@@ -1,0 +1,11 @@
+{
+  "conf": {
+    "rr_clients": {
+      "type_arg": "list",
+      "arg": [
+        {"type_arg": "ipv4", "arg":  "10.21.42.2"},
+        {"type_arg": "ipv4", "arg":  "10.21.42.5"}
+      ]
+    }
+  }
+}

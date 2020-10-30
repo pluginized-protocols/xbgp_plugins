@@ -1,0 +1,47 @@
+{
+  "jit_all" : true,
+  "plugins" : {
+    "bgp_pre_inbound_filter": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0" : {
+          "path": "import_route_rr.o"
+        }
+      }
+    },
+    "bgp_pre_outbound_filter": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "export_route_rr.o"
+        }
+      }
+    },
+    "bgp_encode_attr": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "encode_cluster_list.o"
+        },
+        "10": {
+          "path": "encode_originator_id.o"
+        }
+      }
+    },
+    "bgp_decode_attr": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace" : {
+        "0" : {
+          "path": "decode_cluster_list.o"
+        },
+        "10" : {
+          "path": "decode_originator.o"
+        }
+      }
+    }
+  }
+}

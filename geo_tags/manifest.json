@@ -1,0 +1,53 @@
+{
+  "jit_all": false,
+  "plugins": {
+    "bgp_med_decision": {
+      "extra_mem": 512,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "compare_med.o"
+        }
+      }
+    },
+    "bgp_decode_attr": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "receive_attr.o"
+        }
+      }
+    },
+    "bgp_encode_attr": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "write_attr.o"
+        }
+      }
+    },
+    "bgp_pre_inbound_filter": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "import_prefix_originator.o"
+        }
+      }
+    },
+    "bgp_pre_outbound_filter": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "set_med_coord.o"
+        },
+        "10": {
+          "path": "export_igp_metric.o"
+        }
+      }
+    }
+  }
+}

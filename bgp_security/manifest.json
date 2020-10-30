@@ -1,0 +1,14 @@
+{
+  "jit_all": false,
+  "plugins": {
+    "bgp_pre_inbound_filter": {
+      "extra_mem": 4096,
+      "shared_mem": 0,
+      "replace": {
+        "0": {
+          "path": "prefix_validator.o"
+        }
+      }
+    }
+  }
+}
