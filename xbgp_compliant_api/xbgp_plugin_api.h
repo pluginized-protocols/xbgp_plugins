@@ -5,14 +5,17 @@
 #ifndef PLUGINIZED_BIRD_XBGP_API_H
 #define PLUGINIZED_BIRD_XBGP_API_H
 
-#include "ubpf_api_common.h"
-#include "ubpf_prefix.h"
-
+#include <stdint.h>
+#include <stddef.h>
+#include <bytecode_public.h>
 
 /**
  * Insertion point that must be
  * implemented on each BGP implementation
  */
+
+#define FAIL 0
+
 enum ubpf_plugins {
     BGP_UNUSED = 0 ,
     BGP_PRE_DECISION,
@@ -37,6 +40,13 @@ enum BGP_ROUTE_TYPE {
     BGP_ROUTE_TYPE_UNDEF = 0,
     BGP_ROUTE_TYPE_NEW,
     BGP_ROUTE_TYPE_OLD,
+    BGP_ROUTE_TYPE_UNKNOWN
+};
+
+enum BGP_PLUGIN_FILTER_DECISION {
+    PLUGIN_FILTER_REJECT,
+    PLUGIN_FILTER_ACCEPT,
+    PLUGIN_FILTER_UNKNOWN,
 };
 
 /* REGISTERED ATTRIBUTE ID */
@@ -89,7 +99,7 @@ enum BGP_ROUTE_TYPE {
  * @return  0 if the attribute has been stored to the list of attribute of the current BGP route
  *         -1 if the attribute has not been stored.
  */
-extern int add_attr(uint code, uint flags, uint16_t length, uint8_t *decoded_attr);
+extern int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr);
 
 /**
  * Adds or modifies an attribute of the current route. See add_attr for a full explanation.

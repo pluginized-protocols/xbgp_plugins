@@ -2,13 +2,13 @@
 // Created by thomas on 16/06/20.
 //
 
-#include "../../public_bpf.h"
-#include "../../ubpf_prefix.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include <bytecode_public.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
 #define MAX_METRIC 5000
 
-uint64_t export_igp(bpf_full_args_t *args UNUSED) {
+uint64_t export_igp(args_t *args UNUSED) {
 
     int nb_peers;
     struct ubpf_nexthop *nexthop;

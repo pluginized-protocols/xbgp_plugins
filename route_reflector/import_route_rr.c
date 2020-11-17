@@ -2,11 +2,12 @@
 // Created by thomas on 19/05/20.
 //
 
-#include "../../public_bpf.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 #include "common_rr.h"
 
-uint64_t import_route_rr(bpf_full_args_t *args UNUSED) {
+uint64_t import_route_rr(args_t *args UNUSED) {
 
     int i;
     struct path_attribute *originator;

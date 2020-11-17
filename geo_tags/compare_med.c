@@ -2,14 +2,11 @@
 // Created by thomas on 20/02/20.
 //
 
-#include "public_bpf.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "router_bgp_config.h"
+#include <bytecode_public.h>
 
-typedef struct geo_tags {
-    int32_t coordinates[2];
-} geo_tags_t;
-
-static geo_tags_t this_router_coordinate = {.coordinates = {1, 2}};
 
 static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const int32_t x2[2]) {
 
@@ -26,7 +23,7 @@ static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const in
  *         RTE_NEW if the new route is better than the old one
  *         RTE_UNKNOWN unable to decide with geographical attribute here.
  */
-uint64_t med_compare(bpf_full_args_t *args __attribute__((unused))) {
+uint64_t med_compare(args_t *args __attribute__((unused))) {
 
     uint64_t new_dist, old_dist;
     struct path_attribute *new_attr;
@@ -51,11 +48,11 @@ uint64_t med_compare(bpf_full_args_t *args __attribute__((unused))) {
 
     if (new_dist > old_dist){
         ebpf_print("Old route is kept\n");
-        return RTE_OLD;
+        return BGP_ROUTE_TYPE_OLD;
     }
     if (new_dist < old_dist){
         ebpf_print("New route is used\n");
-        return RTE_NEW;
+        return BGP_ROUTE_TYPE_OLD;
     }
-    return RTE_UNK;
+    return BGP_ROUTE_TYPE_UNKNOWN;
 }

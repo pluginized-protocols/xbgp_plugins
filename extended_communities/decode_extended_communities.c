@@ -2,11 +2,12 @@
 // Created by thomas on 20/05/20.
 //
 
-#include "../../public_bpf.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include <bytecode_public.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_ext_comm.h"
 
-uint64_t decode_extended_communities(bpf_full_args_t *args) {
+uint64_t decode_extended_communities(args_t *args UNUSED) {
 
     int i;
 
@@ -18,10 +19,11 @@ uint64_t decode_extended_communities(bpf_full_args_t *args) {
     uint64_t *in_ext_communitites;
     uint64_t *decoded_ext_communitities;
 
-    code = bpf_get_args(0, args);
-    flags = bpf_get_args(1, args);
-    data = bpf_get_args(2, args);
-    len = bpf_get_args(3, args);
+    ebpf_print("[WARNING] This code won't work!\n");
+    code = get_arg(0);  // refactor
+    flags = get_arg(1);
+    data = get_arg(2);
+    len = get_arg(3);
 
     if (!code || !len || !flags || !data) {
         return EXIT_FAILURE;

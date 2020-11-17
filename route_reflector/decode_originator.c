@@ -2,11 +2,12 @@
 // Created by thomas on 20/05/20.
 //
 
-#include "../../public_bpf.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 #include "common_rr.h"
 
-uint64_t decode_originator(bpf_full_args_t *args UNUSED) {
+uint64_t decode_originator(args_t *args UNUSED) {
 
     uint8_t *code;
     uint16_t *len;
@@ -16,10 +17,10 @@ uint64_t decode_originator(bpf_full_args_t *args UNUSED) {
 
     uint32_t originator_id;
 
-    code = bpf_get_args(0, args);
-    flags = bpf_get_args(1, args);
-    data = bpf_get_args(2, args);
-    len = bpf_get_args(3, args);
+    code = get_arg(0);
+    flags = get_arg(1);
+    data = get_arg(2);
+    len = get_arg(3);
 
     src_info = get_src_peer_info();
 

@@ -2,8 +2,10 @@
 // Created by thomas on 19/02/20.
 //
 
-#include "public_bpf.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include "router_bgp_config.h"
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 
 static __always_inline unsigned int is_negative(uint32_t number) {
     return ((number & 0xffffffff) >> 31u) & 1u;
@@ -63,17 +65,17 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
  * @return EXIT_SUCCESS if the attribute has been decoded and stored in the protocol memory
  *         EXIT_FAILURE otherwise. The protocol itself must decode this attribute.
  */
-uint64_t generic_decode_attr(bpf_full_args_t *args) {
+uint64_t generic_decode_attr(args_t *args UNUSED) {
 
     uint8_t *code;
     uint16_t *len;
     uint8_t *flags;
     uint8_t *data;
 
-    code = bpf_get_args(0, args);
-    flags = bpf_get_args(1, args);
-    data = bpf_get_args(2, args);
-    len = bpf_get_args(3, args);
+    code = get_arg(0);
+    flags = get_arg(1);
+    data = get_arg(2);
+    len = get_arg(3);
 
     if (!code || !len || !flags || !data) {
         return EXIT_FAILURE;

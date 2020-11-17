@@ -2,11 +2,12 @@
 // Created by thomas on 20/05/20.
 //
 
-#include "../../public_bpf.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include <bytecode_public.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_ext_comm.h"
 
-uint64_t generic_encode_attr(bpf_full_args_t *args __attribute__((unused))) {
+uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
 
     uint32_t counter = 0;
     uint8_t *attr_buf;

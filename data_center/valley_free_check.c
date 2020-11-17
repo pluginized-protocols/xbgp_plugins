@@ -2,8 +2,10 @@
 // Created by thomas on 3/06/20.
 //
 
-#include "../../public_bpf.h"
-#include "ubpf_api.h"
+#include <stddef.h>
+#include <sys/cdefs.h>
+#include <bytecode_public.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_datacenter.h"
 #include "../byte_manip.h"
 
@@ -68,7 +70,7 @@ int __always_inline valley_check(uint32_t as1, uint32_t as2) {
 }
 
 
-uint64_t valley_free_check(bpf_full_args_t *args UNUSED) {
+uint64_t valley_free_check(args_t *args UNUSED) {
 
     uint8_t *as_path;
     uint8_t segment_length;

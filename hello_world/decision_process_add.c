@@ -1,5 +1,6 @@
-#include "ubpf_api.h"
-#include "bytecode_public.h"
+#include <stdint.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 
 #define get_community_from_array(arr, len, attr_id) ({ \
  int i__;                                              \
@@ -59,8 +60,8 @@ uint64_t new_bgp_decision_process(args_t *args UNUSED) {
     old_community = check_community(old_attr->data, old_attr->len, 125);
 
     // actual decision
-    if (new_community > old_community) return RTE_NEW;
-    if (new_community < old_community) return RTE_OLD;
+    if (new_community > old_community) return BGP_ROUTE_TYPE_NEW;
+    if (new_community < old_community) return BGP_ROUTE_TYPE_OLD;
 
-    return RTE_UNK;
+    return BGP_ROUTE_TYPE_UNKNOWN;
 }

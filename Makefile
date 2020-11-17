@@ -3,7 +3,7 @@ LLC=llc
 SRC=$(shell find . -name '*.c')
 OBJ=$(SRC:.c=.o)
 
-CFLAGS = -Wall -Wextra -I.. -I../../proto/bgp
+CFLAGS = -Wall -Wextra -I$(LIBXBGP)
 
 all: $(SRC) $(OBJ)
 

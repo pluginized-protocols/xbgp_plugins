@@ -5,7 +5,11 @@
 #ifndef PLUGINIZED_BIRD_ROUTER_BGP_CONFIG_H
 #define PLUGINIZED_BIRD_ROUTER_BGP_CONFIG_H
 
+#define BA_GEO_TAG 42
+#define PREFIX_ORIGINATOR 43
+
 #include <stdint.h>
+#include <bytecode_public.h>
 
 typedef struct geo_tags {
     int32_t coordinates[2];
@@ -23,8 +27,8 @@ static __always_inline uint64_t coord_hton(geo_tags_t *tags) {
     uint64_t _buf;
     uint8_t *buf = (uint8_t *) &_buf;
 
-    *((uint32_t *) buf) = htonl(encode_number(tags->coordinates[0]));
-    *((uint32_t *) (buf+4)) = htonl(encode_number(tags->coordinates[1]));
+    *((uint32_t *) buf) = ebpf_htonl(encode_number(tags->coordinates[0]));
+    *((uint32_t *) (buf+4)) = ebpf_htonl(encode_number(tags->coordinates[1]));
 
     return _buf;
 }

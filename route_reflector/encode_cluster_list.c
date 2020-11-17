@@ -2,11 +2,12 @@
 // Created by thomas on 20/05/20.
 //
 
-#include "../../public_bpf.h"
-#include "ubpf_api.h"
+#include <stdint.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 #include "common_rr.h"
 
-uint64_t encode_cluster_list(bpf_full_args_t *args __attribute__((unused))) {
+uint64_t encode_cluster_list(args_t *args UNUSED) {
 
     uint32_t counter = 0;
     uint8_t *attr_buf;

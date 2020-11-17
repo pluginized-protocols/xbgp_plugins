@@ -3,9 +3,10 @@
 //
 
 
-#include "public_bpf.h"
+#include <stdint.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 #include "router_bgp_config.h"
-#include "ubpf_api.h"
 
 static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const int32_t x2[2]) {
 
@@ -18,7 +19,7 @@ static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const in
 /**
  * Export filter
  */
-uint64_t compute_med(bpf_full_args_t *args UNUSED) {
+uint64_t compute_med(args_t *args UNUSED) {
 
     struct path_attribute med_attr;
     uint32_t med_value;
@@ -36,7 +37,7 @@ uint64_t compute_med(bpf_full_args_t *args UNUSED) {
     med_value = (uint32_t) euclidean_distance(originator_coord->coordinates,
                                               this_router_coordinate.coordinates);
 
-    med_attr.code = MED_ATTR;
+    med_attr.code = MULTI_EXIT_DISC_ATTR_ID;
     med_attr.flags = 0x80;
     med_attr.len = 4;
     med_attr.data = (uint8_t *) &med_value;

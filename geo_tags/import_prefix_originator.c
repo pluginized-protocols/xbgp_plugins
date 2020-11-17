@@ -2,12 +2,11 @@
 // Created by thomas on 15/05/20.
 //
 
-#include "public_bpf.h"
+#include <bytecode_public.h>
 #include "router_bgp_config.h"
-#include "ubpf_api.h"
-#include "tools_ubpf_api.h"
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
-uint64_t add_prefix_originator(bpf_full_args_t *args UNUSED) {
+uint64_t add_prefix_originator(args_t *args UNUSED) {
 
     uint64_t attr;
     int nb_peers;

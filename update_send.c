@@ -2,12 +2,12 @@
 // Created by thomas on 17/04/20.
 //
 
-#include "../public_bpf.h"
-#include "ubpf_api.h"
+#include "xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 
 #define nano_sec(timer) (((timer)->tv_sec * 1000000000) + (timer)->tv_nsec)
 
-uint64_t on_update_send_fini(bpf_full_args_t *args) {
+uint64_t on_update_send_fini(args_t *args) {
     struct path_attribute *attribute;
     struct timespec spec;
     struct timespec final;
@@ -19,7 +19,9 @@ uint64_t on_update_send_fini(bpf_full_args_t *args) {
     uint8_t monit_data[16];
     int offset = 0;
 
-    if (((void *) args->return_value) == NULL) {
+    //TODO
+
+    if (((void *) args /*todo->return_value*/ ) == NULL) {
         // nothing has been sent...
         return EXIT_FAILURE;
     }
@@ -33,7 +35,7 @@ uint64_t on_update_send_fini(bpf_full_args_t *args) {
 
     nanosec = (uint64_t *) attribute->data;
     peer_router_id = (uint32_t *) (attribute->data + 8);
-    to_peer_id = get_peer_router_id();
+    to_peer_id = 0;// TODO get_peer_router_id();
     diff = nano_sec(&final) - *nanosec;
 
     *((uint64_t *)monit_data) = diff;

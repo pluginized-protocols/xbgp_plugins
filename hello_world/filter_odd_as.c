@@ -1,5 +1,6 @@
-#include "ubpf_api.h"
-#include "bytecode_public.h"
+#include <stdint.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 #include "../byte_manip.h" // get_u32 macro definition
 
 #define AS_PATH_ATTR_ID 2
@@ -15,7 +16,7 @@ uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
 
     as_path =  get_attr_from_code(AS_PATH_ATTR_ID);
 
-    if (!as_path) return PLUGIN_FILTER_UNK;
+    if (!as_path) return PLUGIN_FILTER_UNKNOWN;
 
     as_path_data = as_path->data;
 

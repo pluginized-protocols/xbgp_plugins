@@ -2,13 +2,10 @@
 // Created by thomas on 20/02/20.
 //
 
-#include "public_bpf.h"
-#include "ubpf_api.h"
-
-static __always_inline uint32_t encode_number(int32_t number) {
-    if (number >= 0) return number;
-    return ((uint32_t)(-number)) | (1u << 31u);
-}
+#include <stdint.h>
+#include "router_bgp_config.h"
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include <bytecode_public.h>
 
 static __always_inline uint64_t encode_coord(int32_t coord[2]) {
 
@@ -54,7 +51,7 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
             }
 
             if (pinfo->peer_type == EBGP_SESSION) return -1; // don't export the attribute
-            *((uint64_t *)buf_out) = encode_coord(buf_in);
+            *((uint64_t *)buf_out) = encode_coord((int32_t *)buf_in);
             return 8;
 
         default:
@@ -72,7 +69,7 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
  *         0 when no bytes written
  *         else, the number of bytes written to the stream
  */
-uint64_t generic_encode_attr(bpf_full_args_t *args __attribute__((unused))) {
+uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
 
     int ret_val = 0;
     uint32_t counter = 0;

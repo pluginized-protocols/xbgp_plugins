@@ -3,9 +3,10 @@
 //
 
 #include "../byte_manip.h"
-#include "../../public_bpf.h"
-#include "../../ubpf_prefix.h"
-#include "ubpf_api.h"
+#include <stddef.h>
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "../libxbgp/bytecode_public.h"
+
 #include "common_security.h"
 
 #define SESSION_MY_PROVIDER 1
@@ -214,7 +215,7 @@ int __always_inline from_provider_check(uint32_t my_as, struct path_attribute *a
     return current_state == VALID_1 || current_state == VALID_2 ? 1 : -1;
 }
 
-uint64_t customer_provider(bpf_full_args_t *args UNUSED) {
+uint64_t customer_provider(args_t *args UNUSED) {
 
     struct path_attribute *attr;
     uint32_t my_as, from_as;
