@@ -5,7 +5,7 @@
 #include "../byte_manip.h"
 #include <stddef.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
-#include "../libxbgp/bytecode_public.h"
+#include "<bytecode_public.h>"
 
 #include "common_security.h"
 
