@@ -6,6 +6,7 @@
 #define PLUGINIZED_FRR_XBGP_DEFS_H
 
 #include <stdint.h>
+#include <sys/socket.h>
 #include "tools_ubpf_api.h"
 
 #define FAIL 0
@@ -43,6 +44,23 @@
 #define SFP_ATTRIBUTE_ATTR_ID 37
 #define BGP_PREFIXSID_ATTR_ID 40
 #define ATTR_SET_ATTR_ID 128
+
+
+#define iana_afi_to_af(afi) ({ \
+    int __af_type;                      \
+    switch(afi) {         \
+        case XBGP_AFI_IPV4: \
+            __af_type = AF_INET;        \
+            break;        \
+        case XBGP_AFI_IPV6:             \
+            __af_type = AF_INET6;       \
+            break;        \
+        default:          \
+            __af_type = -1;             \
+            break;        \
+    }                     \
+    __af_type;\
+})
 
 enum ubpf_plugins {
     BGP_UNUSED = 0,

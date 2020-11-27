@@ -21,7 +21,7 @@ uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
     as_path_data = as_path->data;
 
     i = 0;
-    while (i < as_path->len) {
+    while (i < as_path->length) {
         i++; // skip segment type
         segment_length = as_path_data[i++];
 

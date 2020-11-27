@@ -4,6 +4,7 @@
 
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include <bytecode_public.h>
+#include <sys/socket.h>
 #include "common_security.h"
 #include "../byte_manip.h"
 
@@ -15,7 +16,7 @@ int __always_inline
 as_path_get_last(struct path_attribute *attr, uint32_t *orig_as)
 {
     const uint8_t *pos = attr->data;
-    const uint8_t *end = pos + attr->len;
+    const uint8_t *end = pos + attr->length;
     int found = 0;
     uint32_t val = 0;
 
@@ -63,7 +64,7 @@ uint64_t prefix_validator(args_t *args UNUSED) {
     struct global_info info, list_vrp, curr_vrp;
     struct global_info current_len, current_max_len, current_originator_as;
     uint64_t vrp_as, vrp_len, vrp_max_len;
-    union ubpf_prefix *pfx_to_validate;
+    struct ubpf_prefix *pfx_to_validate;
     uint16_t prefix_len_to_val;
     struct path_attribute *as_path;
     uint32_t orig_as;
@@ -78,15 +79,14 @@ uint64_t prefix_validator(args_t *args UNUSED) {
         return FAIL;
     }
 
-    prefix_len_to_val = pfx_to_validate->family == AF_INET ? pfx_to_validate->ip4_pfx.prefix_len
-                                                           : pfx_to_validate->ip6_pfx.prefix_len;
+    prefix_len_to_val = pfx_to_validate->prefixlen;
 
     if (get_extra_info("allowed_prefixes", &info) != 0) {
         ebpf_print("No extra info ?\n");
         next();
     }
 
-    if (ebpf_inet_ntop(pfx_to_validate, str_ip, 44) != 0) {
+    if (ebpf_inet_ntop(pfx_to_validate->u, iana_afi_to_af(pfx_to_validate->afi), str_ip, 44) != 0) {
         ebpf_print("Conversion ip to str error");
         return FAIL;
     }

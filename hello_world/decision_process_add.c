@@ -1,13 +1,14 @@
 #include <stdint.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "../xbgp_compliant_api/xbgp_defs.h"
 #include <bytecode_public.h>
 
 #define get_community_from_array(arr, len, attr_id) ({ \
  int i__;                                              \
  struct path_attribute *attr = NULL;                   \
  for (i__ = 0; i__ < (len); i__++) {                   \
-     if ((arr)[i__].code == (attr_id)) {               \
-         attr = &((arr)[i__]);                         \
+     if ((arr)[i__]->code == (attr_id)) {               \
+         attr = ((arr)[i__]);                         \
          break;                                        \
      }                                                 \
  }                                                     \
@@ -56,8 +57,8 @@ uint64_t new_bgp_decision_process(args_t *args UNUSED) {
     }
 
     // get the community value
-    new_community = check_community(new_attr->data, new_attr->len, 125);
-    old_community = check_community(old_attr->data, old_attr->len, 125);
+    new_community = check_community(new_attr->data, new_attr->length, 125);
+    old_community = check_community(old_attr->data, old_attr->length, 125);
 
     // actual decision
     if (new_community > old_community) return BGP_ROUTE_TYPE_NEW;

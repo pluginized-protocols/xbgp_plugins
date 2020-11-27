@@ -95,7 +95,7 @@ uint64_t valley_free_check(args_t *args UNUSED) {
     my_as = peer->local_bgp_session->as;
 
     as_path = attr->data;
-    as_path_len = attr->len;
+    as_path_len = attr->length;
 
     while (i < as_path_len) {
         segment_type = as_path[i++];

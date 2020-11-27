@@ -32,8 +32,8 @@ uint64_t med_compare(args_t *args __attribute__((unused))) {
     geo_tags_t *new_geo;
     geo_tags_t *old_geo;
 
-    new_attr = get_attr_by_code_from_rte(BA_GEO_TAG, 0);
-    old_attr = get_attr_by_code_from_rte(BA_GEO_TAG, 1);
+    new_attr = get_attr_from_code_by_route(BA_GEO_TAG, BGP_ROUTE_TYPE_NEW);
+    old_attr = get_attr_from_code_by_route(BA_GEO_TAG, BGP_ROUTE_TYPE_OLD);
 
     if (!new_attr || !old_attr) {
         ebpf_print("Wow! Trouble to get attributes");

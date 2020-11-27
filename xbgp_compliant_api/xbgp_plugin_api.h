@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "xbgp_defs.h"
 #include <bytecode_public.h>
 
 /**
@@ -77,7 +78,7 @@ extern int write_to_buffer(uint8_t *ptr, size_t len);
  */
 extern struct path_attribute *get_attr_from_code(uint8_t code);
 
-extern struct path_attribute *geattr_from_code_by_route(uint8_t code, int rte);
+extern struct path_attribute *get_attr_from_code_by_route(uint8_t code, int rte);
 
 /**
  * Announce to the peer implementation that a prefix has been parsed.
@@ -86,7 +87,7 @@ extern struct path_attribute *geattr_from_code_by_route(uint8_t code, int rte);
  * @return 1 if the host has correctly received the prefix
  *         0 otherwise. The prefix has not been taken into account
  */
-extern int announce_nrli(union ubpf_prefix *pfx);
+extern int announce_nrli(struct ubpf_prefix *pfx);
 
 /**
  * Retrieves the information related to the peer the local router will announce
@@ -144,7 +145,7 @@ extern int set_peer_info(uint32_t router_id, int key, void *value, int len);
  * @return the current prefix that is processed
  *         NULL otherwise
  */
-extern union ubpf_prefix *get_prefix();
+extern struct ubpf_prefix *get_prefix();
 
 /**
  * Get data related to the nexthop of a given route contained in the Loc-RIB
@@ -155,7 +156,7 @@ extern union ubpf_prefix *get_prefix();
  * @return The nexthop of the route. May return NULL if the function cannot
  *         retrieve data.
  */
-extern struct ubpf_nexthop *get_nexthop(union ubpf_prefix *pfx);
+extern struct ubpf_nexthop *get_nexthop(struct ubpf_prefix *pfx);
 
 /**
  * Functions to access an entry of the multiple RIBs that BGP maintains
@@ -164,11 +165,11 @@ extern struct ubpf_nexthop *get_nexthop(union ubpf_prefix *pfx);
  * @return NULL if no entry is related to the prefix. Otherwise, returns data related
  *         to the entry maintained by the protocol.
  */
-extern struct ubpf_rib_entry *get_rib_in_entry(uint8_t af_family, union ubpf_prefix *pfx);
+extern struct ubpf_rib_entry *get_rib_in_entry(uint8_t af_family, struct ubpf_prefix *pfx);
 
-extern struct ubpf_rib_entry *get_rib_out_entry(uint8_t af_family, union ubpf_prefix *pfx);
+extern struct ubpf_rib_entry *get_rib_out_entry(uint8_t af_family, struct ubpf_prefix *pfx);
 
-extern struct ubpf_rib_entry *get_loc_rib_entry(uint8_t af_family, union ubpf_prefix *pfx);
+extern struct ubpf_rib_entry *get_loc_rib_entry(uint8_t af_family, struct ubpf_prefix *pfx);
 
 /**
  * Retrieve the current BGP route being processed in the insertion point

@@ -15,14 +15,17 @@ static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const in
     return ebpf_sqrt((a * a) + (b * b), 6);
 }
 
+void *memcpy(void *dst, const void *src, unsigned long size);
 
 /**
  * Export filter
  */
 uint64_t compute_med(args_t *args UNUSED) {
 
-    struct path_attribute med_attr;
+    struct path_attribute *med_attr;
+    uint8_t buf[sizeof(struct path_attribute) + sizeof(uint32_t)];
     uint32_t med_value;
+    med_attr = (struct path_attribute *) buf;
 
     struct geo_tags *originator_coord;
     struct path_attribute *attr = get_attr_from_code(PREFIX_ORIGINATOR);
@@ -37,12 +40,12 @@ uint64_t compute_med(args_t *args UNUSED) {
     med_value = (uint32_t) euclidean_distance(originator_coord->coordinates,
                                               this_router_coordinate.coordinates);
 
-    med_attr.code = MULTI_EXIT_DISC_ATTR_ID;
-    med_attr.flags = 0x80;
-    med_attr.len = 4;
-    med_attr.data = (uint8_t *) &med_value;
+    med_attr->code = MULTI_EXIT_DISC_ATTR_ID;
+    med_attr->flags = 0x80;
+    med_attr->length = 4;
+    memcpy(med_attr->data, &med_value, sizeof(uint32_t));
 
-    if (set_attr(&med_attr) != 0) {
+    if (set_attr(med_attr) != 0) {
         ebpf_print("Failed to set attribute\n");
         return FAIL;
     }

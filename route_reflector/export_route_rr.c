@@ -9,12 +9,13 @@
 
 uint64_t export_route_rr(args_t *args UNUSED) {
 
-    int i, nb_peers;
+    int i, nb_peers, cl_len;
     uint32_t *cluster_array;
-    uint32_t *cluster_data;
 
     struct path_attribute *originator;
     struct path_attribute *cluster_list;
+
+    struct path_attribute *new_cluster_list;
 
     struct ubpf_peer_info *pinfo = get_peer_info(&nb_peers);
     struct ubpf_peer_info *src_info = get_src_peer_info();
@@ -38,28 +39,24 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     originator = get_attr_from_code(ORIGINATOR_ID);
     cluster_list = get_attr_from_code(CLUSTER_LIST);
 
+    cl_len = 4 + (cluster_list ? cluster_list->length : 0);
 
-
+    new_cluster_list = ctx_malloc(sizeof(struct path_attribute) + cl_len);
     if (!cluster_list) {
-
-        cluster_list = ctx_malloc(sizeof(struct path_attribute));
-        if (!cluster_list) {
-            ebpf_print("Unable to get memory for cluster list\n");
-            return FAIL;
-        }
-
-        cluster_list->code = CLUSTER_LIST;
-        cluster_list->flags = 0x80;
-        cluster_list->len = 0;
-        cluster_list->data = NULL; // len and data will be set afterwards
+        ebpf_print("Unable to get memory for cluster list\n");
+        return FAIL;
     }
+    new_cluster_list->code = CLUSTER_LIST_ATTR_ID;
+    new_cluster_list->flags = 0x80;
+    new_cluster_list->length = cl_len;
 
-    if (cluster_list->data) {
-        /* append our router_id if it is not contained inside */
+
+    if (cluster_list->length == 0) {
+        /* check if our cluster-id/router-id is in the received cluster list */
         cluster_array = (uint32_t *) cluster_list->data;
-        for(i = 0; i < cluster_list->len / 4; i++) {
+        for(i = 0; i < cluster_list->length / 4; i++) {
             if(cluster_array[i] == pinfo->local_bgp_session->router_id) {
-                ebpf_print("My AS %d is in the cluster list (rcv %d)!\n", pinfo->local_bgp_session->router_id, src_info->router_id);
+                ebpf_print("My router-id %d is in the cluster list (rcv %d)!\n", pinfo->local_bgp_session->router_id, src_info->router_id);
                 return PLUGIN_FILTER_REJECT;
             }
         }
@@ -77,7 +74,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
 
     if (!originator) {
         // must set the ORIGINATOR ID
-        originator = ctx_malloc(sizeof(struct path_attribute));
+        originator = ctx_malloc(sizeof(struct path_attribute) + sizeof(uint32_t));
         if (!originator) {
             // fail !!!
             ebpf_print("Unable to allocate memory for ORIGINATOR_ID\n");
@@ -85,29 +82,21 @@ uint64_t export_route_rr(args_t *args UNUSED) {
         }
         originator->code = ORIGINATOR_ID;
         originator->flags = 0x80; // originator is non transitive !
-        originator->len = 4;
-        originator->data = (uint8_t *) &src_info->router_id;
+        originator->length = 4;
+        *((uint32_t *)originator->data) = src_info->router_id;
 
     }
 
-    /* must append here */
-    cluster_data = ctx_malloc(cluster_list->len + 4);
-    if (!cluster_data) {
-        ebpf_print("Unable to create new cluster list\n");
-        return FAIL;
+
+    /* prepend our router_id */
+    ((uint32_t *)new_cluster_list->data)[0] = src_info->local_bgp_session->router_id; //pinfo->local_bgp_session->router_id;
+
+    if (cluster_list->length != 0) {
+        ebpf_memcpy(new_cluster_list + 4, cluster_list->data, cluster_list->length);
     }
-
-    cluster_data[0] = src_info->local_bgp_session->router_id; //pinfo->local_bgp_session->router_id;
-
-
-    if (cluster_list->len != 0) {
-        ebpf_memcpy(&cluster_data[1], cluster_list->data, cluster_list->len);
-    }
-    cluster_list->len += 4;
-    cluster_list->data = (uint8_t *) cluster_data;
 
     set_attr(originator);
-    set_attr(cluster_list);
+    set_attr(new_cluster_list);
     next();
     return PLUGIN_FILTER_ACCEPT;
 }

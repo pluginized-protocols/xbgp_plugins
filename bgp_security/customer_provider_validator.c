@@ -5,7 +5,7 @@
 #include "../byte_manip.h"
 #include <stddef.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
-#include "<bytecode_public.h>"
+#include "bytecode_public.h"
 
 #include "common_security.h"
 
@@ -85,7 +85,7 @@ int __always_inline from_customer_check(uint32_t my_as, struct path_attribute *a
     int current_res = 1;
 
     const uint8_t *pos = attr->data;
-    const uint8_t *end = pos + attr->len;
+    const uint8_t *end = pos + attr->length;
 
     uint32_t prev_as = my_as;
     uint32_t curr_as;
@@ -143,7 +143,7 @@ int __always_inline from_provider_check(uint32_t my_as, struct path_attribute *a
     int curr_check;
 
     const uint8_t *pos = attr->data;
-    const uint8_t *end = pos + attr->len;
+    const uint8_t *end = pos + attr->length;
 
     uint32_t prev_as = my_as;
     uint32_t curr_as;

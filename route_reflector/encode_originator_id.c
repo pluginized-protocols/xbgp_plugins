@@ -40,8 +40,8 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     if (attribute->code != ORIGINATOR_ID) next();
 
     tot_len += 2; // Type hdr
-    tot_len += attribute->len < 256 ? 1 : 2; // Length hdrs
-    tot_len += attribute->len;
+    tot_len += attribute->length < 256 ? 1 : 2; // Length hdrs
+    tot_len += attribute->length;
 
     attr_buf = ctx_calloc(1, tot_len);
     if (!attr_buf) {
@@ -52,9 +52,9 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     attr_buf[counter++] = attribute->flags;
     attr_buf[counter++] = attribute->code;
 
-    if (attribute->len < 256) attr_buf[counter++] = (uint8_t) attribute->len;
+    if (attribute->length < 256) attr_buf[counter++] = (uint8_t) attribute->length;
     else {
-        attr_buf[counter] = attribute->len;
+        attr_buf[counter] = attribute->length;
         counter += 2;
     }
 

@@ -36,8 +36,8 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     if (attribute->code != CLUSTER_LIST) next();
 
     tot_len += 2; // Type hdr
-    tot_len += attribute->len < 256 ? 1 : 2; // Length hdr
-    tot_len += attribute->len;
+    tot_len += attribute->length < 256 ? 1 : 2; // Length hdr
+    tot_len += attribute->length;
 
     attr_buf = ctx_calloc(1, tot_len);
     if (!attr_buf) return 0;
@@ -45,14 +45,14 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     attr_buf[counter++] = attribute->flags;
     attr_buf[counter++] = attribute->code;
 
-    if (attribute->len < 256) attr_buf[counter++] = (uint8_t) attribute->len;
+    if (attribute->length < 256) attr_buf[counter++] = (uint8_t) attribute->length;
     else {
-        attr_buf[counter] = attribute->len;
+        attr_buf[counter] = attribute->length;
         counter += 2;
     }
 
     cluster_list = (uint32_t *) attribute->data;
-    for (i = 0;  i < attribute->len/4; i++) {
+    for (i = 0;  i < attribute->length/4; i++) {
         *((uint32_t *)(attr_buf + counter)) = ebpf_htonl(cluster_list[i]);
         counter += 4;
     }

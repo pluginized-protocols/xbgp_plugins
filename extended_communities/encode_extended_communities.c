@@ -23,8 +23,8 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
     if (attribute->code != EXTENDED_COMMUNITIES) next();
 
     tot_len += 2; // Type hdr
-    tot_len += attribute->len < 256 ? 1 : 2; // Length hdr
-    tot_len += attribute->len;
+    tot_len += attribute->length < 256 ? 1 : 2; // Length hdr
+    tot_len += attribute->length;
 
     attr_buf = ctx_calloc(1, tot_len);
     if (!attr_buf) return 0;
@@ -32,14 +32,14 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
     attr_buf[counter++] = attribute->flags;
     attr_buf[counter++] = attribute->code;
 
-    if (attribute->len < 256) attr_buf[counter++] = (uint8_t) attribute->len;
+    if (attribute->length < 256) attr_buf[counter++] = (uint8_t) attribute->length;
     else {
-        attr_buf[counter] = attribute->len;
+        attr_buf[counter] = attribute->length;
         counter += 2;
     }
 
     ext_communities = (uint64_t *) attribute->data;
-    for (i = 0;  i < attribute->len/8; i++) {
+    for (i = 0;  i < attribute->length/8; i++) {
         *((uint64_t *)(attr_buf + counter)) = ebpf_htonll(ext_communities[i]);
         counter += 8;
     }

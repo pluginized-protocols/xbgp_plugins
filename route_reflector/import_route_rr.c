@@ -43,7 +43,7 @@ uint64_t import_route_rr(args_t *args UNUSED) {
 
     /* 2. Is Router ID contained in the CLUSTER_LIST ? */
     cluster_array = (uint32_t *) cluster_list->data;
-    for (i = 0; i < cluster_list->len / 4; i++) {
+    for (i = 0; i < cluster_list->length / 4; i++) {
         if (cluster_array[i] == router_id) {
             return PLUGIN_FILTER_REJECT;
         }
