@@ -1,20 +1,14 @@
 //
-// xBGP API
+// Created by thomas on 20/11/20.
 //
 
-#ifndef PLUGINIZED_BIRD_XBGP_API_H
-#define PLUGINIZED_BIRD_XBGP_API_H
+#ifndef PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H
+#define PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H
 
 #include <stdint.h>
 #include <stddef.h>
-#include <bytecode_public.h>
-
-/**
- * Insertion point that must be
- * implemented on each BGP implementation
- */
-
-
+#include <context_hdr.h>
+#include <xbgp_compliant_api/xbgp_defs.h>
 
 /**
  * Adds a new attribute to the route processed by the current plugin
@@ -32,7 +26,7 @@
  * @return  0 if the attribute has been stored to the list of attribute of the current BGP route
  *         -1 if the attribute has not been stored.
  */
-extern int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr);
+extern int add_attr(context_t *ctx, uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr);
 
 /**
  * Adds or modifies an attribute of the current route. See add_attr for a full explanation.
@@ -41,7 +35,7 @@ extern int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decod
  * @return  0 if the attribute has been stored to the list of attribute of the current BGP route
  *         -1 if the attribute has not been stored.
  */
-extern int set_attr(struct path_attribute *attr);
+extern int set_attr(context_t *ctx, struct path_attribute *attr);
 
 /**
  * Get the current attribute to be processed (if the plugin receives a single
@@ -51,7 +45,7 @@ extern int set_attr(struct path_attribute *attr);
  *         Otherwise a pointer (pointing to a valid memory space of the plugin) to the structure
  *         of the retreived attribute.
  */
-extern struct path_attribute *get_attr();
+extern struct path_attribute *get_attr(context_t *ctx);
 
 
 /**
@@ -64,7 +58,7 @@ extern struct path_attribute *get_attr();
  * @return  0 if ptr has been successfully copied to the network buffer
  *         -1 if nothing has been done
  */
-extern int write_to_buffer(uint8_t *ptr, size_t len);
+extern int write_to_buffer(context_t *ctx, uint8_t *ptr, size_t len);
 
 /**
  * Gets the route attribute from its code if the plugin is handling a given BGP route
@@ -75,9 +69,21 @@ extern int write_to_buffer(uint8_t *ptr, size_t len);
  *              to copy the attribute inside the plugin memory space
  *              Or a pointer to the memory space allocated for the attribute.
  */
-extern struct path_attribute *get_attr_from_code(uint8_t code);
+extern struct path_attribute *get_attr_from_code(context_t *ctx, uint8_t code);
 
-extern struct path_attribute *geattr_from_code_by_route(uint8_t code, int rte);
+
+/**
+ * Gets the route attribute from its code and from the given route specified in argument.
+ * @param code IANA code for the BGP Attribute
+ * @param rte The route from which the attribute must be retrieved. If rte is O,
+ *            the default route will be retrieved. In the case of an insertion point
+ *            having multiple route (typically, in the BGP decision process two route
+ *            is passed to the insertion point), the rte parameter MUST be different
+ *            than 0.
+ * @return a pointer pointing to the plugin memory space. If the attribute cannot be
+ *         retrieved, the functions returns NULL.
+ */
+extern struct path_attribute *get_attr_from_code_by_route(context_t *ctx, uint8_t code, int rte);
 
 /**
  * Announce to the peer implementation that a prefix has been parsed.
@@ -86,7 +92,7 @@ extern struct path_attribute *geattr_from_code_by_route(uint8_t code, int rte);
  * @return 1 if the host has correctly received the prefix
  *         0 otherwise. The prefix has not been taken into account
  */
-extern int announce_nrli(union ubpf_prefix *pfx);
+extern int announce_nrli(context_t *ctx, struct ubpf_prefix *pfx);
 
 /**
  * Retrieves the information related to the peer the local router will announce
@@ -114,7 +120,7 @@ extern int announce_nrli(union ubpf_prefix *pfx);
  *         };
  *
  */
-extern struct ubpf_peer_info *get_peer_info(int *nb_peers);
+extern struct ubpf_peer_info *get_peer_info(context_t *ctx, int *nb_peers);
 
 /**
  * Retrieves the information related to the peer having advertised a BGP message to the
@@ -126,7 +132,7 @@ extern struct ubpf_peer_info *get_peer_info(int *nb_peers);
  * @return NULL if the function is unable to pass those data to the plugin
  *         Otherwise a pointer is returned
  */
-extern struct ubpf_peer_info *get_src_peer_info();
+extern struct ubpf_peer_info *get_src_peer_info(context_t *ctx);
 
 /**
  * Modifies the information the local BGP router maintains for a peer.
@@ -136,7 +142,7 @@ extern struct ubpf_peer_info *get_src_peer_info();
  * @param len length of the value
  * @return 0 if the operation succeeds, -1 in case of failure.
  */
-extern int set_peer_info(uint32_t router_id, int key, void *value, int len);
+extern int set_peer_info(context_t *ctx, uint32_t router_id, int key, void *value, int len);
 
 
 /**
@@ -144,7 +150,7 @@ extern int set_peer_info(uint32_t router_id, int key, void *value, int len);
  * @return the current prefix that is processed
  *         NULL otherwise
  */
-extern union ubpf_prefix *get_prefix();
+extern struct ubpf_prefix *get_prefix(context_t *ctx);
 
 /**
  * Get data related to the nexthop of a given route contained in the Loc-RIB
@@ -155,7 +161,7 @@ extern union ubpf_prefix *get_prefix();
  * @return The nexthop of the route. May return NULL if the function cannot
  *         retrieve data.
  */
-extern struct ubpf_nexthop *get_nexthop(union ubpf_prefix *pfx);
+extern struct ubpf_nexthop *get_nexthop(context_t *ctx, struct ubpf_prefix *pfx);
 
 /**
  * Functions to access an entry of the multiple RIBs that BGP maintains
@@ -164,11 +170,11 @@ extern struct ubpf_nexthop *get_nexthop(union ubpf_prefix *pfx);
  * @return NULL if no entry is related to the prefix. Otherwise, returns data related
  *         to the entry maintained by the protocol.
  */
-extern struct ubpf_rib_entry *get_rib_in_entry(uint8_t af_family, union ubpf_prefix *pfx);
+extern struct ubpf_rib_entry *get_rib_in_entry(context_t *ctx, uint8_t af_family, struct ubpf_prefix *pfx);
 
-extern struct ubpf_rib_entry *get_rib_out_entry(uint8_t af_family, union ubpf_prefix *pfx);
+extern struct ubpf_rib_entry *get_rib_out_entry(context_t *ctx, uint8_t af_family, struct ubpf_prefix *pfx);
 
-extern struct ubpf_rib_entry *get_loc_rib_entry(uint8_t af_family, union ubpf_prefix *pfx);
+extern struct ubpf_rib_entry *get_loc_rib_entry(context_t *ctx, uint8_t af_family, struct ubpf_prefix *pfx);
 
 /**
  * Retrieve the current BGP route being processed in the insertion point
@@ -177,7 +183,6 @@ extern struct ubpf_rib_entry *get_loc_rib_entry(uint8_t af_family, union ubpf_pr
  *                    loaded in the VM.
  * @return The BGP route
  */
-extern struct bgp_route *get_bgp_route(enum BGP_ROUTE_TYPE type);
+extern struct bgp_route *get_bgp_route(context_t *ctx, enum BGP_ROUTE_TYPE type);
 
-#endif //PLUGINIZED_BIRD_XBGP_API_H
-
+#endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H

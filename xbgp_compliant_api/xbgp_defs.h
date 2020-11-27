@@ -1,0 +1,144 @@
+//
+// Created by thomas on 20/11/20.
+//
+
+#ifndef PLUGINIZED_FRR_XBGP_DEFS_H
+#define PLUGINIZED_FRR_XBGP_DEFS_H
+
+#include <stdint.h>
+#include "tools_ubpf_api.h"
+
+#define FAIL 0
+
+/* REGISTERED ATTRIBUTE ID */
+
+#define RESERVED_ATTR_ID 0
+#define ORIGIN_ATTR_ID 1
+#define AS_PATH_ATTR_ID 2
+#define NEXT_HOP_ATTR_ID 3
+#define MULTI_EXIT_DISC_ATTR_ID 4
+#define LOCAL_PREF_ATTR_ID 5
+#define ATOMIC_AGGREGATE_ATTR_ID 6
+#define AGGREGATOR_ATTR_ID 7
+#define COMMUNITY_ATTR_ID 8
+#define ORIGINATOR_ID_ATTR_ID 9
+#define CLUSTER_LIST_ATTR_ID 10
+#define MP_REACH_NLRI_ATTR_ID 14
+#define MP_UNREACH_NLRI_ATTR_ID 15
+#define EXTENDED_COMMUNITIES_ATTR_ID 16
+#define AS4_PATH_ATTR_ID 17
+#define AS4_AGGREGATOR_ATTR_ID 18
+#define PMSI_TUNNEL_ATTR_ID 22
+#define TUNNEL_ENCAPSULATION_ATTRIBUTE_ATTR_ID 23
+#define TRAFFIC_ENGINEERING_ATTR_ID 24
+#define IPV6_ADDRESS_SPECIFIC_EXTENDED_COMMUNITY_ATTR_ID 25
+#define AIGP_ATTR_ID 26
+#define PE_DISTINGUISHER_LABELS_ATTR_ID 27
+#define BGPLS_ATTRIBUTE_ATTR_ID 29
+#define LARGE_COMMUNITY_ATTR_ID 32
+#define BGPSEC_PATH_ATTR_ID 33
+#define BGP_COMMUNITY_CONTAINER_ATTRIBUTE_TEMPORARY_REGISTERED_20170728_ATTR_ID 34
+#define ONLY_TO_CUSTOMER_OTC_TEMPORARY_REGISTERED_20180329_ATTR_ID 35
+#define BGP_DOMAIN_PATH_DPATH_TEMPORARY_REGISTERED_20190708_ATTR_ID 36
+#define SFP_ATTRIBUTE_ATTR_ID 37
+#define BGP_PREFIXSID_ATTR_ID 40
+#define ATTR_SET_ATTR_ID 128
+
+enum ubpf_plugins {
+    BGP_UNUSED = 0,
+    BGP_PRE_DECISION,
+    BGP_NEXTHOP_RESOLVABLE_DECISION,
+    BGP_LOCAL_PREF_DECISION,
+    BGP_AS_PATH_LENGTH_DECISION,
+    BGP_MED_DECISION, // decision process MED insertion point
+    BGP_USE_ORIGIN_DECISION,
+    BGP_PREFER_EXTERNAL_PEER_DECISION,
+    BGP_IGP_COST_DECISION,
+    BGP_ROUTER_ID_DECISION,
+    BGP_IPADDR_DECISION,
+    BGP_POST_DECISION,
+    BGP_DECODE_ATTR,
+    BGP_ENCODE_ATTR,
+    BGP_PRE_INBOUND_FILTER,
+    BGP_PRE_OUTBOUND_FILTER,
+    BGP_DECODE_MESSAGE,
+    BGP_ENCODE_MESSAGE,
+};
+
+enum {
+    EBGP_SESSION,
+    IBGP_SESSION,
+    LOCAL_SESSION,
+};
+
+enum BGP_ROUTE_TYPE {
+    BGP_ROUTE_TYPE_UNDEF = BPF_MAX_RESERVED_RETURN_VAL,
+    BGP_ROUTE_TYPE_NEW,
+    BGP_ROUTE_TYPE_OLD,
+    BGP_ROUTE_TYPE_UNKNOWN,
+    BGP_ROUTE_TYPE_FAIL
+};
+
+enum BGP_PLUGIN_FILTER_DECISION {
+    PLUGIN_FILTER_REJECT = BPF_MAX_RESERVED_RETURN_VAL,
+    PLUGIN_FILTER_ACCEPT,
+    PLUGIN_FILTER_UNKNOWN,
+};
+
+struct path_attribute {
+    uint8_t code;
+    uint8_t flags;
+    uint16_t length;
+    uint8_t data[0];
+};
+
+struct ubpf_peer_info {
+    uint32_t as;
+    uint32_t router_id;
+    uint32_t capability;
+    uint8_t peer_type; // iBGP, eBGP, or LOCAL for local_bgp_sessions field.
+
+    struct {
+        uint8_t af;
+        union {
+            struct in6_addr in6;
+            struct in_addr in;
+        } addr;
+    } addr;
+
+    struct ubpf_peer_info *local_bgp_session; // NULL if the structure is about the local BGP router.
+};
+
+enum xbgp_afi {
+    XBGP_AFI_IPV4 = 1,
+    XBGP_AFI_IPV6 = 2
+};
+
+enum xbgp_safi {
+    XBGP_SAFI_UNICAST = 1,
+};
+
+struct ubpf_prefix {
+    uint16_t afi;
+    uint8_t safi;
+    uint8_t padding;
+    uint16_t prefixlen;
+    uint8_t u[20];
+};
+
+struct bgp_route {
+    struct ubpf_prefix pfx;
+    int attr_nb;
+    struct path_attribute **attr;
+    struct ubpf_peer_info *peer_info;
+    uint32_t type; // CONNECTED, STATIC, IGP, BGP
+};
+
+struct ubpf_nexthop {
+    uint8_t route_type; // connected, static, kernel
+    uint64_t igp_metric;
+};
+
+
+
+#endif //PLUGINIZED_FRR_XBGP_DEFS_H
