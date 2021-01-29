@@ -7,12 +7,12 @@
 #include <bytecode_public.h>
 
 
-uint64_t filter_attr_42(args_t *args) {
+uint64_t filter_attr_42(args_t *args UNUSED) {
 
     int *code;
-    ret = get_arg(BGP_ATTR_CODE);
+    code = get_arg(0); // todo change
 
-    if (!ret) {
+    if (!code) {
         return EXIT_FAILURE;
     }
 
