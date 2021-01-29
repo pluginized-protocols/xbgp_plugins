@@ -1,0 +1,22 @@
+{
+  "jit_all": false,
+  "plugins": {
+    "filter_42": {
+      "extra_mem": 128,
+      "shared_mem": 0,
+      "obj_code_list": {
+        "simple_reject_42": {
+          "obj": "simple_test_api.o",
+          "jit": true
+        }
+      }
+    }
+  },
+  "insertion_points": {
+    "add_two_insert_ip": {
+      "replace": {
+        "0": "simple_reject_42"
+      }
+    }
+  }
+}

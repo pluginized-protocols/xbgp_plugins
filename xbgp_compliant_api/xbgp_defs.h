@@ -81,6 +81,7 @@ enum ubpf_plugins {
     BGP_PRE_OUTBOUND_FILTER,
     BGP_DECODE_MESSAGE,
     BGP_ENCODE_MESSAGE,
+    BGP_OPEN_SENT,
 };
 
 enum {
