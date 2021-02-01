@@ -17,10 +17,10 @@ uint64_t decode_originator(args_t *args UNUSED) {
 
     uint32_t originator_id;
 
-    code = get_arg(0);
-    flags = get_arg(1);
-    data = get_arg(2);
-    len = get_arg(3);
+    code = get_arg(ARG_CODE);
+    flags = get_arg(ARG_FLAGS);
+    data = get_arg(ARG_DATA);
+    len = get_arg(ARG_LENGTH);
 
     src_info = get_src_peer_info();
 

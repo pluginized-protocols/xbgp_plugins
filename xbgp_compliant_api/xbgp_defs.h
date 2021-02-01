@@ -84,6 +84,23 @@ enum ubpf_plugins {
     BGP_OPEN_SENT,
 };
 
+enum ubpf_arg_type {
+    ARG_UNUSED = 0,
+    ARG_CODE,
+    ARG_TYPE,
+    ARG_LENGTH,
+    ARG_FLAGS,
+    ARG_DATA,
+    ARG_BGP_ROUTE,
+    ARG_BGP_ATTRIBUTE_LIST,
+    ARG_ATTRIBUTE,
+    ARG_BUFFER,
+    ARG_BGP_PREFIX,
+
+
+    ARG_MAX_OPAQUE // can be used to init the personal enum
+};
+
 enum {
     EBGP_SESSION,
     IBGP_SESSION,

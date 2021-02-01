@@ -20,10 +20,10 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     uint64_t *decoded_ext_communitities;
 
     ebpf_print("[WARNING] This code won't work!\n");
-    code = get_arg(0);  // refactor
-    flags = get_arg(1);
-    data = get_arg(2);
-    len = get_arg(3);
+    code = get_arg(ARG_CODE);  // refactor
+    flags = get_arg(ARG_FLAGS);
+    data = get_arg(ARG_DATA);
+    len = get_arg(ARG_LENGTH);
 
     if (!code || !len || !flags || !data) {
         return EXIT_FAILURE;

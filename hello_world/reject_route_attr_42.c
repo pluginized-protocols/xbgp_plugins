@@ -10,7 +10,7 @@
 uint64_t filter_attr_42(args_t *args UNUSED) {
 
     int *code;
-    code = get_arg(0); // todo change
+    code = get_arg(ARG_CODE);
 
     if (!code) {
         return EXIT_FAILURE;

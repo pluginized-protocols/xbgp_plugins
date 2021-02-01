@@ -40,7 +40,7 @@
 uint64_t parse_attribute(args_t *args UNUSED) {
 
     uint8_t *code;
-    code = get_arg(0); // argument 0 is the code attribute received from the neighbor
+    code = get_arg(ARG_CODE); // get the argument from its "ID"
 
     if (!code) {
         // unable to retrieve the argument (internal failure)

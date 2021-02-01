@@ -72,10 +72,10 @@ uint64_t generic_decode_attr(args_t *args UNUSED) {
     uint8_t *flags;
     uint8_t *data;
 
-    code = get_arg(0);
-    flags = get_arg(1);
-    data = get_arg(2);
-    len = get_arg(3);
+    code = get_arg(ARG_CODE);
+    flags = get_arg(ARG_FLAGS);
+    data = get_arg(ARG_DATA);
+    len = get_arg(ARG_LENGTH);
 
     if (!code || !len || !flags || !data) {
         return EXIT_FAILURE;
