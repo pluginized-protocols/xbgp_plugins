@@ -6,7 +6,7 @@
       "shared_mem": 0,
       "obj_code_list": {
         "simple_reject_42": {
-          "obj": "simple_test_api.o",
+          "obj": "reject_route_attr_42.o",
           "jit": true
         }
       }
