@@ -12,6 +12,8 @@ enum {
     KEY_RR_CLIENT = 1,
 };
 
+#define max_info 65535
+
 static __always_inline int is_rr_client(uint32_t router_id) {
 
     struct global_info info;
@@ -24,7 +26,7 @@ static __always_inline int is_rr_client(uint32_t router_id) {
         return -1;
     }
 
-    for (i = 0; ; i++) {
+    for (i = 0; i < max_info ; i++) {
         if (get_extra_info_lst_idx(&info, i, &current_client) != 0) return 0;
         if (get_extra_info_value(&current_client, &rter_id, sizeof(rter_id)) != 0)  {
             ebpf_print("Unable to retrieve router_id of rr clients\n");

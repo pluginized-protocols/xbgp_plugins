@@ -9,6 +9,7 @@
 #include "common_datacenter.h"
 #include "../byte_manip.h"
 
+#define MAX_DC_ROUTERS INT32_MAX
 
 /* only for static arrays !!! */
 void *memset(void *s, int c, size_t n);
@@ -42,7 +43,7 @@ int __always_inline valley_check(uint32_t as1, uint32_t as2) {
 
     int i;
 
-    for (i = 0;; i++) {
+    for (i = 0; i < MAX_DC_ROUTERS - 1; i++) {
 
         if (get_extra_info_lst_idx(&info, i, &current_as_type) != 0) return -1;
 
@@ -70,53 +71,71 @@ int __always_inline valley_check(uint32_t as1, uint32_t as2) {
 }
 
 
-uint64_t valley_free_check(args_t *args UNUSED) {
-
-    uint8_t *as_path;
+int __always_inline flatten_as_path(const uint8_t *as_path, unsigned int length, unsigned int *asp_flat, int flat_size) {
+    unsigned int bytes = 0;
+    unsigned int dummy = 0;
     uint8_t segment_length;
-    uint8_t segment_type;
+    unsigned int j;
+    int idx = 0;
+    unsigned int seg_size;
 
-    uint32_t curr_as, next_as;
+    if (length < 6) return -1;
+    if (length > 4096) return -1;
+    if (length % 2) return -1;
 
+    while (bytes < length && dummy < length) {
+        segment_length = as_path[bytes+1];
+
+        if (segment_length <= 0) return -1;
+        if (segment_length > 255) return -1;
+
+        for (j = 0; j < segment_length && idx < flat_size && idx >= 0; j++) {
+            unsigned int ofst = *(unsigned int *) (as_path + bytes + 2 + (4 * j));
+            asp_flat[idx] = get_u32_t2_friendly(ofst);
+            idx++;
+        }
+
+        seg_size = (segment_length * 4) + 2;
+        if (seg_size + bytes > length) return -1;
+
+        bytes += seg_size;
+
+        /* increment dummy to the minimal segment length value for T2*/
+        dummy += 6;
+
+    }
+    return idx;
+}
+
+
+uint64_t valley_free_check(args_t *args UNUSED) {
+    int i;
+    int nb_ases;
+    uint8_t *as_path;
+    uint32_t *arr_aspath;
     uint32_t my_as;
-    int as_path_len;
-    int i = 0;
-    int j;
-
-    int is_beginning = 1;
-
+    unsigned int as_path_len;
     struct ubpf_peer_info *peer;
-
     struct path_attribute *attr;
-    attr = get_attr_from_code(AS_PATH_ATTR_CODE);
 
+    attr = get_attr_from_code(AS_PATH_ATTR_CODE);
     peer = get_src_peer_info();
     if (!attr || !peer) return FAIL;
     my_as = peer->local_bgp_session->as;
-
     as_path = attr->data;
     as_path_len = attr->length;
 
-    while (i < as_path_len) {
-        segment_type = as_path[i++];
-        segment_length = as_path[i++];
+    arr_aspath = ctx_malloc(sizeof(*arr_aspath) * 1024);
+    if (!arr_aspath) return PLUGIN_FILTER_UNKNOWN;
 
-        for (j = 0; j < segment_length - 1; j++) {
+    nb_ases = flatten_as_path(as_path, as_path_len, arr_aspath, 1024);
+    if (nb_ases == -1) return PLUGIN_FILTER_UNKNOWN;
 
-            curr_as = get_u32(as_path + i);
-            i += 4;
+    // should always contains at least one AS !
+    if (!valley_check(arr_aspath[0], my_as)) return PLUGIN_FILTER_REJECT;
 
-            if (is_beginning) {
-                if (!valley_check(curr_as, my_as)) return PLUGIN_FILTER_REJECT;
-                is_beginning = 0;
-            }
-
-            next_as = get_u32(as_path + i);
-            i += 4;
-
-            if (!valley_check(next_as, curr_as)) return PLUGIN_FILTER_REJECT;
-
-        }
+    for (i = 1; i < nb_ases; i++) {
+        if (!valley_check(arr_aspath[i], my_as)) return PLUGIN_FILTER_REJECT;
     }
     next();
     return PLUGIN_FILTER_REJECT;

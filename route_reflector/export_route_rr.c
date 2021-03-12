@@ -26,7 +26,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     }
 
     if (pinfo->peer_type != IBGP_SESSION || src_info->peer_type != IBGP_SESSION) {
-        // we do not reflect to other iBGP session
+        // we do not reflect to other iBGP sessions
         next();
     }
 
@@ -51,7 +51,10 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     new_cluster_list->length = cl_len;
 
 
-    if (cluster_list->length == 0) {
+    if (cluster_list->length > 0) {
+
+        if (cluster_list->length > 255) return PLUGIN_FILTER_REJECT;
+
         /* check if our cluster-id/router-id is in the received cluster list */
         cluster_array = (uint32_t *) cluster_list->data;
         for(i = 0; i < cluster_list->length / 4; i++) {

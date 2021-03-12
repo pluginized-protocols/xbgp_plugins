@@ -2,6 +2,10 @@ CC=clang
 LLC=llc
 SRC=$(shell find . -name '*.c')
 OBJ=$(SRC:.c=.o)
+OBJ_PRE_T2=$(SRC:.c=.pre_t2)
+OBJ_T2=$(SRC:.c=.t2)
+OBJ_LL=$(SRC:.c=.ll)
+OBJ_BC=$(SRC:.c=.bc)
 
 CFLAGS = -Wall -Wextra -I$(LIBXBGP)
 
@@ -12,7 +16,7 @@ all: $(SRC) $(OBJ)
 	@$(CC) $(CFLAGS) -fno-stack-protector -O2 -emit-llvm -c $< -o - | $(LLC) -O2 -march=bpf -filetype=obj -o $@
 
 clean:
-	rm -f $(OBJ)
+	rm -f $(OBJ) $(OBJ_PRE_T2) $(OBJ_T2) $(OBJ_LL) $(OBJ_BC)
 
 copy: $(OBJ)
 	@echo CP eBPF bytecode
