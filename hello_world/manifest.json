@@ -13,7 +13,7 @@
     }
   },
   "insertion_points": {
-    "add_two_insert_ip": {
+    "bgp_decode_attr": {
       "replace": {
         "0": "simple_reject_42"
       }

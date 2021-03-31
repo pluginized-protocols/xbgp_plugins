@@ -9,13 +9,20 @@
 
 uint64_t filter_attr_42(args_t *args UNUSED) {
 
-    int *code;
+    uint8_t *code;
     code = get_arg(ARG_CODE);
 
     if (!code) {
+        ebpf_print("There was an error\n");
         return EXIT_FAILURE;
     }
 
-    return *code == 42 ? EXIT_FAILURE : EXIT_SUCCESS;
+    if (*code == 42) {
+        ebpf_print("The update is rejected since it contains the attribute 42\n");
+        return PLUGIN_FILTER_REJECT;
+    }
+
+    ebpf_print("Update accepted\n");
+    return PLUGIN_FILTER_ACCEPT;
 
 }
