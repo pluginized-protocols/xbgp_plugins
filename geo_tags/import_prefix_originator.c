@@ -12,7 +12,7 @@ void *memcpy(void *dest, const void *src, size_t n);
 
 uint64_t add_prefix_originator(args_t *args UNUSED) {
 
-    uint64_t attr;
+    uint64_t _attr;
     int nb_peers;
     struct path_attribute *originating_prefix;
     uint8_t buf[sizeof(*originating_prefix) + sizeof(uint64_t)];
@@ -26,12 +26,14 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
     }
 
     /* the peer is eBGP -> the prefix is outside the our AS, need to add our coordinate */
-    attr = coord_to_attr(&this_router_coordinate);
+    _attr = coord_to_attr(&this_router_coordinate);
 
     originating_prefix->code = PREFIX_ORIGINATOR;
     originating_prefix->flags = 0x80;
     originating_prefix->length = 8;
-    memcpy(originating_prefix->data, &attr, sizeof(uint64_t));
+    memcpy(originating_prefix->data, &_attr, sizeof(uint64_t));
+
+    //CHECK_ATTR_FORMAT(originating_prefix, 8);
 
     if (set_attr(originating_prefix) == -1) {
         ebpf_print("Error, Unable to add attribute\n");

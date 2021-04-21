@@ -42,25 +42,29 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     cl_len = 4 + (cluster_list ? cluster_list->length : 0);
 
     new_cluster_list = ctx_malloc(sizeof(struct path_attribute) + cl_len);
-    if (!cluster_list) {
-        ebpf_print("Unable to get memory for cluster list\n");
+    if (!new_cluster_list) {
+        ebpf_print("Unable to get memory for cluster list (%d + %d)\n", sizeof(struct path_attribute), cl_len);
         return FAIL;
     }
     new_cluster_list->code = CLUSTER_LIST_ATTR_ID;
     new_cluster_list->flags = 0x80;
     new_cluster_list->length = cl_len;
 
+    //ebpf_print("memory for cluster list (%d + %d)\n", sizeof(struct path_attribute), cl_len);
 
-    if (cluster_list->length > 0) {
+    if (cluster_list != NULL) {
+        if (cluster_list->length > 0) {
 
-        if (cluster_list->length > 255) return PLUGIN_FILTER_REJECT;
+            if (cluster_list->length > 255) return PLUGIN_FILTER_REJECT;
 
-        /* check if our cluster-id/router-id is in the received cluster list */
-        cluster_array = (uint32_t *) cluster_list->data;
-        for(i = 0; i < cluster_list->length / 4; i++) {
-            if(cluster_array[i] == pinfo->local_bgp_session->router_id) {
-                ebpf_print("My router-id %d is in the cluster list (rcv %d)!\n", pinfo->local_bgp_session->router_id, src_info->router_id);
-                return PLUGIN_FILTER_REJECT;
+            /* check if our cluster-id/router-id is in the received cluster list */
+            cluster_array = (uint32_t *) cluster_list->data;
+            for (i = 0; i < cluster_list->length / 4; i++) {
+                if (cluster_array[i] == pinfo->local_bgp_session->router_id) {
+                    ebpf_print("My router-id %d is in the cluster list (rcv %d)!\n",
+                               pinfo->local_bgp_session->router_id, src_info->router_id);
+                    return PLUGIN_FILTER_REJECT;
+                }
             }
         }
     }
@@ -94,8 +98,10 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     /* prepend our router_id */
     ((uint32_t *)new_cluster_list->data)[0] = src_info->local_bgp_session->router_id; //pinfo->local_bgp_session->router_id;
 
-    if (cluster_list->length != 0) {
-        ebpf_memcpy(new_cluster_list + 4, cluster_list->data, cluster_list->length);
+    if (cluster_list != NULL) {
+        if (cluster_list->length != 0) {
+            ebpf_memcpy(new_cluster_list + 4, cluster_list->data, cluster_list->length);
+        }
     }
 
     set_attr(originator);

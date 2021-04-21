@@ -46,6 +46,6 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
         cluster_list[i] = ebpf_ntohl(in_cluster_list[i]);
     }
 
-    add_attr(CLUSTER_LIST, *flags, 4, (uint8_t *) cluster_list);
+    add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
     return EXIT_SUCCESS;
 }

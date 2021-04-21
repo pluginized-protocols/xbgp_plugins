@@ -19,7 +19,10 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     struct path_attribute *attribute;
     attribute = get_attr();
 
-    if (!attribute) return 0;
+    if (!attribute) {
+        ebpf_print("No attribute ?\n");
+        return 0;
+    }
 
     struct ubpf_peer_info *to_info;
     to_info = get_peer_info(&nb_peer);
@@ -30,6 +33,7 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     }
 
     if (to_info->peer_type != IBGP_SESSION) {
+        ebpf_print("This is not an ibgp session\n");
         next();
     }
 
