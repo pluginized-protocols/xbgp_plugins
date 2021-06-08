@@ -12,6 +12,42 @@
 #define AS_PATH_SEQUENCE	2
 #define AS_PATH_CONFED_SEQUENCE	3
 #define AS_PATH_CONFED_SET	4
+
+#ifdef PROVERS
+
+struct path_attribute *get_attr_from_code(uint8_t code) {
+    struct path_attribute *attr;
+    if (code != AS_PATH_ATTR_CODE) {
+        return NULL;
+    }
+
+    attr = malloc(sizeof(*attr) + 32);
+    if (!attr) return NULL;
+
+    attr->code = AS_PATH_ATTR_CODE;
+    attr->flags = ATTR_TRANSITIVE;
+    attr->length = 32;
+    // leave trash data for data attribute
+
+    return attr;
+}
+
+struct ubpf_prefix *get_prefix() {
+    struct ubpf_prefix *pfx;
+    pfx = malloc(sizeof(*pfx));
+    if (!pfx) return NULL;
+
+    pfx->afi = XBGP_AFI_IPV4;
+    pfx->safi = XBGP_SAFI_UNICAST;
+    pfx->prefixlen = 16;
+    *(uint32_t *)pfx->u = 16820416; // 192.168.0.1
+
+    return pfx;
+}
+
+#endif
+
+
 int __always_inline
 as_path_get_last(struct path_attribute *attr, uint32_t *orig_as)
 {
@@ -26,11 +62,10 @@ as_path_get_last(struct path_attribute *attr, uint32_t *orig_as)
         uint len  = pos[1];
         pos += 2;
 
-        if (!len)
+        if (len <= 0)
             continue;
 
-        switch (type)
-        {
+        switch (type) {
             case AS_PATH_SET:
             case AS_PATH_CONFED_SET:
                 found = 0;
@@ -96,6 +131,11 @@ uint64_t prefix_validator(args_t *args UNUSED) {
         next();
     }
 
+    // get the last as
+    if (!as_path_get_last(as_path, &orig_as)){
+        return PLUGIN_FILTER_REJECT;
+    }
+
     for (i = 0;; i++) {
 
         if (get_extra_info_lst_idx(&list_vrp, i, &curr_vrp) != 0) {
@@ -132,10 +172,6 @@ uint64_t prefix_validator(args_t *args UNUSED) {
 
         if (vrp_len <= prefix_len_to_val) { // covered
             prefix_exists = 1;
-
-            if (!as_path_get_last(as_path, &orig_as)){
-                return PLUGIN_FILTER_REJECT;
-            }
 
             if (prefix_len_to_val <= vrp_max_len) {
                 if (vrp_as == orig_as){

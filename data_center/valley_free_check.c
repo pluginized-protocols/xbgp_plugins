@@ -11,6 +11,8 @@
 
 #define MAX_DC_ROUTERS INT32_MAX
 
+#include "../prove_stuffs/prove.h"
+
 /* only for static arrays !!! */
 void *memset(void *s, int c, size_t n);
 
@@ -50,7 +52,7 @@ int __always_inline valley_check(uint32_t as1, uint32_t as2) {
         if (get_extra_info_lst_idx(&current_as_type, 0, &current_as) != 0) return -1;
         if (get_extra_info_lst_idx(&current_as_type, 1, &current_type) != 0) return -1;
 
-        memset(type, 0, sizeof(char) * 10);
+        memset(type, 0, sizeof(type));
 
         if (get_extra_info_value(&current_type, type, 9) != 0) return -1;
         if (get_extra_info_value(&current_type, &as, sizeof(as)) != 0) return -1;
@@ -140,3 +142,16 @@ uint64_t valley_free_check(args_t *args UNUSED) {
     next();
     return PLUGIN_FILTER_REJECT;
 }
+
+#ifdef PROVERS_SH
+int main(void) {
+    args_t args = {};
+
+    uint64_t ret_val = valley_free_check(&args);
+
+    p_assert(ret_val == PLUGIN_FILTER_REJECT || ret_val == PLUGIN_FILTER_ACCEPT ||
+    ret_val == PLUGIN_FILTER_UNKNOWN);
+
+    return 0;
+}
+#endif

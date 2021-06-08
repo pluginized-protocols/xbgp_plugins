@@ -4,22 +4,23 @@
 
 #include "ubpf_public.h"
 #include "xbgp_plugin_host_api.h"
+#include "xbgp_defs.h"
 
 // announce nlri + loc_rib...
 
 static proto_ext_fun_t api_funcs[] = {
-        {.fn = add_attr, .name="add_attr"},
-        {.fn = set_attr, .name="set_attr"},
-        {.fn = get_attr, .name="get_attr"},
-        {.fn = write_to_buffer, .name="write_to_buffer"},
-        {.fn = get_peer_info, .name = "get_peer_info"},
-        {.fn = get_src_peer_info, .name = "get_src_peer_info"},
-        {.fn = set_peer_info, .name = "set_peer_info"},
-        {.fn = get_attr_from_code, .name = "get_attr_from_code"},
-        {.fn = get_attr_from_code_by_route, .name = "get_attr_from_code_by_route"},
-        {.fn = get_prefix, .name = "get_prefix"},
-        {.fn = get_nexthop, .name = "get_nexthop"},
-        {.fn = get_bgp_route, .name = "get_bgp_route"},
+        {.fn = add_attr, .name="add_attr", .attributes=HELPER_ATTR_WRITE | HELPER_ATTR_USR_PTR},
+        {.fn = set_attr, .name="set_attr", .attributes=HELPER_ATTR_WRITE | HELPER_ATTR_USR_PTR},
+        {.fn = get_attr, .name="get_attr", .attributes=HELPER_ATTR_READ},
+        {.fn = write_to_buffer, .name="write_to_buffer", .attributes=HELPER_ATTR_WRITE | HELPER_ATTR_USR_PTR},
+        {.fn = get_peer_info, .name = "get_peer_info", .attributes=HELPER_ATTR_READ},
+        {.fn = get_src_peer_info, .name = "get_src_peer_info", .attributes=HELPER_ATTR_READ},
+        {.fn = set_peer_info, .name = "set_peer_info", .attributes=HELPER_ATTR_WRITE},
+        {.fn = get_attr_from_code, .name = "get_attr_from_code", .attributes=HELPER_ATTR_READ},
+        {.fn = get_attr_from_code_by_route, .name = "get_attr_from_code_by_route", .attributes=HELPER_ATTR_READ},
+        {.fn = get_prefix, .name = "get_prefix", .attributes=HELPER_ATTR_READ},
+        {.fn = get_nexthop, .name = "get_nexthop", .attributes=HELPER_ATTR_READ},
+        {.fn = get_bgp_route, .name = "get_bgp_route", .attributes=HELPER_ATTR_READ},
         proto_ext_func_null,
 };
 

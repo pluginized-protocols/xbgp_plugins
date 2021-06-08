@@ -45,6 +45,11 @@
 #define BGP_PREFIXSID_ATTR_ID 40
 #define ATTR_SET_ATTR_ID 128
 
+/* ATTRIBUTE FLAGS */
+#define ATTR_OPTIONAL		0x80
+#define ATTR_TRANSITIVE		0x40
+#define ATTR_PARTIAL		0x20
+#define ATTR_EXT_LEN		0x10
 
 #define iana_afi_to_af(afi) ({ \
     int __af_type;                      \

@@ -7,6 +7,31 @@
 #include "router_bgp_config.h"
 #include <bytecode_public.h>
 
+#include "../prove_stuffs/prove.h"
+
+#ifdef PROVERS
+
+uint64_t get_int(void);
+
+struct path_attribute *get_attr_from_code_by_route(uint8_t code, int rte) {
+    p_assert(code == BA_GEO_TAG);
+    struct path_attribute *p_attr;
+
+    p_attr = malloc(sizeof(*p_attr));
+    if (!p_attr) return NULL;
+
+    p_attr->code = BA_GEO_TAG;
+    p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
+    p_attr->length = 8;
+    *((uint64_t *)p_attr->data) = get_int();
+
+    return p_attr;
+}
+#endif
+
+#ifdef PROVERS_SH
+#include "../prove_stuffs/prove.h"
+#endif
 
 static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const int32_t x2[2]) {
 
@@ -56,3 +81,18 @@ uint64_t med_compare(args_t *args __attribute__((unused))) {
     }
     return BGP_ROUTE_TYPE_UNKNOWN;
 }
+
+#ifdef PROVERS_SH
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val;
+
+    ret_val = med_compare(&args);
+
+    p_assert(ret_val == BGP_ROUTE_TYPE_OLD || ret_val == BGP_ROUTE_TYPE_NEW ||
+    ret_val == BGP_ROUTE_TYPE_UNKNOWN || ret_val == BGP_ROUTE_TYPE_FAIL);
+
+
+    return 0;
+}
+#endif

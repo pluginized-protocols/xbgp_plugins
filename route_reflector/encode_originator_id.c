@@ -6,6 +6,34 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include <bytecode_public.h>
 #include "common_rr.h"
+#include "../prove_stuffs/prove.h"
+
+
+#ifdef PROVERS
+uint16_t get_u32();
+
+struct path_attribute *get_attr() {
+    struct path_attribute *p_attr;
+    p_attr = malloc(sizeof(*p_attr));
+    if (!p_attr) return NULL;
+
+    p_attr->code = ORIGINATOR_ID;
+    p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+    p_attr->length =  get_u16();
+    *(uint32_t *)p_attr->data = get_u32();
+
+    return p_attr;
+}
+
+struct ubpf_peer_info *get_src_peer_info() {
+    struct ubpf_peer_info *pf = gpi();
+    pf->peer_type = IBGP_SESSION;
+}
+#endif
+
+#ifdef PROVERS_SH
+#include "../prove_stuffs/mod_ubpf_api.c"
+#endif
 
 uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
 
@@ -67,6 +95,10 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
         ebpf_print("Size missmatch\n");
         return 0;
     }
+
+#ifdef PROVERS_SH
+    BUF_CHECK_ORIGINATOR(attr_buf);
+#endif
 
     if (write_to_buffer(attr_buf, counter) == -1) {
         ebpf_print("Write failed\n");

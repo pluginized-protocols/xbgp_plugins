@@ -7,6 +7,55 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_ext_comm.h"
 
+#include "../prove_stuffs/prove.h"
+
+#ifdef PROVERS
+uint16_t get_length();
+
+void *get_arg(unsigned int id) {
+
+    int nb_extended = 10;
+
+    switch (id) {
+        case ARG_CODE: {
+            uint8_t *code = malloc(sizeof(uint8_t));
+            if (!code) return NULL;
+
+            *code = EXTENDED_COMMUNITIES;
+            return code;
+        }
+        case ARG_DATA: {
+            uint64_t *ec = malloc(sizeof(uint64_t) * nb_extended);
+            if (!ec) return NULL;
+
+            return ec;
+        }
+        case ARG_FLAGS: {
+            uint8_t *flags = malloc(sizeof(uint8_t));
+            if (!flags) return NULL;
+
+            *flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+
+            return flags;
+        }
+        case ARG_LENGTH: {
+            uint16_t *length = malloc(sizeof(uint16_t));
+            if (!length) return NULL;
+
+            *length = get_length();
+
+            return length;
+        }
+        default:
+            return NULL;
+    }
+}
+#endif
+
+#ifdef PROVERS_SH
+#include "../prove_stuffs/mod_ubpf_api.c"
+#endif
+
 uint64_t decode_extended_communities(args_t *args UNUSED) {
 
     int i;
@@ -36,6 +85,8 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
         return EXIT_FAILURE;
     }
 
+    //assume(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
+
     in_ext_communitites = (uint64_t *)data;
 
     decoded_ext_communitities = ctx_malloc(*len);
@@ -44,6 +95,9 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     for (i = 0; i < *len/8; i++) {
         decoded_ext_communitities[i] = ebpf_ntohll(in_ext_communitites[i]);
     }
+
+    p_assert(*len % 8 == 0);
+    p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
 
     add_attr(EXTENDED_COMMUNITIES, *flags, *len, (uint8_t *)decoded_ext_communitities);
 

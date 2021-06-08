@@ -7,6 +7,9 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include <bytecode_public.h>
 
+#include "../prove_stuffs/prove.h"
+
+
 static __always_inline uint64_t encode_coord(int32_t coord[2]) {
 
     uint64_t _buf;
@@ -101,6 +104,11 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
     if (ret_val == -1) return 0;
 
     counter += ret_val;
+
+#ifdef PROVERS_SH
+    BUF_GEN_ASSERT(attribute, attribute->code, 8, attribute->flags);
+#endif
+
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
     return counter;
 }

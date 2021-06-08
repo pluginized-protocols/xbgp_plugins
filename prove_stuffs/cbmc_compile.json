@@ -1,0 +1,32 @@
+[
+  {
+    "main": "main_add_prefix_originator.c",
+    "src": [
+      "../geo_tags/import_prefix_originator.c"
+    ]
+  },
+  {
+    "main": "main_monitoring.c",
+    "src": [
+      "../monitoring/as_path_count.c"
+    ]
+  },
+  {
+    "main": "main_encode_extended_communitites.c",
+    "src": [
+      "../extended_communities/encode_extended_communities.c"
+    ]
+  },
+  {
+    "main": "main_filter_enum.c",
+    "src": [
+      "../geo_tags/import_prefix_originator.c"
+    ]
+  },
+  {
+    "main": "main_filter_prefix_validator.c",
+    "src": [
+      "../bgp_security/prefix_validator.c"
+    ]
+  }
+]

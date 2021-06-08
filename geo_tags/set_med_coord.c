@@ -8,6 +8,15 @@
 #include <bytecode_public.h>
 #include "router_bgp_config.h"
 
+#include "../prove_stuffs/prove.h"
+
+#ifdef PROVERS_SH
+#include "../prove_stuffs/mod_ubpf_api.c"
+
+#define next() return PLUGIN_FILTER_UNKNOWN
+
+#endif
+
 static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const int32_t x2[2]) {
 
     uint64_t a = (x2[0] - x1[0]);
@@ -45,6 +54,11 @@ uint64_t compute_med(args_t *args UNUSED) {
     med_attr->length = 4;
     memcpy(med_attr->data, &med_value, sizeof(uint32_t));
 
+#ifdef PROVERS_SH
+    CHECK_MED(med_attr);
+    CHECK_IN_BOUNDS_MED(med_attr, 0, 4096);
+#endif
+
     if (set_attr(med_attr) != 0) {
         ebpf_print("Failed to set attribute\n");
         return FAIL;
@@ -53,3 +67,14 @@ uint64_t compute_med(args_t *args UNUSED) {
     next();
     return PLUGIN_FILTER_ACCEPT;
 }
+
+#ifdef PROVERS_SH
+int main(void) {
+    args_t args = {};
+    uint64_t rt_val = compute_med(&args);
+
+    RET_VAL_FILTERS_CHECKS(rt_val);
+
+    return 0;
+}
+#endif

@@ -5,10 +5,26 @@
 #include <bytecode_public.h>
 #include "router_bgp_config.h"
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
-#include "../xbgp_compliant_api/xbgp_defs.h"
+#include "../prove_stuffs/prove.h"
 
-// for static fixed size only !
+
+// for static fixed size only (and because of -O2)!
 void *memcpy(void *dest, const void *src, size_t n);
+
+#ifdef PROVERS
+
+struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
+    struct ubpf_peer_info *pf;
+    pf = malloc(sizeof(*pf));
+    if (!pf) {
+        return NULL;
+    }
+    pf->peer_type = EBGP_SESSION;
+
+    return pf;
+}
+
+#endif
 
 uint64_t add_prefix_originator(args_t *args UNUSED) {
 
@@ -33,7 +49,9 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
     originating_prefix->length = 8;
     memcpy(originating_prefix->data, &_attr, sizeof(uint64_t));
 
-    //CHECK_ATTR_FORMAT(originating_prefix, 8);
+#ifdef PROVERS_SH
+    CHECK_ATTR_FORMAT(originating_prefix, 8);
+#endif
 
     if (set_attr(originating_prefix) == -1) {
         ebpf_print("Error, Unable to add attribute\n");
@@ -41,3 +59,14 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
 
     return PLUGIN_FILTER_ACCEPT;
 }
+
+#ifdef PROVERS_SH
+int main(void) {
+    args_t args = {};
+
+    uint64_t ret_val = add_prefix_originator(&args);
+
+    RET_VAL_FILTER_CHECK(ret_val);
+    return 0;
+}
+#endif

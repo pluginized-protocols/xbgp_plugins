@@ -1,6 +1,6 @@
 CC=clang
 LLC=llc
-SRC=$(shell find . -name '*.c')
+SRC=$(shell find . -name '*.c' -not -path "./prove_stuffs/*")
 OBJ=$(SRC:.c=.o)
 OBJ_PRE_T2=$(SRC:.c=.pre_t2)
 OBJ_T2=$(SRC:.c=.t2)

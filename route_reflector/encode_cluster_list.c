@@ -6,6 +6,35 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include <bytecode_public.h>
 #include "common_rr.h"
+#include "../prove_stuffs/prove.h"
+
+
+#ifdef PROVERS
+uint16_t get_u16();
+
+struct path_attribute *get_attr() {
+    struct path_attribute *p_attr;
+    p_attr = malloc(sizeof(*p_attr));
+    if (!p_attr) return NULL;
+
+    p_attr->code = CLUSTER_LIST;
+    p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+    p_attr->length =  get_u16();
+    p_attr->data =
+
+    return p_attr;
+}
+
+struct ubpf_peer_info *get_src_peer_info() {
+    struct ubpf_peer_info *pf = gpi();
+    pf->peer_type = IBGP_SESSION;
+}
+#endif
+
+#ifdef PROVERS_SH
+#include "../prove_stuffs/mod_ubpf_api.c"
+#endif
+
 
 uint64_t encode_cluster_list(args_t *args UNUSED) {
 
@@ -65,6 +94,10 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
         ebpf_print("Size missmatch counter %d totlen %d\n", counter, tot_len);
         return 0;
     }
+
+#ifdef PROVERS_SH
+    BUF_CHECK_ORIGINATOR(attr_buf, attribute->length);
+#endif
 
     if (write_to_buffer(attr_buf, counter) == -1) {
         ebpf_print("Write failed\n");

@@ -6,6 +6,49 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include <bytecode_public.h>
 #include "common_rr.h"
+#include "../prove_stuffs/prove.h"
+
+
+#ifdef PROVERS
+void *get_buffer();
+uint16_t *get_u16();
+
+void *get_arg(unsigned int arg_type) {
+    switch (arg_type) {
+        case ARG_CODE: {
+            uint8_t *code;
+            code  = malloc(sizeof(*code));
+            *code = CLUSTER_LIST
+            return code;
+        }
+        case ARG_FLAGS: {
+            uint8_t *flags;
+            flags = malloc(sizeof(*flags));
+            *flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+            return flags;
+        }
+        case ARG_DATA: {
+            return get_buffer();
+        }
+        case ARG_LENGTH: {
+            return get_u16();
+        }
+    }
+
+}
+
+struct struct ubpf_peer_info *gpi(void);
+
+struct ubpf_peer_info *get_src_peer_info() {
+    struct ubpf_peer_info *pf = gpi();
+    pf->peer_type = IBGP_SESSION;
+}
+#endif
+
+#ifdef PROVERS_SH
+#include "../prove_stuffs/mod_ubpf_api.c"
+#define next() return EXIT_SUCCESS
+#endif
 
 uint64_t decode_cluster_list(args_t *args UNUSED) {
 
