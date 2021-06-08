@@ -39,15 +39,15 @@
 
 #define CHECK_ORIGIN(p_attr) \
    GEN_ASSERT(p_attr, ORIGIN_ATTR_ID, 1, ATTR_TRANSITIVE, \
-      (*(uint8_t *)((p_attr)->data) = 0   ||               \
-      *(uint8_t *)((p_attr)->data) = 1   ||               \
-      *(uint8_t *)((p_attr)->data) = 2)  \
+      (*(uint8_t *)((p_attr)->data) == 0   ||               \
+      *(uint8_t *)((p_attr)->data) == 1   ||               \
+      *(uint8_t *)((p_attr)->data) == 2)  \
    )
 
 #define CHECK_ASPATH(p_attr, len) \
     GEN_ASSERT(p_attr, AS_PATH_ATTR_ID, len, ATTR_TRANSITIVE, \
-        ((p_attr)->len == (len)) &&                           \
-        ((p_attr)->len % 2 == 0))
+        ((p_attr)->length == (len)) &&                           \
+        ((p_attr)->length % 2 == 0))
 
 #define CHECK_NEXTHOP(p_attr) \
     GEN_ASSERT(p_attr, NEXT_HOP_ATTR_ID, 4, ATTR_TRANSITIVE)
@@ -73,7 +73,7 @@
 #define CHECK_CLUSTER_LIST(p_attr, len) \
     GEN_ASSERT(p_attr, CLUSTER_LIST_ATTR_ID, len, ATTR_OPTIONAL, \
         ((len) % 4 == 0) &&             \
-        ((p_attr)->len % 4 == 0)                 \
+        ((p_attr)->length % 4 == 0)                 \
     )
 
 #define CHECK_EXTENDED_COMMUNITY(p_attr, len) \
@@ -95,7 +95,7 @@
 
 #define CHECK_LARGE_COMMUNITY(p_attr, len) \
     GEN_ASSERT(p_attr, LARGE_COMMUNITY_ATTR_ID, len, ATTR_OPTIONAL | ATTR_TRANSITIVE, \
-     (p_attr)->len % 12 == 0                                       \
+     (p_attr)->length % 12 == 0                                       \
     )
 
 

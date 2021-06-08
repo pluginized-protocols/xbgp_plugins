@@ -10,7 +10,7 @@
   #include "seahorn/seahorn.h"
   #define assert(x) sassert(x)
 
-  #include "prove_helpers.h"
+  #include "../prove_stuffs/prove_helpers.h"
   #define p_assert(x) assert(x)
 #else
   #ifdef ASSERT_CBMC

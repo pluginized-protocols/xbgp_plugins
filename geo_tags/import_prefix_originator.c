@@ -12,7 +12,6 @@
 void *memcpy(void *dest, const void *src, size_t n);
 
 #ifdef PROVERS
-
 struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
     struct ubpf_peer_info *pf;
     pf = malloc(sizeof(*pf));
@@ -23,7 +22,6 @@ struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
 
     return pf;
 }
-
 #endif
 
 uint64_t add_prefix_originator(args_t *args UNUSED) {
@@ -66,7 +64,7 @@ int main(void) {
 
     uint64_t ret_val = add_prefix_originator(&args);
 
-    RET_VAL_FILTER_CHECK(ret_val);
+    RET_VAL_FILTERS_CHECK(ret_val);
     return 0;
 }
 #endif

@@ -40,7 +40,7 @@ struct path_attribute *get_attr() {
 #endif
 
 #ifdef PROVERS_SH
-#include "../prover_stuff/mod_ubpf_api.c"
+#include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
 uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {

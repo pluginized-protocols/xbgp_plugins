@@ -122,7 +122,7 @@ uint64_t valley_free_check(args_t *args UNUSED) {
 
     attr = get_attr_from_code(AS_PATH_ATTR_CODE);
     peer = get_src_peer_info();
-    if (!attr || !peer) return FAIL;
+    if (!attr || !peer) return PLUGIN_FILTER_UNKNOWN;
     my_as = peer->local_bgp_session->as;
     as_path = attr->data;
     as_path_len = attr->length;
