@@ -9,6 +9,35 @@
 
 #include "../prove_stuffs/prove.h"
 
+#ifdef PROVERS
+uint8_t get_u8();
+uint8_t *get_buf();
+
+struct path_attribute *get_attr() {
+    struct path_attribute *p_attr;
+    p_attr = malloc(sizeof(*p_attr));
+    if (!p_attr) return NULL;
+
+    p_attr->code = get_u8();
+    p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+    p_attr->length =  8;
+    memcpy(p_attr->data, get_buf(), 8);
+
+    return p_attr;
+}
+
+struct ubpf_peer_info *gpi(void);
+
+struct ubpf_peer_info *get_src_peer_info() {
+    struct ubpf_peer_info *pf = gpi();
+    pf->peer_type = IBGP_SESSION;
+}
+#endif
+
+#ifdef PROVERS_SH
+#include "../prove_stuffs//mod_ubpf_api.c"
+#endif
+
 
 static __always_inline uint64_t encode_coord(int32_t coord[2]) {
 
@@ -106,7 +135,7 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
     counter += ret_val;
 
 #ifdef PROVERS_SH
-    BUF_GEN_ASSERT(attribute, attribute->code, 8, attribute->flags);
+    BUF_GEN_ASSERT(attr_buf, attribute->code, 8, attribute->flags);
 #endif
 
     if (write_to_buffer(attr_buf, counter) == -1) return 0;

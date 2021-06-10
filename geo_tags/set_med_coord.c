@@ -41,13 +41,15 @@ uint64_t compute_med(args_t *args UNUSED) {
 
     if (!attr) {
         ebpf_print("PREFIX ORIGINATOR not found\n");
-        return FAIL;
+        return PLUGIN_FILTER_UNKNOWN;
     }
 
     originator_coord = (struct geo_tags *) attr->data;
 
     med_value = (uint32_t) euclidean_distance(originator_coord->coordinates,
                                               this_router_coordinate.coordinates);
+
+    if (med_value < 0 || med_value > 4096) return PLUGIN_FILTER_REJECT;
 
     med_attr->code = MULTI_EXIT_DISC_ATTR_ID;
     med_attr->flags = 0x80;
@@ -61,7 +63,7 @@ uint64_t compute_med(args_t *args UNUSED) {
 
     if (set_attr(med_attr) != 0) {
         ebpf_print("Failed to set attribute\n");
-        return FAIL;
+        return PLUGIN_FILTER_UNKNOWN;
     }
 
     next();

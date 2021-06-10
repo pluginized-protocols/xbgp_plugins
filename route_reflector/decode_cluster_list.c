@@ -18,7 +18,7 @@ void *get_arg(unsigned int arg_type) {
         case ARG_CODE: {
             uint8_t *code;
             code  = malloc(sizeof(*code));
-            *code = CLUSTER_LIST
+            *code = CLUSTER_LIST;
             return code;
         }
         case ARG_FLAGS: {
@@ -37,7 +37,7 @@ void *get_arg(unsigned int arg_type) {
 
 }
 
-struct struct ubpf_peer_info *gpi(void);
+struct ubpf_peer_info *gpi(void);
 
 struct ubpf_peer_info *get_src_peer_info() {
     struct ubpf_peer_info *pf = gpi();
@@ -88,6 +88,11 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
     for(i = 0; i < *len/4; i++) {
         cluster_list[i] = ebpf_ntohl(in_cluster_list[i]);
     }
+
+#ifdef PROVERS_SH
+    p_assert(*len % 4 == 0);
+    p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
+#endif
 
     add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
     return EXIT_SUCCESS;

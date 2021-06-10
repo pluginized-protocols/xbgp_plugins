@@ -18,12 +18,14 @@ struct path_attribute *get_attr() {
     if (!p_attr) return NULL;
 
     p_attr->code = ORIGINATOR_ID;
-    p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
-    p_attr->length =  get_u16();
+    p_attr->flags = ATTR_OPTIONAL;
+    p_attr->length =  4;
     *(uint32_t *)p_attr->data = get_u32();
 
     return p_attr;
 }
+
+struct ubpf_peer_info *gpi(void);
 
 struct ubpf_peer_info *get_src_peer_info() {
     struct ubpf_peer_info *pf = gpi();

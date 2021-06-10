@@ -181,3 +181,12 @@ uint64_t prefix_validator(args_t *args UNUSED) {
         }
     }
 }
+
+#ifdef PROVERS_SH
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = prefix_validator(&args);
+    RET_VAL_FILTERS_CHECK(ret_val);
+    return 0;
+}
+#endif

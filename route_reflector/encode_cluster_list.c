@@ -11,6 +11,7 @@
 
 #ifdef PROVERS
 uint16_t get_u16();
+uint8_t get_buf();
 
 struct path_attribute *get_attr() {
     struct path_attribute *p_attr;
@@ -20,7 +21,7 @@ struct path_attribute *get_attr() {
     p_attr->code = CLUSTER_LIST;
     p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
     p_attr->length =  get_u16();
-    p_attr->data =
+    memcpy(p_attr->data, get_buf(), 8);
 
     return p_attr;
 }
@@ -96,7 +97,7 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     }
 
 #ifdef PROVERS_SH
-    BUF_CHECK_ORIGINATOR(attr_buf, attribute->length);
+    BUF_CHECK_ORIGINATOR(attr_buf);
 #endif
 
     if (write_to_buffer(attr_buf, counter) == -1) {

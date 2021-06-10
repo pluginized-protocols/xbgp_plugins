@@ -40,8 +40,6 @@ void *get_arg(unsigned int id) {
 
 int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr) {
 
-    p_assert(code == PREFIX_ORIGINATOR || code == BA_GEO_TAG);
-
     uint8_t minibuf[5];
 
     // i < 4096 limits the unrolling of loops
@@ -96,6 +94,10 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
             geo_tag[0] = decode(raw_latitude);
             geo_tag[1] = decode(raw_longitude);
 
+#ifdef PROVERS_SH
+            p_assert(code == PREFIX_ORIGINATOR || code == BA_GEO_TAG);
+#endif
+
             return add_attr(code, flags, len, (uint8_t *) attr_data) == -1 ? -1 : 0;
         }
         default:
@@ -125,6 +127,8 @@ uint64_t generic_decode_attr(args_t *args UNUSED) {
     if (!code || !len || !flags || !data) {
         return EXIT_FAILURE;
     }
+
+    if (*code != BA_GEO_TAG || *code != PREFIX_ORIGINATOR) return EXIT_FAILURE;
 
     return decode_attr(*code, *len, *flags, data) == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

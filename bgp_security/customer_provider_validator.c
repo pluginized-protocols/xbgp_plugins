@@ -8,6 +8,7 @@
 #include "bytecode_public.h"
 
 #include "common_security.h"
+#include "../prove_stuffs/prove.h"
 
 #define SESSION_MY_PROVIDER 1
 #define SESSION_MY_CUSTOMER 2
@@ -19,6 +20,49 @@
 void *memset(void *s, int c, size_t n);
 
 struct global_info info;
+
+#ifdef PROVERS
+uint8_t *get_buf();
+
+struct ubpf_peer_info *get_pinfo();
+uint16_t get_u16();
+
+struct ubpf_peer_info *get_peer_info(int *nb_peers) {
+    struct ubpf_peer_info *pinfo = get_pinfo();
+    pinfo->peer_type = IBGP_SESSION;
+    return pinfo;
+}
+
+struct ubpf_peer_info *get_src_peer_info() {
+    struct ubpf_peer_info *pinfo = get_pinfo();
+    pinfo->peer_type = IBGP_SESSION;
+    return pinfo;
+}
+
+
+struct path_attribute *get_attr_from_code(uint8_t code) {
+    struct path_attribute *p_attr;
+    p_attr = malloc(sizeof(*p_attr));
+
+    switch (code) {
+        case AS_PATH_ATTR_ID:
+            p_attr->code = AS_PATH_ATTR_ID;
+            p_attr->flags = ATTR_TRANSITIVE;
+            p_attr->length = get_u16() * 4;
+            memcpy(p_attr->data, get_buf(), p_attr->length);
+            break;
+        default:
+            //p_assert(0);
+            return NULL;
+    }
+    return NULL;
+}
+#endif
+
+#ifdef PROVERS_SH
+#define next() return PLUGIN_FILTER_UNKNOWN
+#include "../prove_stuffs/mod_ubpf_api.c"
+#endif
 
 /*
  *  0 if not valid
@@ -249,3 +293,13 @@ uint64_t customer_provider(args_t *args UNUSED) {
     next();
     return PLUGIN_FILTER_REJECT;
 }
+
+#ifdef PROVERS_SH
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = customer_provider(&args);
+    RET_VAL_FILTERS_CHECK(ret_val);
+
+    return 0;
+}
+#endif

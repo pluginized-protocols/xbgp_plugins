@@ -10,7 +10,6 @@
 
 
 #ifdef PROVERS
-
 struct ubpf_peer_info *get_pinfo();
 uint16_t get_u16();
 
@@ -31,17 +30,17 @@ struct path_attribute *get_attr_from_code(uint8_t code) {
     p_attr = malloc(sizeof(*p_attr));
 
     switch (code) {
-        case ORIGINATOR_ID:
+        case ORIGINATOR_ID_ATTR_ID:
         case CLUSTER_LIST:
             p_attr->code = code;
-            p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
+            p_attr->flags = ATTR_OPTIONAL;
             p_attr->length = code == ORIGINATOR_ID ? 4 : get_u16();
-            break
+            break;
         default:
-            p_assert(0);
+            //p_assert(0);
             return NULL;
     }
-    return
+    return NULL;
 }
 #endif
 
@@ -86,7 +85,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     new_cluster_list = ctx_malloc(sizeof(struct path_attribute) + cl_len);
     if (!new_cluster_list) {
         ebpf_print("Unable to get memory for cluster list (%d + %d)\n", sizeof(struct path_attribute), cl_len);
-        return FAIL;
+        return PLUGIN_FILTER_UNKNOWN;
     }
     new_cluster_list->code = CLUSTER_LIST_ATTR_ID;
     new_cluster_list->flags = 0x80;
@@ -105,7 +104,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
                 if (cluster_array[i] == pinfo->local_bgp_session->router_id) {
                     ebpf_print("My router-id %d is in the cluster list (rcv %d)!\n",
                                pinfo->local_bgp_session->router_id, src_info->router_id);
-                    return PLUGIN_FILTER_REJECT;
+                    return PLUGIN_FILTER_UNKNOWN;
                 }
             }
         }
@@ -127,7 +126,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
         if (!originator) {
             // fail !!!
             ebpf_print("Unable to allocate memory for ORIGINATOR_ID\n");
-            return FAIL;
+            return PLUGIN_FILTER_REJECT;
         }
         originator->code = ORIGINATOR_ID;
         originator->flags = 0x80; // originator is non transitive !
@@ -145,6 +144,11 @@ uint64_t export_route_rr(args_t *args UNUSED) {
             ebpf_memcpy(new_cluster_list + 4, cluster_list->data, cluster_list->length);
         }
     }
+
+#ifdef PROVERS_SH
+    CHECK_ORIGINATOR(originator);
+    CHECK_CLUSTER_LIST(new_cluster_list, 4+ cluster_list->length);
+#endif
 
     set_attr(originator);
     set_attr(new_cluster_list);

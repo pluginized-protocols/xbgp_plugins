@@ -19,7 +19,7 @@ void *get_arg(unsigned int arg_type) {
         case ARG_CODE: {
             uint8_t *code;
             code  = malloc(sizeof(*code));
-            *code = ORIGINATOR_ID
+            *code = ORIGINATOR_ID;
             return code;
         }
         case ARG_FLAGS: {
@@ -38,7 +38,7 @@ void *get_arg(unsigned int arg_type) {
 
 }
 
-struct struct ubpf_peer_info *gpi(void);
+struct ubpf_peer_info *gpi(void);
 
 struct ubpf_peer_info *get_src_peer_info() {
     struct ubpf_peer_info *pf = gpi();
@@ -79,6 +79,10 @@ uint64_t decode_originator(args_t *args UNUSED) {
     if (*len != 4) return 0;
 
     originator_id = ebpf_ntohl(*((uint32_t *) data));
+
+#ifdef PROVERS_SH
+    p_assert(*flags ==  (ATTR_OPTIONAL | ATTR_TRANSITIVE));
+#endif
 
     add_attr(ORIGINATOR_ID, *flags, 4, (uint8_t *) &originator_id);
     return EXIT_SUCCESS;

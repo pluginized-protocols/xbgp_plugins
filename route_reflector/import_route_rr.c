@@ -36,12 +36,12 @@ struct path_attribute *get_attr_from_code(uint8_t code) {
             p_attr->code = code;
             p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
             p_attr->length = code == ORIGINATOR_ID ? 4 : get_u16();
-            break
+            break;
         default:
             p_assert(0);
             return NULL;
     }
-    return
+    return NULL;
 }
 #endif
 
@@ -99,7 +99,7 @@ uint64_t import_route_rr(args_t *args UNUSED) {
 #ifdef PROVERS_SH
 int main(void) {
     args_t args = {};
-    uint64_t rt_val = export_route_rr(&args);
+    uint64_t rt_val = import_route_rr(&args);
 
     RET_VAL_FILTERS_CHECK(rt_val);
     return 0;
