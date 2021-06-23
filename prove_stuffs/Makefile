@@ -13,24 +13,21 @@ CFLAGS += -Wmissing-prototypes
 CFLAGS += -Wmissing-declarations
 CFLAGS += -Wpointer-arith
 CFLAGS += -Wbad-function-cast
-CFLAGS += -ffunction-sections -fdata-sections
+# CFLAGS += -ffunction-sections -fdata-sections
 
 CFLAGS += -I/mnt/ubpf_tools/include -I/home/thomas/Documents/GitHub/ubpf_tools
 CFLAGS += -I/mnt/ubpf_tools -I/home/thomas/Documents/GitHub/ubpf_tools/include
 
-LDFLAGS += -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now,--gc-sections
+# LDFLAGS += -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now,--gc-sections
 
-LDLIBS  =
+LDFLAGS = -lm
 
 
-SRC = ./mod_ubpf_api.c \
-      $(THE_FILES) \
-      $(THE_MAIN)
+SRC = $(shell find .. -type f -name '*.c')
 
 GOTO-OBJ = $(SRC:.c=.gbo)
 
-MAIN_INST = $(THE_MAIN:.c=.rel)
-MAIN = $(THE_MAIN:.c=.inst)
+MAINS = $(SRC:.c=.rel)
 
 GOTO_CHECKS  = --pointer-check
 GOTO_CHECKS += --memory-leak-check
@@ -48,19 +45,20 @@ GOTO_CHECKS += --pointer-primitive-check
 # GOTO_CHECKS += --uninitialized-check   # cbmc failed to generate annotation
 
 
-all: $(MAIN)
+all: $(MAINS)
 
 %.gbo: %.c
 	@echo GOTO-CC $@
-	@$(CC) $(CFLAGS) -DPROVERS -c -o $@ $<
+	@$(CC) $(CFLAGS) $(LDFLAGS) -DPROVERS -c -o $@ $<
 
-$(MAIN_INST): $(GOTO-OBJ)
-	@echo GOTO-LD $@
-	@$(LD) $(LDFLAGS) $(TARGET_ARCH) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-$(MAIN): $(MAIN_INST)
+%.rel: %.gbo
 	@echo GOTO-INSTRUMENT $<
 	@$(GOTOINSTRUMENT) $< $@ $(GOTO_CHECKS)
+
+#%.rel: %.gbf
+#	@echo GOTO-LD $@
+#	@$(LD) $(LDFLAGS) $(TARGET_ARCH) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 .PHONY: clean
 

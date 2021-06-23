@@ -10,7 +10,7 @@
 
 
 #ifdef PROVERS
-uint16_t get_u32();
+uint16_t nondet_get_u32__verif();
 
 struct path_attribute *get_attr() {
     struct path_attribute *p_attr;
@@ -20,7 +20,7 @@ struct path_attribute *get_attr() {
     p_attr->code = ORIGINATOR_ID;
     p_attr->flags = ATTR_OPTIONAL;
     p_attr->length =  4;
-    *(uint32_t *)p_attr->data = get_u32();
+    *(uint32_t *)p_attr->data = nondet_get_u32__verif();
 
     return p_attr;
 }
@@ -31,9 +31,7 @@ struct ubpf_peer_info *get_src_peer_info() {
     struct ubpf_peer_info *pf = gpi();
     pf->peer_type = IBGP_SESSION;
 }
-#endif
 
-#ifdef PROVERS_SH
 #include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 

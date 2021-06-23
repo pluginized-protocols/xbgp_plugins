@@ -11,8 +11,8 @@
 
 
 #ifdef PROVERS
-void *get_buffer();
-uint32_t *get_u32();
+uint32_t *nondet_get_u32__verif();
+struct ubpf_peer_info *nondet_gpi__verif();
 
 void *get_arg(unsigned int arg_type) {
     switch (arg_type) {
@@ -29,7 +29,7 @@ void *get_arg(unsigned int arg_type) {
             return flags;
         }
         case ARG_DATA: {
-            return get_u32();
+            return nondet_get_u32__verif();
         }
         case ARG_LENGTH: {
             uint16_t *length;
@@ -41,12 +41,12 @@ void *get_arg(unsigned int arg_type) {
 struct ubpf_peer_info *gpi(void);
 
 struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pf = gpi();
+    struct ubpf_peer_info *pf = nondet_gpi__verif();
     pf->peer_type = IBGP_SESSION;
 }
-#endif
 
-#ifdef PROVERS_SH
+#include "../prove_stuffs/mod_ubpf_api.c"
+
 #define next() return EXIT_SUCCESS
 #endif
 
@@ -87,3 +87,11 @@ uint64_t decode_originator(args_t *args UNUSED) {
     add_attr(ORIGINATOR_ID, *flags, 4, (uint8_t *) &originator_id);
     return EXIT_SUCCESS;
 }
+
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = decode_originator(&args);
+    return ret_val;
+}
+#endif

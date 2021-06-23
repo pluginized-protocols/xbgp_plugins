@@ -22,6 +22,8 @@ struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
 
     return pf;
 }
+
+#include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
 uint64_t add_prefix_originator(args_t *args UNUSED) {
@@ -58,13 +60,14 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
     return PLUGIN_FILTER_ACCEPT;
 }
 
-#ifdef PROVERS_SH
+#ifdef PROVERS
 int main(void) {
     args_t args = {};
-
     uint64_t ret_val = add_prefix_originator(&args);
 
+#ifdef PROVERS_SH
     RET_VAL_FILTERS_CHECK(ret_val);
+#endif
     return 0;
 }
 #endif

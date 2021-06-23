@@ -591,22 +591,22 @@ uint64_t ebpf_sqrt(uint64_t a, unsigned int precision) {
     return res;
 }
 
-int get_extra_info_value(struct global_info *info UNUSED,
+int get_extra_info_value(struct global_info *info__ UNUSED,
         void *buf UNUSED, size_t len_buf UNUSED) {
     return 0;
 }
 
-int get_extra_info_lst_idx(struct global_info *info UNUSED,
+int get_extra_info_lst_idx(struct global_info *info__ UNUSED,
         int arr_idx UNUSED, struct global_info *value UNUSED) {
     return 0;
 }
 
-int get_extra_info_dict(struct global_info *info UNUSED,
+int get_extra_info_dict(struct global_info *info__ UNUSED,
         const char *key UNUSED, struct global_info *value UNUSED) {
     return 0;
 }
 
-int get_extra_info(const char *key UNUSED, struct global_info *info UNUSED) {
+int get_extra_info(const char *key UNUSED, struct global_info *info__ UNUSED) {
     return 0;
 }
 

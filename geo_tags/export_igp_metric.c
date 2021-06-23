@@ -9,6 +9,10 @@
 #define MAX_METRIC 5000
 #include "../prove_stuffs/prove.h"
 
+#ifdef PROVERS
+#include "../prove_stuffs/mod_ubpf_api.c"
+#endif
+
 #ifdef PROVERS_SH
 #define next() return PLUGIN_FILTER_UNKNOWN
 #endif
@@ -35,14 +39,15 @@ uint64_t export_igp(args_t *args UNUSED) {
     return PLUGIN_FILTER_REJECT;
 }
 
-#ifdef PROVERS_SH
+#ifdef PROVERS
 int main(void) {
     args_t args = {};
 
     uint64_t ret_val = export_igp(&args);
 
-    p_assert(ret_val == PLUGIN_FILTER_REJECT || ret_val == PLUGIN_FILTER_ACCEPT ||
-    ret_val == PLUGIN_FILTER_UNKNOWN);
+#ifdef PROVERS_SH
+    RET_VAL_FILTERS_CHECK(ret_val);
+#endif
 
     return 0;
 }

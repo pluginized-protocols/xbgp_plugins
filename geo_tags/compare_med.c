@@ -10,8 +10,7 @@
 #include "../prove_stuffs/prove.h"
 
 #ifdef PROVERS
-
-uint64_t get_int(void);
+uint64_t nondet_get_int__verif(void);
 
 struct path_attribute *get_attr_from_code_by_route(uint8_t code, int rte) {
     p_assert(code == BA_GEO_TAG);
@@ -23,13 +22,11 @@ struct path_attribute *get_attr_from_code_by_route(uint8_t code, int rte) {
     p_attr->code = BA_GEO_TAG;
     p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
     p_attr->length = 8;
-    *((uint64_t *)p_attr->data) = get_int();
+    *((uint64_t *)p_attr->data) = nondet_get_int__verif();
 
     return p_attr;
 }
-#endif
 
-#ifdef PROVERS_SH
 #include "../prove_stuffs/prove.h"
 #endif
 
@@ -82,17 +79,16 @@ uint64_t med_compare(args_t *args __attribute__((unused))) {
     return BGP_ROUTE_TYPE_UNKNOWN;
 }
 
-#ifdef PROVERS_SH
+#ifdef PROVERS
 int main(void) {
     args_t args = {};
     uint64_t ret_val;
 
     ret_val = med_compare(&args);
 
-    p_assert(ret_val == BGP_ROUTE_TYPE_OLD || ret_val == BGP_ROUTE_TYPE_NEW ||
-    ret_val == BGP_ROUTE_TYPE_UNKNOWN || ret_val == BGP_ROUTE_TYPE_FAIL);
-
-
+#ifdef PROVERS_SH
+    RET_VAL_FILTERS_CHECK(ret_val);
+#endif
     return 0;
 }
 #endif

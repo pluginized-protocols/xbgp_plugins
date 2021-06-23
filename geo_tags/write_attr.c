@@ -32,10 +32,8 @@ struct ubpf_peer_info *get_src_peer_info() {
     struct ubpf_peer_info *pf = gpi();
     pf->peer_type = IBGP_SESSION;
 }
-#endif
 
-#ifdef PROVERS_SH
-#include "../prove_stuffs//mod_ubpf_api.c"
+#include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
 
@@ -141,3 +139,12 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
     return counter;
 }
+
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = generic_encode_attr(&args);
+
+    return 0;
+}
+#endif

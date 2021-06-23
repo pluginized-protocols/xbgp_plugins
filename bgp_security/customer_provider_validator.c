@@ -18,23 +18,27 @@
 
 /* only for static arrays !!! */
 void *memset(void *s, int c, size_t n);
+void *memcpy(void *dest, const void *src, size_t len);
 
 struct global_info info;
 
 #ifdef PROVERS
-uint8_t *get_buf();
 
-struct ubpf_peer_info *get_pinfo();
-uint16_t get_u16();
+uint8_t *nondet_get_buf__verif();
+struct ubpf_peer_info *nondet_get_pinfo__verif();
+uint16_t nondet_get_u16__verif();
 
-struct ubpf_peer_info *get_peer_info(int *nb_peers) {
-    struct ubpf_peer_info *pinfo = get_pinfo();
+struct ubpf_peer_info *get_peer_info(int *nb_peers);
+struct ubpf_peer_info *get_src_peer_info(void);
+
+struct ubpf_peer_info *get_peer_info(int *nb_peers UNUSED) {
+    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
     pinfo->peer_type = IBGP_SESSION;
     return pinfo;
 }
 
 struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pinfo = get_pinfo();
+    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
     pinfo->peer_type = IBGP_SESSION;
     return pinfo;
 }
@@ -48,8 +52,8 @@ struct path_attribute *get_attr_from_code(uint8_t code) {
         case AS_PATH_ATTR_ID:
             p_attr->code = AS_PATH_ATTR_ID;
             p_attr->flags = ATTR_TRANSITIVE;
-            p_attr->length = get_u16() * 4;
-            memcpy(p_attr->data, get_buf(), p_attr->length);
+            p_attr->length = nondet_get_u16__verif() * 4;
+            memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
             break;
         default:
             //p_assert(0);
@@ -57,9 +61,7 @@ struct path_attribute *get_attr_from_code(uint8_t code) {
     }
     return NULL;
 }
-#endif
 
-#ifdef PROVERS_SH
 #define next() return PLUGIN_FILTER_UNKNOWN
 #include "../prove_stuffs/mod_ubpf_api.c"
 #endif
@@ -70,7 +72,7 @@ struct path_attribute *get_attr_from_code(uint8_t code) {
  * -1 if unknown
  * -2 if fail;
  */
-int __always_inline valid_pair(uint32_t asn, uint32_t prov) {
+__always_inline int valid_pair(uint32_t asn, uint32_t prov) {
     char customer_as_str[12];
     uint32_t provider_as;
     int i;
@@ -95,19 +97,19 @@ int __always_inline valid_pair(uint32_t asn, uint32_t prov) {
     return 0;
 }
 
-int __always_inline get_session_relation(uint32_t upstream_as) {
+__always_inline int get_session_relation(uint32_t upstream_as) {
 
     uint64_t session_type;
     char as_str[15];
-    struct global_info info;
+    struct global_info info_;
     struct global_info session_info;
     struct global_info neighbor_relation;
 
     memset(as_str, 0, 15);
     ubpf_sprintf(as_str, 14, "%d", upstream_as);
 
-    if (get_extra_info("neighbors", &info) != 0) return -1;
-    if (get_extra_info_dict(&info, as_str, &session_info) != 0) return -1;
+    if (get_extra_info("neighbors", &info_) != 0) return -1;
+    if (get_extra_info_dict(&info_, as_str, &session_info) != 0) return -1;
     if (get_extra_info_dict(&session_info, "session_type", &neighbor_relation) != 0) return -1;
     if (get_extra_info_value(&neighbor_relation, &session_type, sizeof(session_type)) != 0) return -1;
 
@@ -123,7 +125,7 @@ int __always_inline get_session_relation(uint32_t upstream_as) {
     }
 }
 
-int __always_inline from_customer_check(uint32_t my_as, struct path_attribute *attr) {
+__always_inline int from_customer_check(uint32_t my_as, struct path_attribute *attr) {
     if (!attr || attr->code != AS_PATH_ATTR_CODE) return -1;
 
     int current_res = 1;
@@ -175,7 +177,7 @@ int __always_inline from_customer_check(uint32_t my_as, struct path_attribute *a
     return current_res;
 }
 
-int __always_inline from_provider_check(uint32_t my_as, struct path_attribute *attr) {
+__always_inline  int from_provider_check(uint32_t my_as, struct path_attribute *attr) {
     if (!attr || attr->code != AS_PATH_ATTR_CODE) return -1;
 
 #define VALID_1 1
@@ -294,12 +296,13 @@ uint64_t customer_provider(args_t *args UNUSED) {
     return PLUGIN_FILTER_REJECT;
 }
 
-#ifdef PROVERS_SH
+#ifdef PROVERS
 int main(void) {
     args_t args = {};
     uint64_t ret_val = customer_provider(&args);
+#ifdef PROVERS_SH
     RET_VAL_FILTERS_CHECK(ret_val);
-
-    return 0;
+#endif
+    return ret_val;
 }
 #endif

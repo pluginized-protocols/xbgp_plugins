@@ -10,8 +10,8 @@
 #include "../prove_stuffs/prove.h"
 
 #ifdef PROVERS
-uint8_t get_uint8(void);
-uint64_t get_uint64(void);
+uint8_t nondet_get_uint8__verif(void);
+uint64_t nondet_get_uint64__verif(void);
 
 void *get_arg(unsigned int id) {
     switch (id) {
@@ -19,7 +19,7 @@ void *get_arg(unsigned int id) {
         case ARG_FLAGS:{
             uint8_t *code;
             code = malloc(sizeof(*code));
-            *code =  get_uint8();
+            *code =  nondet_get_uint8__verif();
             return code;
         }
         case ARG_LENGTH: {
@@ -30,7 +30,7 @@ void *get_arg(unsigned int id) {
         }
         case ARG_DATA: {
             uint64_t *data = malloc(sizeof(uint64_t));
-            *data = get_uint64();
+            *data = nondet_get_uint64__verif();
             return data;
         }
         default:
@@ -49,6 +49,8 @@ int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr
     }
     return 0;
 }
+
+#include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
 static __always_inline unsigned int is_negative(uint32_t number) {
@@ -132,3 +134,12 @@ uint64_t generic_decode_attr(args_t *args UNUSED) {
 
     return decode_attr(*code, *len, *flags, data) == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
+
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = add_prefix_originator(&args);
+
+    return ret_val;
+}
+#endif

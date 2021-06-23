@@ -50,9 +50,7 @@ void *get_arg(unsigned int id) {
             return NULL;
     }
 }
-#endif
 
-#ifdef PROVERS_SH
 #include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
@@ -103,3 +101,11 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
 
     return EXIT_SUCCESS;
 }
+
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = decode_extended_communities(&args);
+    return ret_val;
+}
+#endif

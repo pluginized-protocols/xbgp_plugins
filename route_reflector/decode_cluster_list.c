@@ -10,8 +10,8 @@
 
 
 #ifdef PROVERS
-void *get_buffer();
-uint16_t *get_u16();
+void *nondet_get_buffer__verif();
+uint16_t *nondet_get_u16__verif();
 
 void *get_arg(unsigned int arg_type) {
     switch (arg_type) {
@@ -28,10 +28,10 @@ void *get_arg(unsigned int arg_type) {
             return flags;
         }
         case ARG_DATA: {
-            return get_buffer();
+            return nondet_get_buffer__verif();
         }
         case ARG_LENGTH: {
-            return get_u16();
+            return nondet_get_u16__verif();
         }
     }
 
@@ -43,9 +43,7 @@ struct ubpf_peer_info *get_src_peer_info() {
     struct ubpf_peer_info *pf = gpi();
     pf->peer_type = IBGP_SESSION;
 }
-#endif
 
-#ifdef PROVERS_SH
 #include "../prove_stuffs/mod_ubpf_api.c"
 #define next() return EXIT_SUCCESS
 #endif
@@ -97,3 +95,10 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
     add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
     return EXIT_SUCCESS;
 }
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = decode_cluster_list(&args);
+    return ret_val;
+}
+#endif

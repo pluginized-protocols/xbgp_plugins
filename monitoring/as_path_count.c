@@ -45,6 +45,8 @@ void *get_arg(unsigned int id) {
             return NULL;
     }
 }
+
+#include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
 unsigned int __always_inline count_nb_as(const unsigned char *const as_path, unsigned int max_len) {
@@ -115,3 +117,11 @@ uint64_t count_as_path(args_t *args UNUSED) {
 
     return EXIT_SUCCESS;
 }
+
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    count_as_path(&args);
+    return 0;
+}
+#endif

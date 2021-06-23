@@ -6,22 +6,20 @@
 #include <bytecode_public.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_ext_comm.h"
-//#include "../prove_stuffs/seahorn_api.h"
+
 void *memset(void *s, int c, size_t n);
 
 uint64_t generic_encode_attr(args_t *args __attribute__((unused)));
 
-//#define PROVERS
 #include "../prove_stuffs/prove.h"
 
 
 #ifdef PROVERS
-
 #define next() return 0
 
 struct path_attribute *get_attr(void);
 
-void set_data(void *data);
+void nondet_set_data__verif(void *data);
 
 struct path_attribute *get_attr() {
 
@@ -33,13 +31,11 @@ struct path_attribute *get_attr() {
     p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
     p_attr->code = EXTENDED_COMMUNITIES_ATTR_ID;
     p_attr->length = 64;
-    set_data(p_attr->data);
+    nondet_set_data__verif(p_attr->data);
 
     return p_attr;
 }
-#endif
 
-#ifdef PROVERS_SH
 #include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
@@ -86,13 +82,20 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
         return 0;
     }
 
-#ifdef PROVERS
+#ifdef PROVERS_SH
     BUF_CHECK_EXTENDED_COMMUNITY(attr_buf, attribute->length);
 #endif
-
 
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
 
     //ctx_free(attr_buf);
     return counter;
 }
+
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = decode_extended_communities(&args);
+    return ret_val;
+}
+#endif

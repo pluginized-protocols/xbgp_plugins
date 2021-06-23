@@ -10,8 +10,9 @@
 
 
 #ifdef PROVERS
-uint16_t get_u16();
-uint8_t get_buf();
+uint16_t nondet_get_u16__verif();
+uint8_t nondet_get_buf__verif();
+struct ubpf_peer_info *nondet_gpi__verif();
 
 struct path_attribute *get_attr() {
     struct path_attribute *p_attr;
@@ -20,19 +21,17 @@ struct path_attribute *get_attr() {
 
     p_attr->code = CLUSTER_LIST;
     p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
-    p_attr->length =  get_u16();
-    memcpy(p_attr->data, get_buf(), 8);
+    p_attr->length =  nondet_get_u16__verif();
+    memcpy(p_attr->data, nondet_get_buf__verif(), 8);
 
     return p_attr;
 }
 
 struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pf = gpi();
+    struct ubpf_peer_info *pf = nondet_gpi__verif();
     pf->peer_type = IBGP_SESSION;
 }
-#endif
 
-#ifdef PROVERS_SH
 #include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
@@ -106,3 +105,11 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     }
     return counter;
 }
+
+#ifdef PROVERS
+int main(void) {
+    args_t args = {};
+    uint64_t ret_val = decode_cluster_list();
+    return ret_val;
+}
+#endif
