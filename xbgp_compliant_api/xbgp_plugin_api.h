@@ -180,5 +180,10 @@ extern struct ubpf_rib_entry *get_loc_rib_entry(uint8_t af_family, struct ubpf_p
  */
 extern struct bgp_route *get_bgp_route(enum BGP_ROUTE_TYPE type);
 
+int new_rib_iterator(int afi, int safi);
+struct bgp_route *next_rib_route(unsigned int iterator_id);
+int rib_has_route(unsigned int iterator_id);
+void rib_iterator_clean(unsigned int iterator_id);
+
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 

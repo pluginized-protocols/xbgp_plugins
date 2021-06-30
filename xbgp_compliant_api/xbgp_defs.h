@@ -87,6 +87,8 @@ enum ubpf_plugins {
     BGP_DECODE_MESSAGE,
     BGP_ENCODE_MESSAGE,
     BGP_OPEN_SENT,
+
+    INSERTION_POINT_RESERVED = 2000000000
 };
 
 enum ubpf_arg_type {
@@ -176,6 +178,7 @@ struct bgp_route {
     struct path_attribute **attr;
     struct ubpf_peer_info *peer_info;
     uint32_t type; // CONNECTED, STATIC, IGP, BGP
+    time_t uptime;
 };
 
 struct ubpf_nexthop {

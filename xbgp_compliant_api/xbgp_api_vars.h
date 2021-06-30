@@ -21,6 +21,10 @@ static proto_ext_fun_t api_funcs[] = {
         {.fn = get_prefix, .name = "get_prefix", .attributes=HELPER_ATTR_READ},
         {.fn = get_nexthop, .name = "get_nexthop", .attributes=HELPER_ATTR_READ},
         {.fn = get_bgp_route, .name = "get_bgp_route", .attributes=HELPER_ATTR_READ},
+        {.fn = new_rib_iterator, .name = "new_rib_iterator", .attributes=HELPER_ATTR_MASK},
+        {.fn = rib_has_route, .name = "rib_has_route", .attributes=HELPER_ATTR_MASK},
+        {.fn = rib_iterator_clean, .name = "rib_iterator_clean", .attributes=HELPER_ATTR_MASK},
+        {.fn = next_rib_route, .name = "next_rib_route", .attributes=HELPER_ATTR_MASK},
         proto_ext_func_null,
 };
 
@@ -40,6 +44,7 @@ static insertion_point_info_t insertion_points[] = {
         {.insertion_point_str="bgp_encode_attr", .insertion_point_id = BGP_ENCODE_ATTR},
         {.insertion_point_str="bgp_pre_inbound_filter", .insertion_point_id = BGP_PRE_INBOUND_FILTER},
         {.insertion_point_str="bgp_pre_outbound_filter", .insertion_point_id = BGP_PRE_OUTBOUND_FILTER},
+        {.insertion_point_str="job_plugins", .insertion_point_id = INSERTION_POINT_RESERVED}
         insertion_point_info_null
 };
 

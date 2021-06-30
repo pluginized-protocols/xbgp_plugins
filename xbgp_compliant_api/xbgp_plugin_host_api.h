@@ -185,4 +185,9 @@ extern struct ubpf_rib_entry *get_loc_rib_entry(context_t *ctx, uint8_t af_famil
  */
 extern struct bgp_route *get_bgp_route(context_t *ctx, enum BGP_ROUTE_TYPE type);
 
+int new_rib_iterator(context_t *ctx, int afi, int safi);
+struct bgp_route *next_rib_route(context_t *ctx, unsigned int iterator_id);
+int rib_has_route(context_t *ctx, unsigned int iterator_id);
+void rib_iterator_clean(context_t *ctx, unsigned int iterator_id);
+
 #endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H
