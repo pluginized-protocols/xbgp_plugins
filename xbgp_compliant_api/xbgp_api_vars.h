@@ -44,7 +44,7 @@ static insertion_point_info_t insertion_points[] = {
         {.insertion_point_str="bgp_encode_attr", .insertion_point_id = BGP_ENCODE_ATTR},
         {.insertion_point_str="bgp_pre_inbound_filter", .insertion_point_id = BGP_PRE_INBOUND_FILTER},
         {.insertion_point_str="bgp_pre_outbound_filter", .insertion_point_id = BGP_PRE_OUTBOUND_FILTER},
-        {.insertion_point_str="job_plugins", .insertion_point_id = INSERTION_POINT_RESERVED}
+        {.insertion_point_str="job_plugins", .insertion_point_id = INSERTION_POINT_RESERVED},
         insertion_point_info_null
 };
 
