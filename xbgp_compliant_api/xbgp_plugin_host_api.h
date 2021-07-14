@@ -190,4 +190,20 @@ struct bgp_route *next_rib_route(context_t *ctx, unsigned int iterator_id);
 int rib_has_route(context_t *ctx, unsigned int iterator_id);
 void rib_iterator_clean(context_t *ctx, unsigned int iterator_id);
 
+/**
+ * Removes the route related to the prefix pfx sent by the neighbor
+ * whose info are contained in peer_info.
+ * /!\ We make the assumption that only one best route is sent by each peer,
+ * Thus "add_path" extension is not supported.
+ *
+ * @param ctx pluglet execution context
+ * @param pfx prefix of the route to remove
+ * @param peer_info must store the address + router_id of the peer. The other
+ *                  fields of the struct ubpf_peer_info ore not checked
+ * @return  0 if the route has been successfully deleted (a withdraw will be sent)
+ *         -1 if the route has not been deleted
+ */
+int remove_route_from_rib(context_t *ctx, struct ubpf_prefix *pfx, struct ubpf_peer_info *peer_info);
+
+
 #endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H

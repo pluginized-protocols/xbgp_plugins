@@ -185,5 +185,7 @@ struct bgp_route *next_rib_route(unsigned int iterator_id);
 int rib_has_route(unsigned int iterator_id);
 void rib_iterator_clean(unsigned int iterator_id);
 
+int remove_route_from_rib(struct ubpf_prefix *pfx, struct ubpf_peer_info *peer_info);
+
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 

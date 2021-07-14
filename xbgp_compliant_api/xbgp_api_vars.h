@@ -21,10 +21,11 @@ static proto_ext_fun_t api_funcs[] = {
         {.fn = get_prefix, .name = "get_prefix", .attributes=HELPER_ATTR_READ},
         {.fn = get_nexthop, .name = "get_nexthop", .attributes=HELPER_ATTR_READ},
         {.fn = get_bgp_route, .name = "get_bgp_route", .attributes=HELPER_ATTR_READ},
-        {.fn = new_rib_iterator, .name = "new_rib_iterator", .attributes=HELPER_ATTR_MASK},
-        {.fn = rib_has_route, .name = "rib_has_route", .attributes=HELPER_ATTR_MASK},
-        {.fn = rib_iterator_clean, .name = "rib_iterator_clean", .attributes=HELPER_ATTR_MASK},
-        {.fn = next_rib_route, .name = "next_rib_route", .attributes=HELPER_ATTR_MASK},
+        {.fn = new_rib_iterator, .name = "new_rib_iterator", .attributes=HELPER_ATTR_NONE},
+        {.fn = rib_has_route, .name = "rib_has_route", .attributes=HELPER_ATTR_READ},
+        {.fn = rib_iterator_clean, .name = "rib_iterator_clean", .attributes=HELPER_ATTR_READ},
+        {.fn = next_rib_route, .name = "next_rib_route", .attributes=HELPER_ATTR_READ},
+        {.fn = remove_route_from_rib, .name = "remove_route_from_rib", .attributes=HELPER_ATTR_READ},
         proto_ext_func_null,
 };
 
