@@ -149,7 +149,7 @@ uint64_t rib_test(UNUSED args_t *args) {
     char ip_str[60];
     char next_hop[60];
     char *as_path; // alloc in the heap to save stack memory
-    const char *unk = "???";
+    const char unk[] = "???";
     rib_fd = new_rib_iterator(XBGP_AFI_IPV4, XBGP_SAFI_UNICAST);
 
     if (rib_fd < 0) {
@@ -182,9 +182,7 @@ uint64_t rib_test(UNUSED args_t *args) {
 
             // nexthop
             if (nexthop2str(find_by_code(rte->attr, NEXT_HOP_ATTR_ID, rte->attr_nb), next_hop, sizeof(next_hop)) != 0) {
-                // the compiler doesn't want to put unk to
-                // rodata... So force it with global memcpy call ...
-                ebpf_memcpy(next_hop, unk, 4);
+                memcpy(next_hop, unk, sizeof (unk));
             }
 
             log_msg(L_INFO"Pfx %s/%d %s %s via %s",
