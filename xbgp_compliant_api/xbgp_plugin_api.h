@@ -52,7 +52,7 @@ extern int set_attr(struct path_attribute *attr);
  *         Otherwise a pointer (pointing to a valid memory space of the plugin) to the structure
  *         of the retreived attribute.
  */
-extern struct path_attribute *get_attr();
+extern struct path_attribute *get_attr(void);
 
 
 /**
@@ -60,7 +60,7 @@ extern struct path_attribute *get_attr();
  * Usually used when the plugin wants to encode a BGP message to be sent
  * through the network. The buffer must be encoded in network byte order
  *
- * @param ptr, the buffer to be copied to the network buffer
+ * @param ptr the buffer to be copied to the network buffer
  * @param len length of the buffer to be copied
  * @return  0 if ptr has been successfully copied to the network buffer
  *         -1 if nothing has been done
@@ -132,7 +132,7 @@ extern struct ubpf_peer_info *get_src_peer_info();
 /**
  * Modifies the information the local BGP router maintains for a peer.
  * @param router_id identifies the peer
- * @param key, key related to which data to alter
+ * @param key key related to which data to alter
  * @param value the value to add
  * @param len length of the value
  * @return 0 if the operation succeeds, -1 in case of failure.
@@ -145,7 +145,7 @@ extern int set_peer_info(uint32_t router_id, int key, void *value, int len);
  * @return the current prefix that is processed
  *         NULL otherwise
  */
-extern struct ubpf_prefix *get_prefix();
+extern struct ubpf_prefix *get_prefix(void);
 
 /**
  * Get data related to the nexthop of a given route contained in the Loc-RIB
@@ -174,7 +174,7 @@ extern struct ubpf_rib_entry *get_loc_rib_entry(uint8_t af_family, struct ubpf_p
 /**
  * Retrieve the current BGP route being processed in the insertion point
  *
- * @param which_route Given the Insertion point (and if multiple route are involved), select the route to be
+ * @param type Given the Insertion point (and if multiple route are involved), select the route to be
  *                    loaded in the VM.
  * @return The BGP route
  */

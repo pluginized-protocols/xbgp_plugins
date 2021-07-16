@@ -51,6 +51,17 @@
 #define ATTR_PARTIAL		0x20
 #define ATTR_EXT_LEN		0x10
 
+/* AS_PATH_SEGMENT_TYPE */
+#define AS_PATH_SEGMENT_SET             1
+#define AS_PATH_SEGMENT_SEQUENCE        2
+#define AS_PATH_SEGMENT_CONFED_SEQUENCE 3
+#define AS_PATH_SEGMENT_CONFED_SET      4
+
+/* ORIGIN */
+#define BGP_ORIGIN_IGP                           0
+#define BGP_ORIGIN_EGP                           1
+#define BGP_ORIGIN_INCOMPLETE                    2
+
 #define iana_afi_to_af(afi) ({ \
     int __af_type;                      \
     switch(afi) {         \
