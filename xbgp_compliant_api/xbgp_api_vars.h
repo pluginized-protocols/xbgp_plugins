@@ -26,6 +26,7 @@ static proto_ext_fun_t api_funcs[] = {
         {.fn = rib_iterator_clean, .name = "rib_iterator_clean", .attributes=HELPER_ATTR_READ},
         {.fn = next_rib_route, .name = "next_rib_route", .attributes=HELPER_ATTR_READ},
         {.fn = remove_route_from_rib, .name = "remove_route_from_rib", .attributes=HELPER_ATTR_READ},
+        {.fn = get_vrf, .name = "get_vrf", .attributes=HELPER_ATTR_READ},
         proto_ext_func_null,
 };
 

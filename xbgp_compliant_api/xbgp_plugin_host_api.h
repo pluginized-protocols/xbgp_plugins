@@ -205,5 +205,12 @@ void rib_iterator_clean(context_t *ctx, unsigned int iterator_id);
  */
 int remove_route_from_rib(context_t *ctx, struct ubpf_prefix *pfx, struct ubpf_peer_info *peer_info);
 
+/**
+ *
+ * @param ctx pluglet execution context
+ * @param vrf_info
+ * @return
+ */
+int get_vrf(context_t *ctx, struct vrf_info *vrf_info);
 
 #endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H

@@ -187,5 +187,7 @@ void rib_iterator_clean(unsigned int iterator_id);
 
 int remove_route_from_rib(struct ubpf_prefix *pfx, struct ubpf_peer_info *peer_info);
 
+int get_vrf(struct vrf_info *vrf_info);
+
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 

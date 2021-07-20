@@ -117,6 +117,7 @@ enum ubpf_arg_type {
     ARG_BGP_ATTRIBUTE,
     ARG_BUFFER,
     ARG_BGP_PREFIX,
+    ARG_BGP_VRF,
 
 
     ARG_MAX_OPAQUE // can be used to init the personal enum
@@ -195,6 +196,12 @@ struct bgp_route {
 struct ubpf_nexthop {
     uint8_t route_type; // connected, static, kernel
     uint64_t igp_metric;
+};
+
+struct vrf_info {
+    int vrf_id;
+    size_t str_len;
+    char name[0];
 };
 
 
