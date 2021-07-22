@@ -143,6 +143,12 @@ enum BGP_PLUGIN_FILTER_DECISION {
     PLUGIN_FILTER_UNKNOWN,
 };
 
+struct bgp_message {
+    int type;
+    size_t buf_len;
+    uint8_t *buf;
+};
+
 struct path_attribute {
     uint8_t code;
     uint8_t flags;

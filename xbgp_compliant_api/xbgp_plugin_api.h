@@ -189,5 +189,7 @@ int remove_route_from_rib(struct ubpf_prefix *pfx, struct ubpf_peer_info *peer_i
 
 int get_vrf(struct vrf_info *vrf_info);
 
+int schedule_bgp_message(int type, struct bgp_message *message, const char *peer_ip);
+
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 

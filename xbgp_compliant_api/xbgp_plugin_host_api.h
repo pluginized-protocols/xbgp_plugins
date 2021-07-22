@@ -213,4 +213,19 @@ int remove_route_from_rib(context_t *ctx, struct ubpf_prefix *pfx, struct ubpf_p
  */
 int get_vrf(context_t *ctx, struct vrf_info *vrf_info);
 
+/**
+ * Schedule a BGP message to be sent to a BGP peer.
+ *
+ * @param ctx pluglet execution context
+ * @param message structure containing the message to be sent through the wire
+ *          message->type BGP message type (check https://www.iana.org/assignments/bgp-parameters/bgp-parameters.xhtml)
+ *                        1 - OPEN      3 - NOTIFICATION    5 - ROUTE REFRESH
+ *                        2 - UPDATE    4 - KEEPALIVE
+ *          message->buf Actual data of the BGP message (encoded in network byte !)
+ *          message->buf_len buf length
+ * @param peer remote peer address
+ * @return 0 if the message has been scheduled, -1 otherwise (the message will be not send to the peer)
+ */
+int schedule_bgp_message(context_t *ctx, int type, struct bgp_message *message, const char *peer_ip);
+
 #endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H
