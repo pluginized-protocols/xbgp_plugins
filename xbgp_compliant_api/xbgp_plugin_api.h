@@ -180,16 +180,18 @@ extern struct ubpf_rib_entry *get_loc_rib_entry(uint8_t af_family, struct ubpf_p
  */
 extern struct bgp_route *get_bgp_route(enum BGP_ROUTE_TYPE type);
 
-int new_rib_iterator(int afi, int safi);
-struct bgp_route *next_rib_route(unsigned int iterator_id);
-int rib_has_route(unsigned int iterator_id);
-void rib_iterator_clean(unsigned int iterator_id);
+extern int new_rib_iterator(int afi, int safi);
+extern struct bgp_route *next_rib_route(unsigned int iterator_id);
+extern int rib_has_route(unsigned int iterator_id);
+extern void rib_iterator_clean(unsigned int iterator_id);
 
-int remove_route_from_rib(struct ubpf_prefix *pfx, struct ubpf_peer_info *peer_info);
+extern int remove_route_from_rib(struct ubpf_prefix *pfx, struct ubpf_peer_info *peer_info);
 
-int get_vrf(struct vrf_info *vrf_info);
+extern int get_vrf(struct vrf_info *vrf_info);
 
-int schedule_bgp_message(int type, struct bgp_message *message, const char *peer_ip);
+extern int schedule_bgp_message(int type, struct bgp_message *message, const char *peer_ip);
+
+extern int peer_session_reset(const char *peer_ip);
 
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 

@@ -228,4 +228,17 @@ int get_vrf(context_t *ctx, struct vrf_info *vrf_info);
  */
 int schedule_bgp_message(context_t *ctx, int type, struct bgp_message *message, const char *peer_ip);
 
+/**
+ * Reset the BGP session with the remote BGP peer identified by the
+ * IP given at arguments.
+ * The Graceful restart capability must be negotiated beforehand
+ * to use this function
+ *
+ * @param ctx pluglet execution context
+ * @param peer_ip IPv4 or IPv6 string address that identifies the
+ *                peer with which to reset the BGP session
+ * @return 0 if the session has been shutdown, -1 otherwise
+ */
+int peer_session_reset(context_t *ctx, const char *peer_ip);
+
 #endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H

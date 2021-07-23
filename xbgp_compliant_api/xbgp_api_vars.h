@@ -28,6 +28,7 @@ static proto_ext_fun_t api_funcs[] = {
         {.fn = remove_route_from_rib, .name = "remove_route_from_rib", .attributes=HELPER_ATTR_READ},
         {.fn = get_vrf, .name = "get_vrf", .attributes=HELPER_ATTR_READ},
         {.fn = schedule_bgp_message, .name = "schedule_bgp_message", .attributes=HELPER_ATTR_WRITE},
+        {.fn = peer_session_reset, .name = "peer_session_reset", .attributes=HELPER_ATTR_READ | HELPER_ATTR_WRITE},
         proto_ext_func_null,
 };
 
