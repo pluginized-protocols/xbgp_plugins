@@ -118,6 +118,7 @@ enum ubpf_arg_type {
     ARG_BUFFER,
     ARG_BGP_PREFIX,
     ARG_BGP_VRF,
+    ARG_BGP_MESSAGE,
 
 
     ARG_MAX_OPAQUE // can be used to init the personal enum
