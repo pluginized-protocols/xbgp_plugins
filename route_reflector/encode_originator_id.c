@@ -35,6 +35,8 @@ struct ubpf_peer_info *get_src_peer_info() {
 #include "../prove_stuffs/mod_ubpf_api.c"
 #endif
 
+void *memcpy(void *restrict dest, const void *restrict src, size_t n);
+
 uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
 
     uint32_t counter = 0;
@@ -87,7 +89,10 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     }
 
     originator_id = (uint32_t *) attribute->data;
-    *((uint32_t *)(attr_buf + counter)) = ebpf_htonl(*originator_id);
+    uint32_t originator_id_net = ebpf_htonl(*originator_id);
+    // ebpf_print("Originator id %u (htonl %u)\n", *originator_id, ebpf_htonl(*originator_id));
+    // *((uint32_t *)(attr_buf + counter)) = ebpf_htonl(*originator_id);
+    memcpy(attr_buf + counter, &originator_id_net, sizeof(originator_id_net));
 
     counter += 4;
 

@@ -67,6 +67,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
 
     if (pinfo->peer_type != IBGP_SESSION || src_info->peer_type != IBGP_SESSION) {
         // we do not reflect to other iBGP sessions
+        // ebpf_print("Not iBGP between the two peers\n");
         next();
     }
 
