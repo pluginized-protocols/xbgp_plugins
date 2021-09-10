@@ -1,12 +1,12 @@
 {
   "jit_all": true,
   "plugins": {
-    "prefix_origin": {
+    "client_choice": {
       "extra_mem": 4096,
-      "shared_mem": 0,
+      "shared_mem": 4096,
       "obj_code_list": {
-        "rpki_like": {
-          "obj": "prefix_validator.o",
+        "alternate": {
+          "obj": "alternate_old_new.o",
           "jit": true,
           "permissions": [
             "read",
@@ -15,12 +15,12 @@
           ]
         }
       }
-    },
+    }
   },
   "insertion_points": {
-    "bgp_pre_inbound_filter": {
+    "bgp_local_pref_decision": {
       "replace": {
-        "0": "rpki_like"
+        "0": "alternate"
       }
     }
   }

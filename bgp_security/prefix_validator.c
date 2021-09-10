@@ -130,6 +130,7 @@ uint64_t prefix_validator(args_t *args UNUSED) {
 
     if (get_extra_info_dict(&info, str_ip, &list_vrp) != 0) {
         // We don't know...
+        //ebpf_print("Don't know %s\n", str_ip);
         next();
     }
 

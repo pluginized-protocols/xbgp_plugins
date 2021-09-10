@@ -5,23 +5,26 @@
 
 void *memset(void *s, int c, size_t n);
 
-#define str_equal(str1, str2, maxlen) ({            \
-    int i__;                                        \
-    int ret__ = 0;                                  \
-    const char *str1__ = (str1);                    \
-    const char *str2__ = (str2);                    \
-    if ((maxlen) == 0) ret__ = 1;                   \
-    for (i__ = 0; i__ < (maxlen); i__++) {          \
-        if (*(str1__) != *(str2__++)) {             \
-            ret__ = 0;                              \
-            break;                                  \
-        } else if (*(str1__++) == 0) {              \
-            ret__ = 1;                              \
-            break;                                  \
-        }                                           \
-    }                                               \
-    ret__;                                          \
-})
+struct stats {
+    int choice;
+    unsigned long long int counter;
+};
+
+static __always_inline int
+strncmp(const char *s1, const char *s2, register size_t n)
+{
+    register unsigned char u1, u2;
+    while (n-- > 0)
+    {
+        u1 = (unsigned char) *s1++;
+        u2 = (unsigned char) *s2++;
+        if (u1 != u2)
+            return u1 - u2;
+        if (u1 == '\0')
+            return 0;
+    }
+    return 0;
+}
 
 
 /**
@@ -35,18 +38,22 @@ void *memset(void *s, int c, size_t n);
 uint64_t dumb_decision(args)
         args_t *args UNUSED;
 {
-    int *choice;
-    struct vrf_info info;
+    struct stats *st_sh;
     int decision;
+    uint8_t buf[sizeof(struct vrf_info) + 50]; // space for struct + string on the stack
+    memset(buf, 0, sizeof(buf));
 
-    memset(&info, 0, sizeof(info));
-    if (get_vrf(&info) != 0) {
+    struct vrf_info *info = (struct vrf_info *) buf;
+    info->str_len = 50;
+
+    if (get_vrf(info) != 0) {
         log_msg(L_INFO"Unable to get VRF !");
+        ebpf_print("Unable to get the vrf\n");
         return BGP_ROUTE_TYPE_FAIL;
     }
 
-    if (!str_equal(info.name, "red", 3)) {
-        return BGP_ROUTE_TYPE_FAIL;
+    if (strncmp(info->name, "red", 4) != 0) {
+        return next();
     }
 
     /* just load balance between old and new
@@ -55,21 +62,30 @@ uint64_t dumb_decision(args)
      * storing it to a shared memory that
      * persists across two VM calls
      */
-    choice = ctx_shmget(42);
-    if (choice == NULL) {
-        choice = ctx_shmnew(42, sizeof(*choice));
-        if (!choice) return BGP_ROUTE_TYPE_FAIL;
-        *choice = 0;
+    st_sh = ctx_shmget(42);
+    if (st_sh == NULL) {
+        st_sh = ctx_shmnew(42, sizeof(*st_sh));
+        if (!st_sh) {
+            ebpf_print("Unable to create shared memory!");
+            return BGP_ROUTE_TYPE_FAIL;
+        }
+        st_sh->choice = 0;
+        st_sh->counter = 0;
     }
-    decision = *choice;
-    *choice = (*choice + 1) % 2;
+    decision = (st_sh->counter % 3) == 0;
+    st_sh->choice = decision;
+    st_sh->counter++;
 
     switch (decision) {
         case 0:
+            //ebpf_print("VRF %s, new wins (process run %llu)\n", info->name, st_sh->counter);
             return BGP_ROUTE_TYPE_NEW;
         case 1:
+        case 2:
+            //ebpf_print("VRF %s, old wins (process run %llu)\n", info->name, st_sh->counter);
             return BGP_ROUTE_TYPE_OLD;
         default:
+            next();
             return BGP_ROUTE_TYPE_FAIL;
     }
 }
