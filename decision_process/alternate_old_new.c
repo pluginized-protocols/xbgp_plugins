@@ -3,6 +3,27 @@
 //
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
+#ifdef PROVERS_SH
+#include "../prove_stuffs/mod_ubpf_api.h"
+#endif
+
+#ifdef PROVERS
+
+int nondet_len();
+
+int get_vrf(struct vrf_info *vrf_info) {
+    const char *my_vrf = "red"
+    if (!vrf_info) return -1;
+
+    if (vrf_info->str_len >= vrf_name_len) {
+        strncpy(vrf_info->name, my_vrf, sizeof(my_vrf));
+    }
+    info->vrf_id = non_detlen();
+    return 0;
+}
+
+#endif
+
 void *memset(void *s, int c, size_t n);
 
 struct stats {
@@ -53,7 +74,8 @@ uint64_t dumb_decision(args)
     }
 
     if (strncmp(info->name, "red", 4) != 0) {
-        return next();
+        next();
+        return BGP_ROUTE_TYPE_FAIL;
     }
 
     /* just load balance between old and new
@@ -89,3 +111,17 @@ uint64_t dumb_decision(args)
             return BGP_ROUTE_TYPE_FAIL;
     }
 }
+
+#ifdef PROVER_SH
+int main(void) {
+    args_t args = {};
+
+    uint64_t ret_val =  dumb_decision(&args);
+
+    assert(ret_val == BGP_ROUTE_TYPE_FAIL ||
+           ret_val == BGP_ROUTE_TYPE_NEW ||
+           ret_val == BGP_ROUTE_TYPE_OLD);
+
+    return 0;
+}
+#endif
