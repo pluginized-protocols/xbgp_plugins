@@ -1,12 +1,12 @@
 {
   "jit_all": false,
   "plugins": {
-    "filter_42": {
-      "extra_mem": 128,
+    "show_rib": {
+      "extra_mem": 512,
       "shared_mem": 0,
       "obj_code_list": {
-        "simple_reject_42": {
-          "obj": "reject_route_attr_42.o",
+        "rib_show": {
+          "obj": "rib_walk.o",
           "jit": true,
           "verifiers" : {
             "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
@@ -17,11 +17,9 @@
       }
     }
   },
-  "insertion_points": {
-    "bgp_decode_attr": {
-      "replace": {
-        "0": "simple_reject_42"
-      }
+  "jobs_plugins": {
+    "show_rib": {
+      "schedule": 15
     }
   }
 }

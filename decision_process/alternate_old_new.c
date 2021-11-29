@@ -3,40 +3,12 @@
 //
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
-#ifdef PROVERS_SH
-#include "../prove_stuffs/mod_ubpf_api.h"
-#endif
-
-#ifdef PROVERS
-
-int nondet_len();
-
-int get_vrf(struct vrf_info *vrf_info) {
-    const char *my_vrf = "red"
-    if (!vrf_info) return -1;
-
-    if (vrf_info->str_len >= vrf_name_len) {
-        strncpy(vrf_info->name, my_vrf, sizeof(my_vrf));
-    }
-    info->vrf_id = non_detlen();
-    return 0;
-}
-
-#endif
-
-void *memset(void *s, int c, size_t n);
-
-struct stats {
-    int choice;
-    unsigned long long int counter;
-};
+#include "../prove_stuffs/prove.h"
 
 static __always_inline int
-strncmp(const char *s1, const char *s2, register size_t n)
-{
+strncmp(const char *s1, const char *s2, register size_t n) {
     register unsigned char u1, u2;
-    while (n-- > 0)
-    {
+    while (n-- > 0) {
         u1 = (unsigned char) *s1++;
         u2 = (unsigned char) *s2++;
         if (u1 != u2)
@@ -46,6 +18,29 @@ strncmp(const char *s1, const char *s2, register size_t n)
     }
     return 0;
 }
+
+PROOF_INSTS(
+#define NEXT_RETURN_VALUE BGP_ROUTE_TYPE_UNKNOWN
+        int nondet_len(void);
+
+        int get_vrf(struct vrf_info *vrf_info) {
+            const char my_vrf[] = "red";
+            if (!vrf_info) return -1;
+
+            if (vrf_info->str_len >= sizeof(my_vrf)) {
+                strncpy(vrf_info->name, my_vrf, sizeof(my_vrf));
+            }
+            vrf_info->vrf_id = nondet_len();
+            return 0;
+        }
+)
+
+void *memset(void *s, int c, size_t n);
+
+struct stats {
+    int choice;
+    unsigned long long int counter;
+};
 
 
 /**
@@ -73,7 +68,7 @@ uint64_t dumb_decision(args)
         return BGP_ROUTE_TYPE_FAIL;
     }
 
-    if (strncmp(info->name, "red", 4) != 0) {
+    if (strncmp(info->name, "red", 3) != 0) {
         next();
         return BGP_ROUTE_TYPE_FAIL;
     }
@@ -112,16 +107,16 @@ uint64_t dumb_decision(args)
     }
 }
 
-#ifdef PROVER_SH
-int main(void) {
-    args_t args = {};
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
 
-    uint64_t ret_val =  dumb_decision(&args);
+            uint64_t ret_val = dumb_decision(&args);
 
-    assert(ret_val == BGP_ROUTE_TYPE_FAIL ||
-           ret_val == BGP_ROUTE_TYPE_NEW ||
-           ret_val == BGP_ROUTE_TYPE_OLD);
+            p_assert(ret_val == BGP_ROUTE_TYPE_FAIL ||
+                   ret_val == BGP_ROUTE_TYPE_NEW ||
+                   ret_val == BGP_ROUTE_TYPE_OLD);
 
-    return 0;
-}
-#endif
+            return 0;
+        }
+)

@@ -1,18 +1,13 @@
 {
-  "jit_all": true,
+  "jit_all": false,
   "plugins": {
-    "client_choice": {
-      "extra_mem": 4096,
-      "shared_mem": 4096,
+    "filter_non_valley_free": {
+      "extra_mem": 128,
+      "shared_mem": 0,
       "obj_code_list": {
-        "alternate": {
-          "obj": "alternate_old_new.o",
+        "simple_reject_42": {
+          "obj": "valley_free_check.o",
           "jit": true,
-          "permissions": [
-            "read",
-            "write",
-            "usr_ptr"
-          ],
           "verifiers" : {
             "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
             "t2": "-DPROVERS -DPROVERS_T2",
@@ -23,9 +18,9 @@
     }
   },
   "insertion_points": {
-    "bgp_local_pref_decision": {
+    "bgp_pre_inbound_filter": {
       "replace": {
-        "0": "alternate"
+        "0": "filter_non_valley_free"
       }
     }
   }

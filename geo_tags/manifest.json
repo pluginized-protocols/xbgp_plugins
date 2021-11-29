@@ -1,52 +1,98 @@
 {
-  "jit_all": false,
+  "jit_all": true,
   "plugins": {
-    "bgp_med_decision": {
+    "geo_tags": {
       "extra_mem": 512,
       "shared_mem": 0,
-      "replace": {
-        "0": {
-          "path": "compare_med.o"
+      "obj_code_list": {
+        "export_igp_metric": {
+          "obj": "export_igp_metric.o",
+          "permissions": [
+            "read",
+            "write",
+            "usr_ptr"
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
+        },
+        "import_prefix_originator": {
+          "obj": "import_prefix_originator.o",
+          "permissions": [
+            "read",
+            "write",
+            "usr_ptr"
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
+        },
+        "receive_attr": {
+          "obj": "receive_attr.o",
+          "permissions": [
+            "read",
+            "write",
+            "usr_ptr"
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
+        },
+        "set_med_coord": {
+          "obj": "set_med_coord.o",
+          "permissions": [
+            "read",
+            "write",
+            "usr_ptr"
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
+        },
+        "write_attr": {
+          "obj": "write_attr.o",
+          "permissions": [
+            "read",
+            "write",
+            "usr_ptr"
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
         }
       }
-    },
+    }
+  },
+  "insertion_points": {
     "bgp_decode_attr": {
-      "extra_mem": 4096,
-      "shared_mem": 0,
       "replace": {
-        "0": {
-          "path": "receive_attr.o"
-        }
-      }
-    },
-    "bgp_encode_attr": {
-      "extra_mem": 4096,
-      "shared_mem": 0,
-      "replace": {
-        "0": {
-          "path": "write_attr.o"
-        }
+        "0": "receive_attr"
       }
     },
     "bgp_pre_inbound_filter": {
-      "extra_mem": 4096,
-      "shared_mem": 0,
       "replace": {
-        "0": {
-          "path": "import_prefix_originator.o"
-        }
+        "0": "import_prefix_originator"
       }
     },
     "bgp_pre_outbound_filter": {
-      "extra_mem": 4096,
-      "shared_mem": 0,
       "replace": {
-        "0": {
-          "path": "set_med_coord.o"
-        },
-        "10": {
-          "path": "export_igp_metric.o"
-        }
+        "0": "set_med_coord",
+        "10": "export_igp_metric"
+      }
+    },
+    "bgp_encode_attr": {
+      "replace": {
+        "0": "write_attr"
       }
     }
   }

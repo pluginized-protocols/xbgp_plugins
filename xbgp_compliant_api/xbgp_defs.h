@@ -212,5 +212,21 @@ struct vrf_info {
 };
 
 
+/*
+ * memset and memcpy are
+ * only for static arrays !!! i.e. whose sizes
+ * are known at compile time !
+ *
+ * clang compiler will transform those calls
+ * to their corresponding asm instructions
+ *
+ * If the memory area length is not known at compile
+ * time (i.e. dynamic array) then use the
+ * corresponding ebpf_<fun> alternative API call
+ */
+void *memset(void *s, int c, size_t n);
+
+void *memcpy(void *dest, const void *src, size_t len);
+
 
 #endif //PLUGINIZED_FRR_XBGP_DEFS_H

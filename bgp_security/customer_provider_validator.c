@@ -16,55 +16,50 @@
 #define SESSION_MY_RS 4
 #define SESSION_MY_RS_CLIENT 5
 
-/* only for static arrays !!! */
-void *memset(void *s, int c, size_t n);
-void *memcpy(void *dest, const void *src, size_t len);
-
 struct global_info info;
 
-#ifdef PROVERS
+PROOF_INSTS(
+        #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 
-uint8_t *nondet_get_buf__verif();
-struct ubpf_peer_info *nondet_get_pinfo__verif();
-uint16_t nondet_get_u16__verif();
+        uint8_t *nondet_get_buf__verif();
+        struct ubpf_peer_info *nondet_get_pinfo__verif();
+        uint16_t nondet_get_u16__verif();
 
-struct ubpf_peer_info *get_peer_info(int *nb_peers);
-struct ubpf_peer_info *get_src_peer_info(void);
+        struct ubpf_peer_info *get_peer_info(int *nb_peers);
+        struct ubpf_peer_info *get_src_peer_info(void);
 
-struct ubpf_peer_info *get_peer_info(int *nb_peers UNUSED) {
-    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-    pinfo->peer_type = IBGP_SESSION;
-    return pinfo;
-}
+        struct ubpf_peer_info *get_peer_info(int *nb_peers UNUSED) {
+            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            pinfo->peer_type = IBGP_SESSION;
+            return pinfo;
+        }
 
-struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-    pinfo->peer_type = IBGP_SESSION;
-    return pinfo;
-}
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            pinfo->peer_type = IBGP_SESSION;
+            return pinfo;
+        }
 
 
-struct path_attribute *get_attr_from_code(uint8_t code) {
-    struct path_attribute *p_attr;
-    p_attr = malloc(sizeof(*p_attr));
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *p_attr;
+            p_attr = malloc(sizeof(*p_attr));
 
-    switch (code) {
-        case AS_PATH_ATTR_ID:
-            p_attr->code = AS_PATH_ATTR_ID;
-            p_attr->flags = ATTR_TRANSITIVE;
-            p_attr->length = nondet_get_u16__verif() * 4;
-            memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
-            break;
-        default:
-            //p_assert(0);
+            switch (code) {
+                case AS_PATH_ATTR_ID:
+                    p_attr->code = AS_PATH_ATTR_ID;
+                    p_attr->flags = ATTR_TRANSITIVE;
+                    p_attr->length = nondet_get_u16__verif() * 4;
+                    memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
+                    return p_attr;
+                    break;
+                default:
+                    //p_assert(0);
+                    return NULL;
+            }
             return NULL;
-    }
-    return NULL;
-}
-
-#define next() return PLUGIN_FILTER_UNKNOWN
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
+        }
+)
 
 /*
  *  0 if not valid
@@ -84,7 +79,7 @@ __always_inline int valid_pair(uint32_t asn, uint32_t prov) {
 
     if (get_extra_info_dict(&info, customer_as_str, &cust_info) != 0) return -1;
 
-    for (i = 0; ; i++) {
+    for (i = 0;; i++) {
         if (get_extra_info_lst_idx(&cust_info, i, &prov_info) != 0) return 0;
         if (get_extra_info_value(&prov_info, &provider_as, sizeof(provider_as)) != 0) {
             ebpf_print("Unable to copy provider as\n");
@@ -136,17 +131,15 @@ __always_inline int from_customer_check(uint32_t my_as, struct path_attribute *a
     uint32_t prev_as = my_as;
     uint32_t curr_as;
 
-    while (pos < end)
-    {
+    while (pos < end) {
         uint type = pos[0];
-        uint len  = pos[1];
+        uint len = pos[1];
         pos += 2;
 
         if (!len)
             continue;
 
-        switch (type)
-        {
+        switch (type) {
             case AS_PATH_SET:
             case AS_PATH_CONFED_SET:
                 return -1;
@@ -196,7 +189,7 @@ __always_inline  int from_provider_check(uint32_t my_as, struct path_attribute *
 
     while (pos < end) {
         uint type = pos[0];
-        uint len  = pos[1];
+        uint len = pos[1];
         pos += 2;
 
         if (!len)
@@ -217,7 +210,7 @@ __always_inline  int from_provider_check(uint32_t my_as, struct path_attribute *
                         current_state = UNK_1;
                     } else if (curr_check == 0) {
                         current_state = VALID_2;
-                    }  else if (curr_check == -2) {
+                    } else if (curr_check == -2) {
                         return -1;
                     }
 
@@ -276,7 +269,7 @@ uint64_t customer_provider(args_t *args UNUSED) {
     my_as = peer->local_bgp_session->as;
 
 
-    if(get_extra_info("cust-prov", &info) != 0) return -1;
+    if (get_extra_info("cust-prov", &info) != 0) return -1;
 
     switch (get_session_relation(from_as)) {
         case SESSION_MY_PROVIDER:
@@ -296,13 +289,15 @@ uint64_t customer_provider(args_t *args UNUSED) {
     return PLUGIN_FILTER_REJECT;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = customer_provider(&args);
-#ifdef PROVERS_SH
-    RET_VAL_FILTERS_CHECK(ret_val);
-#endif
-    return ret_val;
-}
-#endif
+
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = customer_provider(&args);
+            PROOF_SEAHORN_INSTS(
+                    RET_VAL_FILTERS_CHECK(ret_val);
+            )
+
+            return ret_val;
+        }
+)

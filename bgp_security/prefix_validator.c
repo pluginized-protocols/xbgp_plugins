@@ -8,60 +8,58 @@
 #include "common_security.h"
 #include "../byte_manip.h"
 
-#define AS_PATH_SET		1	/* Types of path segments */
-#define AS_PATH_SEQUENCE	2
-#define AS_PATH_CONFED_SEQUENCE	3
-#define AS_PATH_CONFED_SET	4
+#define AS_PATH_SET        1    /* Types of path segments */
+#define AS_PATH_SEQUENCE    2
+#define AS_PATH_CONFED_SEQUENCE    3
+#define AS_PATH_CONFED_SET    4
 
-#ifdef PROVERS
+#include "../prove_stuffs/prove.h"
 
-struct path_attribute *get_attr_from_code(uint8_t code) {
-    struct path_attribute *attr;
-    if (code != AS_PATH_ATTR_CODE) {
-        return NULL;
-    }
+PROOF_INSTS(
+#define NEXT_RETURN_VALUE FAIL
 
-    attr = malloc(sizeof(*attr) + 32);
-    if (!attr) return NULL;
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *attr;
+            if (code != AS_PATH_ATTR_CODE) {
+                return NULL;
+            }
 
-    attr->code = AS_PATH_ATTR_CODE;
-    attr->flags = ATTR_TRANSITIVE;
-    attr->length = 32;
-    // leave trash data for data attribute
+            attr = malloc(sizeof(*attr) + 32);
+            if (!attr) return NULL;
 
-    return attr;
-}
+            attr->code = AS_PATH_ATTR_CODE;
+            attr->flags = ATTR_TRANSITIVE;
+            attr->length = 32;
+            // leave trash data for data attribute
 
-struct ubpf_prefix *get_prefix() {
-    struct ubpf_prefix *pfx;
-    pfx = malloc(sizeof(*pfx));
-    if (!pfx) return NULL;
+            return attr;
+        }
 
-    pfx->afi = XBGP_AFI_IPV4;
-    pfx->safi = XBGP_SAFI_UNICAST;
-    pfx->prefixlen = 16;
-    *(uint32_t *)pfx->u = 16820416; // 192.168.0.1
+        struct ubpf_prefix *get_prefix() {
+            struct ubpf_prefix *pfx;
+            pfx = malloc(sizeof(*pfx));
+            if (!pfx) return NULL;
 
-    return pfx;
-}
+            pfx->afi = XBGP_AFI_IPV4;
+            pfx->safi = XBGP_SAFI_UNICAST;
+            pfx->prefixlen = 16;
+            *(uint32_t *) pfx->u = 16820416; // 192.168.0.1
 
-#include "../prove_stuffs/mod_ubpf_api.c"
-
-#endif
+            return pfx;
+        }
+)
 
 
 int __always_inline
-as_path_get_last(struct path_attribute *attr, uint32_t *orig_as)
-{
+as_path_get_last(struct path_attribute *attr, uint32_t *orig_as) {
     const uint8_t *pos = attr->data;
     const uint8_t *end = pos + attr->length;
     int found = 0;
     uint32_t val = 0;
 
-    while (pos < end)
-    {
+    while (pos < end) {
         uint type = pos[0];
-        uint len  = pos[1];
+        uint len = pos[1];
         pos += 2;
 
         if (len <= 0)
@@ -89,10 +87,6 @@ as_path_get_last(struct path_attribute *attr, uint32_t *orig_as)
         *orig_as = val;
     return found;
 }
-
-
-
-void *memset(void *s, int c, size_t n);
 
 uint64_t prefix_validator(args_t *args UNUSED) {
 
@@ -130,12 +124,12 @@ uint64_t prefix_validator(args_t *args UNUSED) {
 
     if (get_extra_info_dict(&info, str_ip, &list_vrp) != 0) {
         // We don't know...
-        //ebpf_print("Don't know %s\n", str_ip);
+        ebpf_print("Don't know %s\n", str_ip);
         next();
     }
 
     // get the last as
-    if (!as_path_get_last(as_path, &orig_as)){
+    if (!as_path_get_last(as_path, &orig_as)) {
         return PLUGIN_FILTER_REJECT;
     }
 
@@ -144,7 +138,8 @@ uint64_t prefix_validator(args_t *args UNUSED) {
         if (get_extra_info_lst_idx(&list_vrp, i, &curr_vrp) != 0) {
 
             if (prefix_exists) return PLUGIN_FILTER_REJECT;
-            else next();
+            else
+                next();
             //ebpf_print("Announce rejected\n");
         }
 
@@ -177,7 +172,7 @@ uint64_t prefix_validator(args_t *args UNUSED) {
             prefix_exists = 1;
 
             if (prefix_len_to_val <= vrp_max_len) {
-                if (vrp_as == orig_as){
+                if (vrp_as == orig_as) {
                     next(); // valid prefix !
                 }
             }
@@ -185,13 +180,14 @@ uint64_t prefix_validator(args_t *args UNUSED) {
     }
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = prefix_validator(&args);
-#ifdef PROVERS_SH
-    RET_VAL_FILTERS_CHECK(ret_val);
-#endif
-    return 0;
-}
-#endif
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = prefix_validator(&args);
+
+            PROOF_SEAHORN_INSTS(RET_VAL_FILTERS_CHECK(ret_val);)
+            return 0;
+        }
+)
+
+

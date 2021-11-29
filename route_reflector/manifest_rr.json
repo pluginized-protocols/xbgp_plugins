@@ -11,7 +11,12 @@
             "read",
             "write",
             "usr_ptr"
-          ]
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
         },
         "export_route_rr": {
           "obj": "export_route_rr.o",
@@ -19,7 +24,12 @@
             "read",
             "write",
             "usr_ptr"
-          ]
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
         },
         "encode_cluster_list": {
           "obj": "encode_cluster_list.o",
@@ -27,7 +37,12 @@
             "read",
             "write",
             "usr_ptr"
-          ]
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
         },
         "encode_originator_id": {
           "obj": "encode_originator_id.o",
@@ -35,7 +50,12 @@
             "read",
             "write",
             "usr_ptr"
-          ]
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
         },
         "decode_cluster_list": {
           "obj": "decode_cluster_list.o",
@@ -43,7 +63,12 @@
             "read",
             "write",
             "usr_ptr"
-          ]
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
         },
         "decode_originator_id": {
           "obj": "decode_originator.o",
@@ -51,7 +76,12 @@
             "read",
             "write",
             "usr_ptr"
-          ]
+          ],
+          "verifiers" : {
+            "seahorn": "-DPROVERS -DPROVERS_SEAHORN",
+            "t2": "-DPROVERS -DPROVERS_T2",
+            "cbmc": "-DPROVERS -DPROVERS_CBMC"
+          }
         }
       }
     }

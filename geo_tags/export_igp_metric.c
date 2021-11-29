@@ -23,7 +23,7 @@ uint64_t export_igp(args_t *args UNUSED) {
     struct ubpf_nexthop *nexthop;
     struct ubpf_peer_info *peer;
     nexthop = get_nexthop(NULL);
-    peer = get_peer_info(&nb_peers);
+    peer = get_src_peer_info(&nb_peers);
 
     if (!nexthop || !peer) next();
 

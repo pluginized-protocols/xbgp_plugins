@@ -32,12 +32,18 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
     int nb_peers;
     struct path_attribute *originating_prefix;
     uint8_t buf[sizeof(*originating_prefix) + sizeof(uint64_t)];
-    struct ubpf_peer_info *peer = get_peer_info(&nb_peers);
+    struct ubpf_peer_info *peer = get_src_peer_info(&nb_peers);
 
     originating_prefix = (struct path_attribute *) buf;
 
     if (peer->peer_type != EBGP_SESSION) {
-        ebpf_print("Not an eBGP session\n");
+
+        const char *tp = peer->peer_type == IBGP_SESSION ? "ibgp" :
+                peer->peer_type == EBGP_SESSION ? "ebgp" :
+                peer->peer_type == LOCAL_SESSION ? "local" :
+                "unk wtf ?";
+
+        ebpf_print("Not an eBGP session %s (%u)\n", tp, peer->router_id);
         next();
     }
 

@@ -7,37 +7,33 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_ext_comm.h"
 
-void *memset(void *s, int c, size_t n);
-
 uint64_t generic_encode_attr(args_t *args __attribute__((unused)));
 
 #include "../prove_stuffs/prove.h"
 
 
-#ifdef PROVERS
-#define next() return 0
+PROOF_INSTS(
+        struct path_attribute *get_attr(void);
 
-struct path_attribute *get_attr(void);
+        void nondet_set_data__verif(void *data);
 
-void nondet_set_data__verif(void *data);
+        struct path_attribute *get_attr() {
 
-struct path_attribute *get_attr() {
+            struct path_attribute *p_attr;
+            p_attr = malloc(sizeof(*p_attr) + 64);
 
-    struct path_attribute *p_attr;
-    p_attr = malloc(sizeof(*p_attr) + 64);
+            if (p_attr == NULL) return NULL;
 
-    if (p_attr == NULL) return NULL;
+            p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+            p_attr->code = EXTENDED_COMMUNITIES_ATTR_ID;
+            p_attr->length = 64;
+            nondet_set_data__verif(p_attr->data);
 
-    p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
-    p_attr->code = EXTENDED_COMMUNITIES_ATTR_ID;
-    p_attr->length = 64;
-    nondet_set_data__verif(p_attr->data);
+            return p_attr;
+        }
+#define NEXT_RETURN_VALUE 0
+)
 
-    return p_attr;
-}
-
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
 
 uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
 
@@ -72,19 +68,19 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
 
     ext_communities = (uint64_t *) attribute->data;
     //assume(attribute->length <= 4096u);
-    for (i = 0;  i < attribute->length/8 && i < 512; i++) {
-        *((uint64_t *)(attr_buf + counter)) = ebpf_htonll(ext_communities[i]);
+    for (i = 0; i < attribute->length / 8 && i < 512; i++) {
+        *((uint64_t *) (attr_buf + counter)) = ebpf_htonll(ext_communities[i]);
         counter += 8;
     }
 
-    if(counter != tot_len) {
+    if (counter != tot_len) {
         ebpf_print("Size mismatch\n");
         return 0;
     }
 
-#ifdef PROVERS_SH
-    BUF_CHECK_EXTENDED_COMMUNITY(attr_buf, attribute->length);
-#endif
+    PROOF_SEAHORN_INSTS(
+            BUF_CHECK_EXTENDED_COMMUNITY(attr_buf, attribute->length);
+    )
 
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
 
@@ -92,10 +88,10 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
     return counter;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = decode_extended_communities(&args);
-    return ret_val;
-}
-#endif
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = decode_extended_communities(&args);
+            return ret_val;
+        }
+)

@@ -13,49 +13,46 @@
 
 #include "../prove_stuffs/prove.h"
 
-#ifdef PROVERS
-uint8_t *nondet_get_buf__verif();
-struct ubpf_peer_info *nondet_get_pinfo__verif();
-uint16_t nondet_get_u16__verif();
+PROOF_INSTS(
+        uint8_t *nondet_get_buf__verif();
+        struct ubpf_peer_info *nondet_get_pinfo__verif();
+        uint16_t nondet_get_u16__verif();
 
-struct ubpf_peer_info *get_peer_info(int *nb_peers) {
-    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-    pinfo->peer_type = IBGP_SESSION;
-    return pinfo;
-}
+        struct ubpf_peer_info *get_peer_info(int *nb_peers) {
+            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            pinfo->peer_type = IBGP_SESSION;
+            return pinfo;
+        }
 
-struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-    pinfo->peer_type = IBGP_SESSION;
-    return pinfo;
-}
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            pinfo->peer_type = IBGP_SESSION;
+            return pinfo;
+        }
 
 
-struct path_attribute *get_attr_from_code(uint8_t code) {
-    struct path_attribute *p_attr;
-    p_attr = malloc(sizeof(*p_attr));
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *p_attr;
+            p_attr = malloc(sizeof(*p_attr));
 
-    switch (code) {
-        case AS_PATH_ATTR_ID:
-            p_attr->code = AS_PATH_ATTR_ID;
-            p_attr->flags = ATTR_TRANSITIVE;
-            p_attr->length = nondet_get_u16__verif() * 4;
-            memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
-            break;
-        default:
-            //p_assert(0);
+            switch (code) {
+                case AS_PATH_ATTR_ID:
+                    p_attr->code = AS_PATH_ATTR_ID;
+                    p_attr->flags = ATTR_TRANSITIVE;
+                    p_attr->length = nondet_get_u16__verif() * 4;
+                    memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
+                    return p_attr;
+                    break;
+                default:
+                    //p_assert(0);
+                    return NULL;
+            }
             return NULL;
-    }
-    return NULL;
-}
+        }
 
-#define next() return PLUGIN_FILTER_UNKNOWN
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
+#define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
+)
 
-
-/* only for static arrays !!! */
-void *memset(void *s, int c, size_t n);
 
 enum type_router {
     TYPE_SPINE,
@@ -114,7 +111,8 @@ int __always_inline valley_check(uint32_t as1, uint32_t as2) {
 }
 
 
-int __always_inline flatten_as_path(const uint8_t *as_path, unsigned int length, unsigned int *asp_flat, int flat_size) {
+int __always_inline
+flatten_as_path(const uint8_t *as_path, unsigned int length, unsigned int *asp_flat, int flat_size) {
     unsigned int bytes = 0;
     unsigned int dummy = 0;
     uint8_t segment_length;
@@ -127,7 +125,7 @@ int __always_inline flatten_as_path(const uint8_t *as_path, unsigned int length,
     if (length % 2) return -1;
 
     while (bytes < length && dummy < length) {
-        segment_length = as_path[bytes+1];
+        segment_length = as_path[bytes + 1];
 
         if (segment_length <= 0) return -1;
         if (segment_length > 255) return -1;
@@ -184,13 +182,14 @@ uint64_t valley_free_check(args_t *args UNUSED) {
     return PLUGIN_FILTER_REJECT;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = valley_free_check(&args);
-#ifdef PROVERS_SH
-    RET_VAL_FILTERS_CHECK(ret_val);
-#endif
-    return 0;
-}
-#endif
+
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = valley_free_check(&args);
+            PROOF_SEAHORN_INSTS(
+                    RET_VAL_FILTERS_CHECK(ret_val);
+            )
+            return 0;
+        }
+)
