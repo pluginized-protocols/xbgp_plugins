@@ -3,10 +3,26 @@
 #include <bytecode_public.h>
 #include "../byte_manip.h" // get_u32 macro definition
 
+#include "../prove_stuffs/prove.h"
+
 #define AS_PATH_ATTR_ID 2
 
+PROOF_INSTS(
+        uint16_t non_det_len();
+
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *obj;
+            int len = non_det_len();
+            if(len > 4096) return NULL;
+            obj = malloc(sizeof(struct path_attribute) + len);
+            if (obj == NULL) return NULL;
+            obj->length = len;
+            return obj;
+        }
+)
+
 /* starting point */
-uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) ;
+uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED);
 
 uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
 
@@ -17,9 +33,9 @@ uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
 
     uint32_t asn;
 
-    as_path =  get_attr_from_code(AS_PATH_ATTR_ID);
+    as_path = get_attr_from_code(AS_PATH_ATTR_ID);
+    if (as_path == NULL) return PLUGIN_FILTER_UNKNOWN;
 
-    if (!as_path) return PLUGIN_FILTER_UNKNOWN;
     if (as_path->length <= 0) return PLUGIN_FILTER_UNKNOWN;
 
     as_path_data = as_path->data;
@@ -31,10 +47,10 @@ uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
         i++; // skip segment type
         segment_length = as_path_data[i++];
 
-        for (j = 0; j < segment_length  && segment_length > 0; j++) {
-            unsigned long o = * (unsigned long *) (as_path_data + i);
+        for (j = 0; j < segment_length && segment_length > 0; j++) {
+            unsigned long o = *(unsigned long *) (as_path_data + i);
             asn = get_u32_t2_friendly(o);
-            if(as_path->length - i <= 4) return -1;
+            if (as_path->length - i <= 4) return -1;
             i += 4;
         }
     }
@@ -45,3 +61,10 @@ uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
 
     return PLUGIN_FILTER_REJECT;
 }
+
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            return filter_route_originated_from_odd_as(&args);
+        }
+)
