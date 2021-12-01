@@ -7,11 +7,14 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
 #define MAX_METRIC 5000
+
 #include "../prove_stuffs/prove.h"
 
-#ifdef PROVERS
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
+/* starting point */
+uint64_t export_igp(args_t *args UNUSED);
+
+
+#define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 
 #ifdef PROVERS_SH
 #define next() return PLUGIN_FILTER_UNKNOWN
@@ -39,16 +42,16 @@ uint64_t export_igp(args_t *args UNUSED) {
     return PLUGIN_FILTER_REJECT;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
 
-    uint64_t ret_val = export_igp(&args);
+            uint64_t ret_val = export_igp(&args);
 
-#ifdef PROVERS_SH
-    RET_VAL_FILTERS_CHECK(ret_val);
-#endif
+            PROOF_SEAHORN_INSTS(
+                    RET_VAL_FILTERS_CHECK(ret_val);
 
-    return 0;
-}
-#endif
+            )
+            return 0;
+        }
+)

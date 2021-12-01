@@ -9,6 +9,9 @@
 
 #include "../prove_stuffs/prove.h"
 
+/* starting point */
+uint64_t decode_extended_communities(args_t *args UNUSED);
+
 
 PROOF_INSTS(
         uint16_t get_length();

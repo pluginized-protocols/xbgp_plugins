@@ -16,6 +16,11 @@
 #define SESSION_MY_RS 4
 #define SESSION_MY_RS_CLIENT 5
 
+/**
+ *  Starting point of the BPF program
+ */
+uint64_t customer_provider(args_t *args UNUSED);
+
 struct global_info info;
 
 PROOF_INSTS(
@@ -67,7 +72,7 @@ PROOF_INSTS(
  * -1 if unknown
  * -2 if fail;
  */
-__always_inline int valid_pair(uint32_t asn, uint32_t prov) {
+static __always_inline int valid_pair(uint32_t asn, uint32_t prov) {
     char customer_as_str[12];
     uint32_t provider_as;
     int i;
@@ -92,7 +97,7 @@ __always_inline int valid_pair(uint32_t asn, uint32_t prov) {
     return 0;
 }
 
-__always_inline int get_session_relation(uint32_t upstream_as) {
+static __always_inline int get_session_relation(uint32_t upstream_as) {
 
     uint64_t session_type;
     char as_str[15];
@@ -120,7 +125,7 @@ __always_inline int get_session_relation(uint32_t upstream_as) {
     }
 }
 
-__always_inline int from_customer_check(uint32_t my_as, struct path_attribute *attr) {
+static __always_inline int from_customer_check(uint32_t my_as, struct path_attribute *attr) {
     if (!attr || attr->code != AS_PATH_ATTR_CODE) return -1;
 
     int current_res = 1;
@@ -170,7 +175,7 @@ __always_inline int from_customer_check(uint32_t my_as, struct path_attribute *a
     return current_res;
 }
 
-__always_inline  int from_provider_check(uint32_t my_as, struct path_attribute *attr) {
+static __always_inline  int from_provider_check(uint32_t my_as, struct path_attribute *attr) {
     if (!attr || attr->code != AS_PATH_ATTR_CODE) return -1;
 
 #define VALID_1 1

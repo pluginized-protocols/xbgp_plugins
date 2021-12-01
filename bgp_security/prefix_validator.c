@@ -15,6 +15,11 @@
 
 #include "../prove_stuffs/prove.h"
 
+/**
+ * Starting point of the BPF program
+ */
+uint64_t prefix_validator(args_t *args UNUSED);
+
 PROOF_INSTS(
 #define NEXT_RETURN_VALUE FAIL
 

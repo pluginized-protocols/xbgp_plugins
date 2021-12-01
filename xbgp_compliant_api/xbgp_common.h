@@ -1,0 +1,11 @@
+//
+// Created by thomas on 29/11/21.
+//
+
+#ifndef XBGP_PLUGINS_XBGP_COMMON_H
+#define XBGP_PLUGINS_XBGP_COMMON_H
+
+#define LO_RESERVED_RETURN_VAL 0
+#define HI_RESERVED_RETURN_VAL 255
+
+#endif //XBGP_PLUGINS_XBGP_COMMON_H

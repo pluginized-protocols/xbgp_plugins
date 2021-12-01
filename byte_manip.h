@@ -8,7 +8,7 @@
 #define get_u32(data) \
 ({ \
     uint32_t a; \
-    a = *((uint32_t *) (data)); \
+    a = *((const uint32_t *) (data)); \
     ebpf_ntohl(a); \
 })
 

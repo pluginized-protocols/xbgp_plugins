@@ -9,49 +9,51 @@
 
 #include "../prove_stuffs/prove.h"
 
-#ifdef PROVERS
-uint8_t nondet_get_uint8__verif(void);
-uint64_t nondet_get_uint64__verif(void);
+/* starting point */
+uint64_t generic_decode_attr(args_t *args UNUSED);
 
-void *get_arg(unsigned int id) {
-    switch (id) {
-        case ARG_CODE:
-        case ARG_FLAGS:{
-            uint8_t *code;
-            code = malloc(sizeof(*code));
-            *code =  nondet_get_uint8__verif();
-            return code;
+PROOF_INSTS(
+        uint8_t nondet_get_uint8__verif(void);
+        uint64_t nondet_get_uint64__verif(void);
+
+        void *get_arg(unsigned int id) {
+            switch (id) {
+                case ARG_CODE:
+                case ARG_FLAGS: {
+                    uint8_t *code;
+                    code = malloc(sizeof(*code));
+                    *code = nondet_get_uint8__verif();
+                    return code;
+                }
+                case ARG_LENGTH: {
+                    uint16_t *length; // by chance ORIGINATOR and GEO are on hte same length
+                    length = malloc((sizeof(*length)));
+                    *length = 8;
+                    return length;
+                }
+                case ARG_DATA: {
+                    uint64_t *data = malloc(sizeof(uint64_t));
+                    *data = nondet_get_uint64__verif();
+                    return data;
+                }
+                default:
+                    return NULL;
+            }
         }
-        case ARG_LENGTH: {
-            uint16_t *length; // by chance ORIGINATOR and GEO are on hte same length
-            length = malloc((sizeof(*length)));
-            *length = 8;
-            return length;
+
+        int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr) {
+
+            uint8_t minibuf[5];
+
+            // i < 4096 limits the unrolling of loops
+            // 4096 is the upper bound for BGP messages
+            for (int i = 0; i < length && i < 4096; i++) {
+                minibuf[i % 5] = minibuf[(i - 1) % 5] + decoded_attr[i];
+            }
+            return 0;
         }
-        case ARG_DATA: {
-            uint64_t *data = malloc(sizeof(uint64_t));
-            *data = nondet_get_uint64__verif();
-            return data;
-        }
-        default:
-            return NULL;
-    }
-}
+)
 
-int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr) {
-
-    uint8_t minibuf[5];
-
-    // i < 4096 limits the unrolling of loops
-    // 4096 is the upper bound for BGP messages
-    for (int i = 0; i < length && i < 4096; i++) {
-        minibuf[i % 5] = minibuf[(i - 1) % 5] + decoded_attr[i];
-    }
-    return 0;
-}
-
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
 
 static __always_inline unsigned int is_negative(uint32_t number) {
     return ((number & 0xffffffff) >> 31u) & 1u;
@@ -86,9 +88,9 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
             uint64_t *attr_data;
             attr_data = (uint64_t *) geo_tag;
 
-            raw_latitude = *((uint32_t *) data);
+            raw_latitude = *((const uint32_t *) data);
             data += 4;
-            raw_longitude = *((uint32_t *) data);
+            raw_longitude = *((const uint32_t *) data);
 
             raw_latitude = ebpf_ntohl(raw_latitude);
             raw_longitude = ebpf_ntohl(raw_longitude);
@@ -96,9 +98,9 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
             geo_tag[0] = decode(raw_latitude);
             geo_tag[1] = decode(raw_longitude);
 
-#ifdef PROVERS_SH
-            p_assert(code == PREFIX_ORIGINATOR || code == BA_GEO_TAG);
-#endif
+            PROOF_SEAHORN_INSTS(
+                    p_assert(code == PREFIX_ORIGINATOR || code == BA_GEO_TAG);
+            )
 
             return add_attr(code, flags, len, (uint8_t *) attr_data) == -1 ? -1 : 0;
         }
@@ -135,11 +137,11 @@ uint64_t generic_decode_attr(args_t *args UNUSED) {
     return decode_attr(*code, *len, *flags, data) == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = add_prefix_originator(&args);
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = add_prefix_originator(&args);
 
-    return ret_val;
-}
-#endif
+            return ret_val;
+        }
+)

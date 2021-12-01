@@ -10,33 +10,32 @@
 
 #include "../prove_stuffs/prove.h"
 
-#ifdef PROVERS
+uint64_t compute_med(args_t *args UNUSED);
 
-uint8_t *nondet_get_buf__verif();
+PROOF_INSTS(
+        uint8_t *nondet_get_buf__verif();
 
-struct path_attribute *get_attr_from_code(uint8_t code) {
-    struct path_attribute *p_attr;
-    p_attr = malloc(sizeof(*p_attr));
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *p_attr;
+            p_attr = malloc(sizeof(*p_attr));
 
-    switch (code) {
-        case PREFIX_ORIGINATOR:
-            p_attr->code = PREFIX_ORIGINATOR;
-            p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
-            p_attr->length = 4;
-            memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
-            break;
-        default:
-            //p_assert(0);
+            switch (code) {
+                case PREFIX_ORIGINATOR:
+                    p_attr->code = PREFIX_ORIGINATOR;
+                    p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
+                    p_attr->length = 4;
+                    memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
+                    break;
+                default:
+                    //p_assert(0);
+                    return NULL;
+            }
             return NULL;
-    }
-    return NULL;
-}
+        }
 
-#include "../prove_stuffs/mod_ubpf_api.c"
 
-#define next() return PLUGIN_FILTER_UNKNOWN
-
-#endif
+#define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
+)
 
 static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const int32_t x2[2]) {
 
@@ -77,10 +76,10 @@ uint64_t compute_med(args_t *args UNUSED) {
     med_attr->length = 4;
     memcpy(med_attr->data, &med_value, sizeof(uint32_t));
 
-#ifdef PROVERS_SH
-    CHECK_MED(med_attr);
-    CHECK_IN_BOUNDS_MED(med_attr, 0, 4096);
-#endif
+    PROOF_SEAHORN_INSTS(
+            CHECK_MED(med_attr);
+            CHECK_IN_BOUNDS_MED(med_attr, 0, 4096);
+    )
 
     if (set_attr(med_attr) != 0) {
         ebpf_print("Failed to set attribute\n");
@@ -91,13 +90,14 @@ uint64_t compute_med(args_t *args UNUSED) {
     return PLUGIN_FILTER_ACCEPT;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t rt_val = compute_med(&args);
-#ifdef PROVERS_SH
-    RET_VAL_FILTERS_CHECKS(rt_val);
-#endif
-    return 0;
-}
-#endif
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t rt_val = compute_med(&args);
+            PROOF_SEAHORN_INSTS(
+                    RET_VAL_FILTERS_CHECKS(rt_val);
+
+            )
+            return 0;
+        }
+)

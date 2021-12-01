@@ -4,9 +4,8 @@
 
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
-void *memset(void *s, int c, size_t n);
-
-void *memcpy(void *restrict dest, const void *restrict src, size_t n);
+/* starting point */
+uint64_t rib_test(UNUSED args_t *args);
 
 #define afi2af(afi) ({          \
   int af__;                     \

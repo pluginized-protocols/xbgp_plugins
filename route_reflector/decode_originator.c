@@ -8,47 +8,46 @@
 #include "common_rr.h"
 #include "../prove_stuffs/prove.h"
 
+/* starting point */
+uint64_t decode_originator(args_t *args UNUSED);
 
+PROOF_INSTS(
+        uint32_t *nondet_get_u32__verif();
+        struct ubpf_peer_info *nondet_gpi__verif();
 
-#ifdef PROVERS
-uint32_t *nondet_get_u32__verif();
-struct ubpf_peer_info *nondet_gpi__verif();
+        void *get_arg(unsigned int arg_type) {
+            switch (arg_type) {
+                case ARG_CODE: {
+                    uint8_t *code;
+                    code = malloc(sizeof(*code));
+                    *code = ORIGINATOR_ID;
+                    return code;
+                }
+                case ARG_FLAGS: {
+                    uint8_t *flags;
+                    flags = malloc(sizeof(*flags));
+                    *flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+                    return flags;
+                }
+                case ARG_DATA: {
+                    return nondet_get_u32__verif();
+                }
+                case ARG_LENGTH: {
+                    uint16_t *length;
+                }
+            }
 
-void *get_arg(unsigned int arg_type) {
-    switch (arg_type) {
-        case ARG_CODE: {
-            uint8_t *code;
-            code  = malloc(sizeof(*code));
-            *code = ORIGINATOR_ID;
-            return code;
         }
-        case ARG_FLAGS: {
-            uint8_t *flags;
-            flags = malloc(sizeof(*flags));
-            *flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
-            return flags;
+
+        struct ubpf_peer_info *gpi(void);
+
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pf = nondet_gpi__verif();
+            pf->peer_type = IBGP_SESSION;
         }
-        case ARG_DATA: {
-            return nondet_get_u32__verif();
-        }
-        case ARG_LENGTH: {
-            uint16_t *length;
-        }
-    }
 
-}
-
-struct ubpf_peer_info *gpi(void);
-
-struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pf = nondet_gpi__verif();
-    pf->peer_type = IBGP_SESSION;
-}
-
-#include "../prove_stuffs/mod_ubpf_api.c"
-
-#define next() return EXIT_SUCCESS
-#endif
+#define NEXT_RETURN_VALUE EXIT_SUCCESS
+)
 
 
 uint64_t decode_originator(args_t *args UNUSED) {
@@ -80,18 +79,18 @@ uint64_t decode_originator(args_t *args UNUSED) {
 
     originator_id = ebpf_ntohl(*((uint32_t *) data));
 
-#ifdef PROVERS_SH
-    p_assert(*flags ==  (ATTR_OPTIONAL | ATTR_TRANSITIVE));
-#endif
+    PROOF_SEAHORN_INSTS(
+            p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
+    )
 
     add_attr(ORIGINATOR_ID, *flags, 4, (uint8_t *) &originator_id);
     return EXIT_SUCCESS;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = decode_originator(&args);
-    return ret_val;
-}
-#endif
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = decode_originator(&args);
+            return ret_val;
+        }
+)

@@ -8,32 +8,32 @@
 #include "common_rr.h"
 #include "../prove_stuffs/prove.h"
 
+/* starting point */
+uint64_t encode_cluster_list(args_t *args UNUSED);
 
-#ifdef PROVERS
-uint16_t nondet_get_u16__verif();
-uint8_t nondet_get_buf__verif();
-struct ubpf_peer_info *nondet_gpi__verif();
+PROOF_INSTS(
+        uint16_t nondet_get_u16__verif();
+        uint8_t nondet_get_buf__verif();
+        struct ubpf_peer_info *nondet_gpi__verif();
 
-struct path_attribute *get_attr() {
-    struct path_attribute *p_attr;
-    p_attr = malloc(sizeof(*p_attr));
-    if (!p_attr) return NULL;
+        struct path_attribute *get_attr() {
+            struct path_attribute *p_attr;
+            p_attr = malloc(sizeof(*p_attr));
+            if (!p_attr) return NULL;
 
-    p_attr->code = CLUSTER_LIST;
-    p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
-    p_attr->length =  nondet_get_u16__verif();
-    memcpy(p_attr->data, nondet_get_buf__verif(), 8);
+            p_attr->code = CLUSTER_LIST;
+            p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+            p_attr->length = nondet_get_u16__verif();
+            memcpy(p_attr->data, nondet_get_buf__verif(), 8);
 
-    return p_attr;
-}
+            return p_attr;
+        }
 
-struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pf = nondet_gpi__verif();
-    pf->peer_type = IBGP_SESSION;
-}
-
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pf = nondet_gpi__verif();
+            pf->peer_type = IBGP_SESSION;
+        }
+)
 
 
 uint64_t encode_cluster_list(args_t *args UNUSED) {
@@ -85,19 +85,19 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     }
 
     cluster_list = (uint32_t *) attribute->data;
-    for (i = 0;  i < attribute->length/4; i++) {
-        *((uint32_t *)(attr_buf + counter)) = ebpf_htonl(cluster_list[i]);
+    for (i = 0; i < attribute->length / 4; i++) {
+        *((uint32_t *) (attr_buf + counter)) = ebpf_htonl(cluster_list[i]);
         counter += 4;
     }
 
-    if(counter != tot_len) {
+    if (counter != tot_len) {
         ebpf_print("Size missmatch counter %d totlen %d\n", counter, tot_len);
         return 0;
     }
 
-#ifdef PROVERS_SH
-    BUF_CHECK_ORIGINATOR(attr_buf);
-#endif
+    PROOF_SEAHORN_INSTS(
+            BUF_CHECK_ORIGINATOR(attr_buf);
+    )
 
     if (write_to_buffer(attr_buf, counter) == -1) {
         ebpf_print("Write failed\n");
@@ -106,10 +106,10 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     return counter;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = decode_cluster_list();
-    return ret_val;
-}
-#endif
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = decode_cluster_list();
+            return ret_val;
+        }
+)

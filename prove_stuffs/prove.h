@@ -5,9 +5,6 @@
 #ifndef XBGP_PLUGINS_PROVE_H
 #define XBGP_PLUGINS_PROVE_H
 
-#define PROVERS
-#define PROVERS_SEAHORN
-
 #ifdef PROVERS
 #include "mod_ubpf_api.c"
 #endif

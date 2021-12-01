@@ -9,43 +9,45 @@
 #include "../prove_stuffs/prove.h"
 
 
-#ifdef PROVERS
-struct ubpf_peer_info *nondet_get_pinfo__verif();
-uint16_t nondet_get_u16__verif();
+/* starting point */
+uint64_t import_route_rr(args_t *args UNUSED);
 
-struct ubpf_peer_info *get_peer_info(int *nb_peers) {
-    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-    pinfo->peer_type = IBGP_SESSION;
-    return pinfo;
-}
+PROOF_INSTS(
+        struct ubpf_peer_info *nondet_get_pinfo__verif();
+        uint16_t nondet_get_u16__verif();
 
-struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-    pinfo->peer_type = IBGP_SESSION;
-    return pinfo;
-}
+        struct ubpf_peer_info *get_peer_info(int *nb_peers) {
+            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            pinfo->peer_type = IBGP_SESSION;
+            return pinfo;
+        }
 
-struct path_attribute *get_attr_from_code(uint8_t code) {
-    struct path_attribute *p_attr;
-    p_attr = malloc(sizeof(*p_attr));
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            pinfo->peer_type = IBGP_SESSION;
+            return pinfo;
+        }
 
-    switch (code) {
-        case ORIGINATOR_ID:
-        case CLUSTER_LIST:
-            p_attr->code = code;
-            p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
-            p_attr->length = code == ORIGINATOR_ID ? 4 : nondet_get_u16__verif();
-            break;
-        default:
-            p_assert(0);
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *p_attr;
+            p_attr = malloc(sizeof(*p_attr));
+
+            switch (code) {
+                case ORIGINATOR_ID:
+                case CLUSTER_LIST:
+                    p_attr->code = code;
+                    p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
+                    p_attr->length = code == ORIGINATOR_ID ? 4 : nondet_get_u16__verif();
+                    break;
+                default:
+                    p_assert(0);
+                    return NULL;
+            }
             return NULL;
-    }
-    return NULL;
-}
+        }
 
-#include "../prove_stuffs/mod_ubpf_api.c"
-#define next() return PLUGIN_FILTER_UNKNOWN
-#endif
+#define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
+)
 
 uint64_t import_route_rr(args_t *args UNUSED) {
 
@@ -93,13 +95,16 @@ uint64_t import_route_rr(args_t *args UNUSED) {
     return PLUGIN_FILTER_ACCEPT;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t rt_val = import_route_rr(&args);
-#ifdef PROVERS_SH
-    RET_VAL_FILTERS_CHECK(rt_val);
-#endif
-    return 0;
-}
-#endif
+
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t rt_val = import_route_rr(&args);
+
+            PROOF_SEAHORN_INSTS(
+
+                    RET_VAL_FILTERS_CHECK(rt_val);
+            )
+            return 0;
+        }
+)

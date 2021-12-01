@@ -3,6 +3,9 @@
 #include "../xbgp_compliant_api/xbgp_defs.h"
 #include <bytecode_public.h>
 
+/* starting point */
+uint64_t new_bgp_decision_process(args_t *args UNUSED);
+
 #define get_community_from_array(arr, len, attr_id) ({ \
  int i__;                                              \
  struct path_attribute *attr = NULL;                   \

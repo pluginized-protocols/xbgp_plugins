@@ -13,6 +13,9 @@
 
 #include "../prove_stuffs/prove.h"
 
+/* starting point */
+uint64_t valley_free_check(args_t *args UNUSED);
+
 PROOF_INSTS(
         uint8_t *nondet_get_buf__verif();
         struct ubpf_peer_info *nondet_get_pinfo__verif();
@@ -131,7 +134,7 @@ flatten_as_path(const uint8_t *as_path, unsigned int length, unsigned int *asp_f
         if (segment_length > 255) return -1;
 
         for (j = 0; j < segment_length && idx < flat_size && idx >= 0; j++) {
-            unsigned int ofst = *(unsigned int *) (as_path + bytes + 2 + (4 * j));
+            unsigned int ofst = *(const unsigned int *) (as_path + bytes + 2 + (4 * j));
             asp_flat[idx] = get_u32_t2_friendly(ofst);
             idx++;
         }

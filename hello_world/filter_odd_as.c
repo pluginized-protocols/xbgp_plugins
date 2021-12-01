@@ -5,6 +5,9 @@
 
 #define AS_PATH_ATTR_ID 2
 
+/* starting point */
+uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) ;
+
 uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
 
     int i, j;

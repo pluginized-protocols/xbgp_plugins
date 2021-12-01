@@ -7,24 +7,22 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "../prove_stuffs/prove.h"
 
+/* starting point*/
+uint64_t add_prefix_originator(args_t *args UNUSED);
 
-// for static fixed size only (and because of -O2)!
-void *memcpy(void *dest, const void *src, size_t n);
+PROOF_INSTS(
+        struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
+            struct ubpf_peer_info *pf;
+            pf = malloc(sizeof(*pf));
+            if (!pf) {
+                return NULL;
+            }
+            pf->peer_type = EBGP_SESSION;
 
-#ifdef PROVERS
-struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
-    struct ubpf_peer_info *pf;
-    pf = malloc(sizeof(*pf));
-    if (!pf) {
-        return NULL;
-    }
-    pf->peer_type = EBGP_SESSION;
+            return pf;
+        }
+)
 
-    return pf;
-}
-
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
 
 uint64_t add_prefix_originator(args_t *args UNUSED) {
 
@@ -39,9 +37,9 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
     if (peer->peer_type != EBGP_SESSION) {
 
         const char *tp = peer->peer_type == IBGP_SESSION ? "ibgp" :
-                peer->peer_type == EBGP_SESSION ? "ebgp" :
-                peer->peer_type == LOCAL_SESSION ? "local" :
-                "unk wtf ?";
+                         peer->peer_type == EBGP_SESSION ? "ebgp" :
+                         peer->peer_type == LOCAL_SESSION ? "local" :
+                         "unk wtf ?";
 
         ebpf_print("Not an eBGP session %s (%u)\n", tp, peer->router_id);
         next();
@@ -55,9 +53,10 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
     originating_prefix->length = 8;
     memcpy(originating_prefix->data, &_attr, sizeof(uint64_t));
 
-#ifdef PROVERS_SH
-    CHECK_ATTR_FORMAT(originating_prefix, 8);
-#endif
+    PROOF_SEAHORN_INSTS(
+            CHECK_ATTR_FORMAT(originating_prefix, 8);
+    )
+
 
     if (set_attr(originating_prefix) == -1) {
         ebpf_print("Error, Unable to add attribute\n");
@@ -66,14 +65,14 @@ uint64_t add_prefix_originator(args_t *args UNUSED) {
     return PLUGIN_FILTER_ACCEPT;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = add_prefix_originator(&args);
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = add_prefix_originator(&args);
 
-#ifdef PROVERS_SH
-    RET_VAL_FILTERS_CHECK(ret_val);
-#endif
-    return 0;
-}
-#endif
+            PROOF_SEAHORN_INSTS(
+                    RET_VAL_FILTERS_CHECK(ret_val);
+            )
+            return 0;
+        }
+)

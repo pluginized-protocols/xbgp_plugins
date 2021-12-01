@@ -5,6 +5,9 @@
 
 #include "../prove_stuffs/prove.h"
 
+/* starting point */
+uint64_t dumb_decision(args_t *args UNUSED);
+
 static __always_inline int
 strncmp(const char *s1, const char *s2, register size_t n) {
     register unsigned char u1, u2;

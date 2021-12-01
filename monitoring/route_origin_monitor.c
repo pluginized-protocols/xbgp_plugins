@@ -5,23 +5,26 @@
 #include <bytecode_public.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
+
+/* starting point */
+uint64_t monitor_route_origin(args_t *args UNUSED);
+
 #define ORIGIN_ATTR 1
 
 #define ORIGIN_ATTR_IGP 0
 #define ORIGIN_ATTR_EGP 1
 #define ORIGIN_ATTR_UNK 2
 
-void *memset(void *s, int c, size_t n);
 
-char *igp = "IGP";
-char *egp = "EGP";
-char *unk = "INCOMPLETE";
+const char *igp = "IGP";
+const char *egp = "EGP";
+const char *unk = "INCOMPLETE";
 
 uint64_t monitor_route_origin(args_t *args UNUSED) {
     struct path_attribute *attr;
     struct ubpf_prefix *p;
     char prefix_addr[52];
-    char *origin_txt;
+    const char *origin_txt;
     uint8_t origin;
 
     attr = get_attr_from_code(ORIGIN_ATTR);

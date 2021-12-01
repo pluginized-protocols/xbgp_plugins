@@ -7,7 +7,9 @@
 
 #include <stdint.h>
 #include <sys/socket.h>
-#include "tools_ubpf_api.h"
+#include <netinet/in.h>
+#include "xbgp_common.h"
+//#include "tools_ubpf_api.h"
 
 #define FAIL 0
 
@@ -131,7 +133,7 @@ enum {
 };
 
 enum BGP_ROUTE_TYPE {
-    BGP_ROUTE_TYPE_UNDEF = BPF_MAX_RESERVED_RETURN_VAL,
+    BGP_ROUTE_TYPE_UNDEF = HI_RESERVED_RETURN_VAL + 1,
     BGP_ROUTE_TYPE_NEW,
     BGP_ROUTE_TYPE_OLD,
     BGP_ROUTE_TYPE_UNKNOWN,
@@ -139,7 +141,7 @@ enum BGP_ROUTE_TYPE {
 };
 
 enum BGP_PLUGIN_FILTER_DECISION {
-    PLUGIN_FILTER_REJECT = BPF_MAX_RESERVED_RETURN_VAL,
+    PLUGIN_FILTER_REJECT = HI_RESERVED_RETURN_VAL + 1,
     PLUGIN_FILTER_ACCEPT,
     PLUGIN_FILTER_UNKNOWN,
 };

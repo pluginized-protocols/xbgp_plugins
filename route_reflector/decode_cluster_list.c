@@ -8,45 +8,48 @@
 #include "common_rr.h"
 #include "../prove_stuffs/prove.h"
 
+/* starting point */
+uint64_t decode_cluster_list(args_t *args UNUSED);
 
-#ifdef PROVERS
-void *nondet_get_buffer__verif();
-uint16_t *nondet_get_u16__verif();
+PROOF_INSTS(
+        void *nondet_get_buffer__verif();
+        uint16_t *nondet_get_u16__verif();
 
-void *get_arg(unsigned int arg_type) {
-    switch (arg_type) {
-        case ARG_CODE: {
-            uint8_t *code;
-            code  = malloc(sizeof(*code));
-            *code = CLUSTER_LIST;
-            return code;
+        void *get_arg(unsigned int arg_type) {
+            switch (arg_type) {
+                case ARG_CODE: {
+                    uint8_t *code;
+                    code = malloc(sizeof(*code));
+                    *code = CLUSTER_LIST;
+                    return code;
+                }
+                case ARG_FLAGS: {
+                    uint8_t *flags;
+                    flags = malloc(sizeof(*flags));
+                    *flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+                    return flags;
+                }
+                case ARG_DATA: {
+                    return nondet_get_buffer__verif();
+                }
+                case ARG_LENGTH: {
+                    return nondet_get_u16__verif();
+                }
+            }
+
         }
-        case ARG_FLAGS: {
-            uint8_t *flags;
-            flags = malloc(sizeof(*flags));
-            *flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
-            return flags;
+
+        struct ubpf_peer_info *gpi(void);
+
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pf = gpi();
+            pf->peer_type = IBGP_SESSION;
         }
-        case ARG_DATA: {
-            return nondet_get_buffer__verif();
-        }
-        case ARG_LENGTH: {
-            return nondet_get_u16__verif();
-        }
-    }
 
-}
 
-struct ubpf_peer_info *gpi(void);
+#define NEXT_RETURN_VALUE EXIT_SUCCESS
+)
 
-struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pf = gpi();
-    pf->peer_type = IBGP_SESSION;
-}
-
-#include "../prove_stuffs/mod_ubpf_api.c"
-#define next() return EXIT_SUCCESS
-#endif
 
 uint64_t decode_cluster_list(args_t *args UNUSED) {
 
@@ -83,22 +86,24 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
 
     in_cluster_list = (uint32_t *) data;
 
-    for(i = 0; i < *len/4; i++) {
+    for (i = 0; i < *len / 4; i++) {
         cluster_list[i] = ebpf_ntohl(in_cluster_list[i]);
     }
 
-#ifdef PROVERS_SH
-    p_assert(*len % 4 == 0);
-    p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
-#endif
+    PROOF_SEAHORN_INSTS(
+            p_assert(*len % 4 == 0);
+            p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
+    )
+
 
     add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
     return EXIT_SUCCESS;
 }
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = decode_cluster_list(&args);
-    return ret_val;
-}
-#endif
+
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = decode_cluster_list(&args);
+            return ret_val;
+        }
+)

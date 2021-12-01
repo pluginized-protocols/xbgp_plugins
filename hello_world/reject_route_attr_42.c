@@ -6,6 +6,8 @@
 #include "../xbgp_compliant_api/xbgp_defs.h"
 #include <bytecode_public.h>
 
+/* starting point */
+uint64_t filter_attr_42(args_t *args UNUSED);
 
 uint64_t filter_attr_42(args_t *args UNUSED) {
 

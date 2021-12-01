@@ -13,41 +13,43 @@
 /* (min =  2 bytes for header + 4 bytes one AS) */
 #define MIN_SEGMENT_SIZE 6
 
-#ifdef PROVERS
-void *get_arg(unsigned int id) {
+/* starting point */
+uint64_t count_as_path(args_t *args UNUSED);
 
-    unsigned int *length;
-    unsigned int *code;
-    unsigned char *buf;
+PROOF_SEAHORN_INSTS(
+        void *get_arg(unsigned int id) {
 
-    switch (id) {
-        case ARG_LENGTH:
-            length = malloc(sizeof(*length));
-            *length = 18; // to be aligned with the buffer returned in arg_data
-            return length;
-        case ARG_CODE:
-            code = malloc(sizeof(*code));
-            *code = AS_PATH_ATTR_ID;
-            return code;
-        case ARG_DATA:
-            buf = malloc(18); // 18bytes 2 hdr + 4*4 bytes
-            buf[0] = 2; //as sequence
-            buf[1] = 4; // 4 as in the PATH
+            unsigned int *length;
+            unsigned int *code;
+            unsigned char *buf;
 
-            // helps cbmc to finish the proof ?
-            /*uint32_t super_array[] = {
-                56, 97, 53, 1268
-            };
-            memcpy(buf + 2,  super_array, sizeof(super_array));*/
+            switch (id) {
+                case ARG_LENGTH:
+                    length = malloc(sizeof(*length));
+                    *length = 18; // to be aligned with the buffer returned in arg_data
+                    return length;
+                case ARG_CODE:
+                    code = malloc(sizeof(*code));
+                    *code = AS_PATH_ATTR_ID;
+                    return code;
+                case ARG_DATA:
+                    buf = malloc(18); // 18bytes 2 hdr + 4*4 bytes
+                    buf[0] = 2; //as sequence
+                    buf[1] = 4; // 4 as in the PATH
 
-            return buf;
-        default:
-            return NULL;
-    }
-}
+                    // helps cbmc to finish the proof ?
+                    /*uint32_t super_array[] = {
+                        56, 97, 53, 1268
+                    };
+                    memcpy(buf + 2,  super_array, sizeof(super_array));*/
 
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
+                    return buf;
+                default:
+                    return NULL;
+            }
+        }
+)
+
 
 unsigned int __always_inline count_nb_as(const unsigned char *const as_path, unsigned int max_len) {
     unsigned int i = 0;
@@ -108,20 +110,19 @@ uint64_t count_as_path(args_t *args UNUSED) {
         return EXIT_FAILURE;
     }
 
-#ifdef PROVERS
-    // free to be removed
-    free(attribute_code);
-    free(as_path_len);
-    free(as_path);
-#endif
+    PROOF_INSTS(
+            free(attribute_code);
+            free(as_path_len);
+            free(as_path);
+    )
 
     return EXIT_SUCCESS;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    count_as_path(&args);
-    return 0;
-}
-#endif
+PROOF_SEAHORN_INSTS(
+        int main(void) {
+            args_t args = {};
+            count_as_path(&args);
+            return 0;
+        }
+)

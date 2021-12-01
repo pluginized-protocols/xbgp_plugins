@@ -9,41 +9,43 @@
 
 #include "../prove_stuffs/prove.h"
 
-#ifdef PROVERS
-uint8_t get_u8();
-uint8_t *get_buf();
+/* starting point */
+uint64_t generic_encode_attr(args_t *args __attribute__((unused)));
 
-struct path_attribute *get_attr() {
-    struct path_attribute *p_attr;
-    p_attr = malloc(sizeof(*p_attr));
-    if (!p_attr) return NULL;
+PROOF_INSTS(
+        uint8_t get_u8();
+        uint8_t *get_buf();
 
-    p_attr->code = get_u8();
-    p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
-    p_attr->length =  8;
-    memcpy(p_attr->data, get_buf(), 8);
+        struct path_attribute *get_attr() {
+            struct path_attribute *p_attr;
+            p_attr = malloc(sizeof(*p_attr));
+            if (!p_attr) return NULL;
 
-    return p_attr;
-}
+            p_attr->code = get_u8();
+            p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+            p_attr->length = 8;
+            memcpy(p_attr->data, get_buf(), 8);
 
-struct ubpf_peer_info *gpi(void);
+            return p_attr;
+        }
 
-struct ubpf_peer_info *get_src_peer_info() {
-    struct ubpf_peer_info *pf = gpi();
-    pf->peer_type = IBGP_SESSION;
-}
+        struct ubpf_peer_info *gpi(void);
 
-#include "../prove_stuffs/mod_ubpf_api.c"
-#endif
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pf = gpi();
+            pf->peer_type = IBGP_SESSION;
+        }
+
+)
 
 
-static __always_inline uint64_t encode_coord(int32_t coord[2]) {
+static __always_inline uint64_t encode_coord(const int32_t coord[2]) {
 
     uint64_t _buf;
     uint8_t *buf = (uint8_t *) &_buf;
 
     *((uint32_t *) buf) = htonl(encode_number(coord[0]));
-    *((uint32_t *) (buf+4)) = htonl(encode_number(coord[1]));
+    *((uint32_t *) (buf + 4)) = htonl(encode_number(coord[1]));
 
     return _buf;
 
@@ -60,12 +62,12 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
             uint32_t lat, raw_lat;
             uint32_t lng, raw_lng;
 
-            raw_lat = *((uint32_t *) (buf_in + count));
+            raw_lat = *((const uint32_t *) (buf_in + count));
             lat = ebpf_ntohl(encode_number(raw_lat));
             *((uint32_t *) (buf_out + count)) = lat;
             count += 4;
 
-            raw_lng = *((uint32_t *) (buf_in + count));
+            raw_lng = *((const uint32_t *) (buf_in + count));
             lng = ebpf_htonl(encode_number(raw_lng));
             *((uint32_t *) (buf_out + count)) = lng;
             count += 4;
@@ -81,7 +83,7 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
             }
 
             if (pinfo->peer_type == EBGP_SESSION) return -1; // don't export the attribute
-            *((uint64_t *)buf_out) = encode_coord((int32_t *)buf_in);
+            *((uint64_t *) buf_out) = encode_coord((const int32_t *) buf_in);
             return 8;
 
         default:
@@ -132,19 +134,21 @@ uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
 
     counter += ret_val;
 
-#ifdef PROVERS_SH
-    BUF_GEN_ASSERT(attr_buf, attribute->code, 8, attribute->flags);
-#endif
+    PROOF_SEAHORN_INSTS(
+            BUF_GEN_ASSERT(attr_buf, attribute->code, 8, attribute->flags);
+    )
+
+
 
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
     return counter;
 }
 
-#ifdef PROVERS
-int main(void) {
-    args_t args = {};
-    uint64_t ret_val = generic_encode_attr(&args);
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = generic_encode_attr(&args);
 
-    return 0;
-}
-#endif
+            return 0;
+        }
+)

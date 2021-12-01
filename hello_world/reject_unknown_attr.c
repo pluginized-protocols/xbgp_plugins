@@ -2,6 +2,10 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include <bytecode_public.h>
 
+
+/* startting point */
+uint64_t parse_attribute(args_t *args UNUSED);
+
 #define is_known_attr(code) ( \
     ((code) == RESERVED_ATTR_ID) || \
     ((code) == ORIGIN_ATTR_ID) || \
