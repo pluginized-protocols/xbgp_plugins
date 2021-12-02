@@ -7,17 +7,25 @@
 
 #define AS_PATH_ATTR_ID 2
 
+#define MIN_ASPATH_LEN 4
+
 PROOF_INSTS(
         uint16_t non_det_len();
 
         struct path_attribute *get_attr_from_code(uint8_t code) {
             struct path_attribute *obj;
-            int len = non_det_len();
-            if(len > 4096) return NULL;
+            uint16_t len = non_det_len();
+            if (len > 4096 || len < MIN_ASPATH_LEN) return NULL;
             obj = malloc(sizeof(struct path_attribute) + len);
             if (obj == NULL) return NULL;
             obj->length = len;
             return obj;
+        }
+
+        void free_path_attr(struct path_attribute *p) {
+            if (p) {
+                free(p);
+            }
         }
 )
 
@@ -26,7 +34,7 @@ uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED);
 
 uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
 
-    int i, j;
+    unsigned int i, j;
     struct path_attribute *as_path;
     uint8_t *as_path_data;
     uint8_t segment_length;
@@ -36,35 +44,53 @@ uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
     as_path = get_attr_from_code(AS_PATH_ATTR_ID);
     if (as_path == NULL) return PLUGIN_FILTER_UNKNOWN;
 
-    if (as_path->length <= 0) return PLUGIN_FILTER_UNKNOWN;
+    if (as_path->length <= 0) {
+        PROOF_INSTS(free_path_attr(as_path););
+        return PLUGIN_FILTER_UNKNOWN;
+    }
 
     as_path_data = as_path->data;
 
     i = 0;
     while (i < as_path->length && i >= 0) {
-        if (as_path->length - i <= 2) return -1;
+        if (as_path->length - i <= 2) {
+            PROOF_INSTS(free_path_attr(as_path););
+            return PLUGIN_FILTER_UNKNOWN;
+        }
 
         i++; // skip segment type
         segment_length = as_path_data[i++];
 
         for (j = 0; j < segment_length && segment_length > 0; j++) {
-            unsigned long o = *(unsigned long *) (as_path_data + i);
+            if (as_path->length - i <= 4) {
+                PROOF_INSTS(free_path_attr(as_path););
+                return PLUGIN_FILTER_UNKNOWN;
+            }
+            uint32_t o = *(uint32_t *) (as_path_data + i);
             asn = get_u32_t2_friendly(o);
-            if (as_path->length - i <= 4) return -1;
             i += 4;
         }
     }
 
     if (asn % 2 == 0) {
+        PROOF_INSTS(free_path_attr(as_path););
         return PLUGIN_FILTER_ACCEPT;
     }
 
+    PROOF_INSTS(free_path_attr(as_path););
     return PLUGIN_FILTER_REJECT;
 }
 
 PROOF_INSTS(
         int main(void) {
+            uint64_t ret;
             args_t args = {};
-            return filter_route_originated_from_odd_as(&args);
+            ret = filter_route_originated_from_odd_as(&args);
+
+            PROOF_SEAHORN_INSTS(
+                    RET_VAL_FILTERS_CHECK(ret);
+            )
+
+            return ret;
         }
 )
