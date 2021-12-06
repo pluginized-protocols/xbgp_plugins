@@ -14,7 +14,7 @@
 #define MIN_SEGMENT_SIZE 6
 
 /* starting point */
-uint64_t count_as_path(args_t *args UNUSED);
+uint64_t as_path_count(args_t *args UNUSED);
 
 PROOF_SEAHORN_INSTS(
         void *get_arg(unsigned int id) {
@@ -87,7 +87,7 @@ unsigned int __always_inline count_nb_as(const unsigned char *const as_path, uns
     return nb_as;
 }
 
-uint64_t count_as_path(args_t *args UNUSED) {
+uint64_t as_path_count(args_t *args UNUSED) {
     unsigned int as_number = 0;
     unsigned int *attribute_code = get_arg(ARG_CODE);
     unsigned int *as_path_len = get_arg(ARG_LENGTH);

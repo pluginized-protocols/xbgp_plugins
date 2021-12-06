@@ -18,7 +18,7 @@
 /**
  *  Starting point of the BPF program
  */
-uint64_t customer_provider(args_t *args UNUSED);
+uint64_t customer_provider_validator(args_t *args UNUSED);
 
 struct global_info info;
 
@@ -258,7 +258,7 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
     return current_state == VALID_1 || current_state == VALID_2 ? 1 : -1;
 }
 
-uint64_t customer_provider(args_t *args UNUSED) {
+uint64_t customer_provider_validator(args_t *args UNUSED) {
 
     struct path_attribute *attr;
     uint32_t my_as, from_as;

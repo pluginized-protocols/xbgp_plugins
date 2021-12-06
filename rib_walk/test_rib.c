@@ -5,7 +5,7 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
 /* starting point */
-uint64_t rib_test(UNUSED args_t *args);
+uint64_t test_rib(UNUSED args_t *args);
 
 #define afi2af(afi) ({          \
   int af__;                     \
@@ -142,7 +142,7 @@ static __always_inline int nexthop2str(struct path_attribute *attr, char *buf, s
     return ebpf_inet_ntop(attr->data, AF_INET, buf, len);
 }
 
-uint64_t rib_test(UNUSED args_t *args) {
+uint64_t test_rib(UNUSED args_t *args) {
     int rib_fd;
     struct bgp_route *rte;
     char ip_str[60];

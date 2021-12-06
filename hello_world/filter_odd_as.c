@@ -29,9 +29,9 @@ PROOF_INSTS(
 )
 
 /* starting point */
-uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED);
+uint64_t filter_odd_as(args_t *args UNUSED);
 
-uint64_t filter_route_originated_from_odd_as(args_t *args UNUSED) {
+uint64_t filter_odd_as(args_t *args UNUSED) {
 
     unsigned int i, j;
     struct path_attribute *as_path;

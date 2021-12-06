@@ -6,7 +6,7 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_ext_comm.h"
 
-uint64_t generic_encode_attr(args_t *args __attribute__((unused)));
+uint64_t encode_extended_communities(args_t *args __attribute__((unused)));
 
 #include "../prove_stuffs/prove.h"
 
@@ -34,7 +34,7 @@ PROOF_INSTS(
 )
 
 
-uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
+uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     uint32_t counter = 0;
     uint8_t *attr_buf;

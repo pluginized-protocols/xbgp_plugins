@@ -6,7 +6,7 @@
 #include "../prove_stuffs/prove.h"
 
 /* starting point */
-uint64_t dumb_decision(args_t *args UNUSED);
+uint64_t alternate_old_new(args_t *args UNUSED);
 
 static __always_inline int
 strncmp(const char *s1, const char *s2, register size_t n) {
@@ -54,7 +54,7 @@ struct stats {
  * @return BGP_ROUTE_TYPE_OLD to keep the old best route
  *         BGP_ROUTE_TYPE_NEW to change the best route
  */
-uint64_t dumb_decision(args)
+uint64_t alternate_old_new(args)
         args_t *args UNUSED;
 {
     struct stats *st_sh;

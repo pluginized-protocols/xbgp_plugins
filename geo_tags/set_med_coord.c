@@ -9,7 +9,8 @@
 
 #include "../prove_stuffs/prove.h"
 
-uint64_t compute_med(args_t *args UNUSED);
+/* starting point */
+uint64_t set_med_coord(args_t *args UNUSED);
 
 PROOF_INSTS(
         uint8_t *nondet_get_buf__verif();
@@ -48,7 +49,7 @@ void *memcpy(void *dst, const void *src, unsigned long size);
 /**
  * Export filter
  */
-uint64_t compute_med(args_t *args UNUSED) {
+uint64_t set_med_coord(args_t *args UNUSED) {
 
     struct path_attribute *med_attr;
     uint8_t buf[sizeof(struct path_attribute) + sizeof(uint32_t)];

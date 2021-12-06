@@ -3,7 +3,7 @@
 #include "../xbgp_compliant_api/xbgp_defs.h"
 
 /* starting point */
-uint64_t new_bgp_decision_process(args_t *args UNUSED);
+uint64_t decision_process_add(args_t *args UNUSED);
 
 #define get_community_from_array(arr, len, attr_id) ({ \
  int i__;                                              \
@@ -32,7 +32,7 @@ uint64_t new_bgp_decision_process(args_t *args UNUSED);
   val_ret__;                                                 \
 })
 
-uint64_t new_bgp_decision_process(args_t *args UNUSED) {
+uint64_t decision_process_add(args_t *args UNUSED) {
     struct bgp_route *rte_new;
     struct bgp_route *rte_old;
 

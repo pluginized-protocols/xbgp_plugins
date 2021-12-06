@@ -3,7 +3,7 @@
 
 
 /* startting point */
-uint64_t parse_attribute(args_t *args UNUSED);
+uint64_t reject_unknown_attr(args_t *args UNUSED);
 
 #define is_known_attr(code) ( \
     ((code) == RESERVED_ATTR_ID) || \
@@ -40,7 +40,7 @@ uint64_t parse_attribute(args_t *args UNUSED);
 
 
 
-uint64_t parse_attribute(args_t *args UNUSED) {
+uint64_t reject_unknown_attr(args_t *args UNUSED) {
 
     uint8_t *code;
     code = get_arg(ARG_CODE); // get the argument from its "ID"

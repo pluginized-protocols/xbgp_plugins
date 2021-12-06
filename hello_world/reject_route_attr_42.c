@@ -6,9 +6,9 @@
 #include "../xbgp_compliant_api/xbgp_defs.h"
 
 /* starting point */
-uint64_t filter_attr_42(args_t *args UNUSED);
+uint64_t reject_route_attr_42(args_t *args UNUSED);
 
-uint64_t filter_attr_42(args_t *args UNUSED) {
+uint64_t reject_route_attr_42(args_t *args UNUSED) {
 
     uint8_t *code;
     code = get_arg(ARG_CODE);

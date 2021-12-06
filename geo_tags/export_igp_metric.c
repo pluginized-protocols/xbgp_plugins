@@ -10,7 +10,7 @@
 #include "../prove_stuffs/prove.h"
 
 /* starting point */
-uint64_t export_igp(args_t *args UNUSED);
+uint64_t export_igp_metric(args_t *args UNUSED);
 
 
 #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
@@ -19,7 +19,7 @@ uint64_t export_igp(args_t *args UNUSED);
 #define next() return PLUGIN_FILTER_UNKNOWN
 #endif
 
-uint64_t export_igp(args_t *args UNUSED) {
+uint64_t export_igp_metric(args_t *args UNUSED) {
 
     int nb_peers;
     struct ubpf_nexthop *nexthop;

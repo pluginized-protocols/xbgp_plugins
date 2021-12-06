@@ -6,7 +6,7 @@
 
 
 /* starting point */
-uint64_t monitor_route_origin(args_t *args UNUSED);
+uint64_t route_origin_monitor(args_t *args UNUSED);
 
 #define ORIGIN_ATTR 1
 
@@ -19,7 +19,7 @@ const char *igp = "IGP";
 const char *egp = "EGP";
 const char *unk = "INCOMPLETE";
 
-uint64_t monitor_route_origin(args_t *args UNUSED) {
+uint64_t route_origin_monitor(args_t *args UNUSED) {
     struct path_attribute *attr;
     struct ubpf_prefix *p;
     char prefix_addr[52];

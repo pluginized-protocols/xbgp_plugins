@@ -9,7 +9,7 @@
 #include "../prove_stuffs/prove.h"
 
 /* starting point */
-uint64_t generic_decode_attr(args_t *args UNUSED);
+uint64_t receive_attr(args_t *args UNUSED);
 
 PROOF_INSTS(
         uint8_t nondet_get_uint8__verif(void);
@@ -115,7 +115,7 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
  * @return EXIT_SUCCESS if the attribute has been decoded and stored in the protocol memory
  *         EXIT_FAILURE otherwise. The protocol itself must decode this attribute.
  */
-uint64_t generic_decode_attr(args_t *args UNUSED) {
+uint64_t receive_attr(args_t *args UNUSED) {
 
     uint8_t *code;
     uint16_t *len;

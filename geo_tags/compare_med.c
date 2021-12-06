@@ -9,7 +9,7 @@
 #include "../prove_stuffs/prove.h"
 
 /* starting point */
-uint64_t med_compare(args_t *args __attribute__((unused)));
+uint64_t compare_med(args_t *args __attribute__((unused)));
 
 
 PROOF_INSTS(
@@ -47,7 +47,7 @@ static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const in
  *         RTE_NEW if the new route is better than the old one
  *         RTE_UNKNOWN unable to decide with geographical attribute here.
  */
-uint64_t med_compare(args_t *args __attribute__((unused))) {
+uint64_t compare_med(args_t *args __attribute__((unused))) {
 
     uint64_t new_dist, old_dist;
     struct path_attribute *new_attr;

@@ -9,7 +9,7 @@
 #include "../prove_stuffs/prove.h"
 
 /* starting point */
-uint64_t generic_encode_attr(args_t *args __attribute__((unused)));
+uint64_t write_attr(args_t *args __attribute__((unused)));
 
 PROOF_INSTS(
         uint8_t get_u8();
@@ -100,7 +100,7 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
  *         0 when no bytes written
  *         else, the number of bytes written to the stream
  */
-uint64_t generic_encode_attr(args_t *args __attribute__((unused))) {
+uint64_t write_attr(args_t *args __attribute__((unused))) {
 
     int ret_val = 0;
     uint32_t counter = 0;

@@ -11,7 +11,7 @@ the router's RIB.
 ### CBMC checks example :
 
 ```shell
-cbmc --depth 800 \
+cbmc --depth 512 \
      --pointer-check \
      --memory-leak-check \
      --bounds-check \

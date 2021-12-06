@@ -7,7 +7,7 @@
 #include "../prove_stuffs/prove.h"
 
 /* starting point*/
-uint64_t add_prefix_originator(args_t *args UNUSED);
+uint64_t import_prefix_originator(args_t *args UNUSED);
 
 PROOF_INSTS(
         struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
@@ -23,7 +23,7 @@ PROOF_INSTS(
 )
 
 
-uint64_t add_prefix_originator(args_t *args UNUSED) {
+uint64_t import_prefix_originator(args_t *args UNUSED) {
 
     uint64_t _attr;
     int nb_peers;
