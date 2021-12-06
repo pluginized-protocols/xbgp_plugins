@@ -16,10 +16,8 @@
 #include "mod_ubpf_api.h"
 
 #include <stdio.h>
-#include <ubpf_public.h>
 #include <stdarg.h>
 #include <string.h>
-#include "plugin_arguments.h"
 #include "../xbgp_compliant_api/xbgp_defs.h"
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include <time.h>
