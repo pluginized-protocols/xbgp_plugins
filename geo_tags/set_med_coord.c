@@ -5,7 +5,6 @@
 
 #include <stdint.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
-#include <bytecode_public.h>
 #include "router_bgp_config.h"
 
 #include "../prove_stuffs/prove.h"

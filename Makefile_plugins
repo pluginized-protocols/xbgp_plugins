@@ -14,7 +14,6 @@ CFLAGS += -Wmissing-declarations
 CFLAGS += -Wpointer-arith
 CFLAGS += -Wbad-function-cast
 CFLAGS += -fno-stack-protector
-CFLAGS += -I$(LIBXBGP) # INCLUDE DIRECTORY TO INTERNAL FUNCTIONS OF LIBXBGP
 
 
 SRC=$(shell find . -name '*.c')

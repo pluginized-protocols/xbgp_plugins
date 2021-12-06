@@ -3,7 +3,6 @@
 //
 
 #include <stdint.h>
-#include <bytecode_public.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_ext_comm.h"
 

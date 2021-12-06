@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "xbgp_defs.h"
-#include <bytecode_public.h>
+#include "xbgp_common_vm.h"
 
 /**
  * Insertion point that must be

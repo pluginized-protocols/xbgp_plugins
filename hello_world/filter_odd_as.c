@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
-#include <bytecode_public.h>
 #include "../byte_manip.h" // get_u32 macro definition
 
 #include "../prove_stuffs/prove.h"

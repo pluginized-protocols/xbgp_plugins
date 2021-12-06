@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "../xbgp_compliant_api/xbgp_defs.h"
-#include <bytecode_public.h>
 
 /* starting point */
 uint64_t new_bgp_decision_process(args_t *args UNUSED);

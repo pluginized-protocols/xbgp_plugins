@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <ubpf_public.h>
 #include <stdarg.h>
-#include <bytecode_public.h>
 #include <string.h>
 #include "plugin_arguments.h"
 #include "../xbgp_compliant_api/xbgp_defs.h"

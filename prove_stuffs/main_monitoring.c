@@ -2,8 +2,6 @@
 // Created by thomas on 27/04/21.
 //
 
-#include <bytecode_public.h>
-
 extern uint64_t count_as_path(args_t *args UNUSED);
 
 int main(void) {

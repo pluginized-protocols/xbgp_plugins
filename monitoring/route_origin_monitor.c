@@ -2,7 +2,6 @@
 // Created by thomas on 17/03/21.
 //
 #include <stdint.h>
-#include <bytecode_public.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
 

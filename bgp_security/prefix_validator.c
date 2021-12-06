@@ -3,7 +3,6 @@
 //
 
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
-#include <bytecode_public.h>
 #include <sys/socket.h>
 #include "common_security.h"
 #include "../byte_manip.h"

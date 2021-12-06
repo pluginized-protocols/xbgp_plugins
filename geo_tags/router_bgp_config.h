@@ -9,7 +9,6 @@
 #define PREFIX_ORIGINATOR 43
 
 #include <stdint.h>
-#include <bytecode_public.h>
 
 typedef struct geo_tags {
     int32_t coordinates[2];

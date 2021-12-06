@@ -3,7 +3,6 @@
 //
 
 
-#include <bytecode_public.h>
 
 extern uint64_t generic_encode_attr(args_t *args __attribute__((unused)));
 

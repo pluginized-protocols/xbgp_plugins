@@ -2,7 +2,6 @@
 // Created by thomas on 1/04/21.
 //
 
-#include <bytecode_public.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "mod_ubpf_api.h"
 

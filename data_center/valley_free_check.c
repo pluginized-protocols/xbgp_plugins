@@ -4,7 +4,6 @@
 
 #include <stddef.h>
 #include <sys/cdefs.h>
-#include <bytecode_public.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_datacenter.h"
 #include "../byte_manip.h"

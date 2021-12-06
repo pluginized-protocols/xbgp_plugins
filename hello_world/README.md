@@ -1,5 +1,13 @@
 # Hello World Plugins
 
+## Filter routes advertised by odd ASes (`filter_odd_as.c`).
+
+This acts like a simple import filter. It parses the
+AS path to determine if the routes advertised inside the
+BGP update is originated from an odd AS. Therefore,
+only routes coming from an even AS will be installed inside
+the router's RIB.
+
 ### CBMC checks example :
 
 ```shell

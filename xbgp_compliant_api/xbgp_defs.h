@@ -11,6 +11,8 @@
 #include "xbgp_common.h"
 //#include "tools_ubpf_api.h"
 
+#define UNUSED __attribute__((unused))
+
 #define FAIL 0
 
 /* REGISTERED ATTRIBUTE ID */
