@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <math.h>
 #include <float.h>
-#include <arpa/inet.h>
 
 #define FAKE_POINTER ((void *) 0x1)
 #define FAKE_CONTEXT FAKE_POINTER // we fake the context so that cbmc can walk to the non null branch
@@ -52,12 +51,12 @@ void ebpf_print(const char *format, ...) {
     va_end(list);
 }
 
-void *ebpf_memcpy(void *dst0, const void *src0, size_t length){
+void *ebpf_memcpy(void *dst0, const void *src0, size_t length) {
     char *dest = dst0;
     char *dst = dst0;
     const char *src = src0;
 
-    while (length-- > 0){
+    while (length-- > 0) {
         *dst++ = *src++;
     }
     return dest;
@@ -75,30 +74,77 @@ int ebpf_memcmp(const void *s1, const void *s2, size_t n) {
     return (0);
 }
 
-int ebpf_inet_ntop(uint8_t *ipaddr, int type, char *buf, size_t len) {
+int numb(unsigned int nb, int base, char *buf, size_t len) {
+    static const char *hexchars = "0123456789abcdef";
+    char tmp[60];
+    unsigned res;
+    int j = 0, conv_len;
 
-    struct in_addr ipv4;
-    struct in6_addr ipv6;
-    void *ip;
+    while (nb != 0) {
+        res = nb % base;
+        nb = nb / base;
+        tmp[j++] = hexchars[res];
+    }
+
+    conv_len = j;
+
+    /* reverse tmp */
+    while (j --> 0 && len > 0) {
+        *buf++ = tmp[j];
+        len -= 1;
+    }
+
+    return conv_len;
+}
+
+
+int ebpf_inet_ntop(uint8_t *ipaddr_, int type, char *buf, size_t len) {
+    static const char *hexchars = "0123456789abcdef";
+    int i, j, k;
+
+    unsigned hilo;
+    unsigned lo;
+    unsigned hi;
+
+    uint8_t *ipaddr = ipaddr_;
 
     switch (type) {
         case AF_INET:
-            ipv4.s_addr = *(uint32_t *) ipaddr;
-            ip = &ipv4;
-            break;
+            for (i = 0, j = 0, k = 0; i < 4; i++) {
+                j += numb(ipaddr[i], 10, buf + j, len - j);
+                if (k < 3) {
+                    buf[j++] = '.';
+                    k++;
+                }
+            }
+            buf[j] = 0;
+
+            return 0;
         case AF_INET6:
-            memcpy(&ipv6, ipaddr, sizeof(ipv6));
-            ip = &ipv6;
-            break;
+            /* returns only the exploded form */
+            for (i = 0, j = 0, k = 0; i < 16; i++) {
+                hilo = ipaddr[i];
+                lo = hilo & 0x0f;
+                hi = hilo >> 4;
+
+                buf[j++] = hexchars[hi];
+                buf[j++] = hexchars[lo];
+                if ((j - k) % 4 == 0 && k < 7) {
+                    buf[j++] = ':';
+                    k++;
+                }
+            }
+            buf[j] = 0;
+
+            return 0;
         default:
             return -1;
     }
 
-    if (!inet_ntop(type, ip, buf, len)) return -1;
-
     return 0;
 }
 
+#include "glib_c_inet_pton.c"
 int ebpf_inet_pton(int af, const char *src, void *dst, size_t buf_len) {
     int s;
     size_t min_len;
@@ -117,7 +163,7 @@ int ebpf_inet_pton(int af, const char *src, void *dst, size_t buf_len) {
 
     if (buf_len < min_len) return -1;
 
-    s = inet_pton(af, src, buf);
+    s = my_inet_pton(af, src, buf);
 
     if (s <= 0) {
         return -1;
@@ -504,12 +550,12 @@ void *ctx_malloc(size_t size) {
 }
 
 void *ctx_calloc(size_t nmemb, size_t size) {
-    unsigned char* b = malloc(nmemb*size);
-    memset(b, 0, nmemb*size);
+    unsigned char *b = malloc(nmemb * size);
+    memset(b, 0, nmemb * size);
     return b;
 }
 
-void *ctx_realloc(void *ptr,size_t size) {
+void *ctx_realloc(void *ptr, size_t size) {
     return realloc(ptr, size);
 }
 
@@ -529,11 +575,11 @@ void ctx_shmrm(key_t key UNUSED) {
     ;
 }
 
-uint16_t ebpf_ntohs(uint16_t value){
+uint16_t ebpf_ntohs(uint16_t value) {
     return ntohs(value);
 }
 
-uint32_t ebpf_ntohl(uint32_t value){
+uint32_t ebpf_ntohl(uint32_t value) {
     return ntohl(value);
 }
 
@@ -589,17 +635,17 @@ uint64_t ebpf_sqrt(uint64_t a, unsigned int precision) {
 }
 
 int get_extra_info_value(struct global_info *info__ UNUSED,
-        void *buf UNUSED, size_t len_buf UNUSED) {
+                         void *buf UNUSED, size_t len_buf UNUSED) {
     return 0;
 }
 
 int get_extra_info_lst_idx(struct global_info *info__ UNUSED,
-        int arr_idx UNUSED, struct global_info *value UNUSED) {
+                           int arr_idx UNUSED, struct global_info *value UNUSED) {
     return 0;
 }
 
 int get_extra_info_dict(struct global_info *info__ UNUSED,
-        const char *key UNUSED, struct global_info *value UNUSED) {
+                        const char *key UNUSED, struct global_info *value UNUSED) {
     return 0;
 }
 
