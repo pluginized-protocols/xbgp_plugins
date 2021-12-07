@@ -84,7 +84,7 @@ PROOF_INSTS(
         int main(void) {
             uint64_t ret;
             args_t args = {};
-            ret = filter_route_originated_from_odd_as(&args);
+            ret = filter_odd_as(&args);
 
             PROOF_SEAHORN_INSTS(
                     RET_VAL_FILTERS_CHECK(ret);
