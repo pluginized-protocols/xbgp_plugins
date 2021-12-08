@@ -11,13 +11,15 @@ uint64_t alternate_old_new(args_t *args UNUSED);
 static __always_inline int
 strncmp(const char *s1, const char *s2, register size_t n) {
     register unsigned char u1, u2;
-    while (n-- > 0) {
+    if (n == 0) return 0;
+    while (n > 0) {
         u1 = (unsigned char) *s1++;
         u2 = (unsigned char) *s2++;
         if (u1 != u2)
             return u1 - u2;
         if (u1 == '\0')
             return 0;
+        n -= 1;
     }
     return 0;
 }
@@ -54,9 +56,7 @@ struct stats {
  * @return BGP_ROUTE_TYPE_OLD to keep the old best route
  *         BGP_ROUTE_TYPE_NEW to change the best route
  */
-uint64_t alternate_old_new(args)
-        args_t *args UNUSED;
-{
+uint64_t alternate_old_new(args_t *args UNUSED) {
     struct stats *st_sh;
     int decision;
     uint8_t buf[sizeof(struct vrf_info) + 50]; // space for struct + string on the stack
@@ -114,11 +114,14 @@ PROOF_INSTS(
         int main(void) {
             args_t args = {};
 
-            uint64_t ret_val = dumb_decision(&args);
+            uint64_t ret_val = alternate_old_new(&args);
 
-            p_assert(ret_val == BGP_ROUTE_TYPE_FAIL ||
+            p_assert(ret_val == BGP_ROUTE_TYPE_UNKNOWN ||
+                    ret_val == BGP_ROUTE_TYPE_FAIL ||
                    ret_val == BGP_ROUTE_TYPE_NEW ||
                    ret_val == BGP_ROUTE_TYPE_OLD);
+
+            ctx_shmrm(42);
 
             return 0;
         }

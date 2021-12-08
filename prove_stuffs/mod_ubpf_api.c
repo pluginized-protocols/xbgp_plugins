@@ -563,16 +563,20 @@ void ctx_free(void *ptr) {
     free(ptr);
 }
 
-void *ctx_shmnew(key_t key UNUSED, size_t size) {
-    return malloc(size);
+static void *key_ptr[8192] = {0}; // 64 KiB
+
+void *ctx_shmnew(key_t key, size_t size) {
+    if (key_ptr[key]) return NULL;
+    key_ptr[key] = malloc(size);
+    return key_ptr[key];
 }
 
-void *ctx_shmget(key_t key UNUSED) {
-    return malloc(0);
+void *ctx_shmget(key_t key) {
+    return key_ptr[key];
 }
 
-void ctx_shmrm(key_t key UNUSED) {
-    ;
+void ctx_shmrm(key_t key) {
+    if (key_ptr[key]) free(key_ptr[key]);
 }
 
 uint16_t ebpf_ntohs(uint16_t value) {

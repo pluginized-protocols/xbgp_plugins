@@ -2,7 +2,6 @@
 // Created by thomas on 3/06/20.
 //
 
-#include <stddef.h>
 #include <sys/cdefs.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_datacenter.h"
