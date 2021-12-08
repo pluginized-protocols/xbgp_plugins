@@ -13,11 +13,14 @@ uint64_t decode_extended_communities(args_t *args UNUSED);
 
 
 PROOF_INSTS(
-        uint16_t get_length();
+        uint16_t get_length(void);
+        static uint16_t def_len = 0;
 
         void *get_arg(unsigned int id) {
 
-            int nb_extended = 10;
+            if (def_len == 0) {
+                def_len = get_length();
+            }
 
             switch (id) {
                 case ARG_CODE: {
@@ -28,7 +31,7 @@ PROOF_INSTS(
                     return code;
                 }
                 case ARG_DATA: {
-                    uint64_t *ec = malloc(sizeof(uint64_t) * nb_extended);
+                    uint64_t *ec = malloc(sizeof(uint64_t) * def_len);
                     if (!ec) return NULL;
 
                     return ec;
@@ -45,8 +48,7 @@ PROOF_INSTS(
                     uint16_t *length = malloc(sizeof(uint16_t));
                     if (!length) return NULL;
 
-                    *length = get_length();
-
+                    *length = def_len;
                     return length;
                 }
                 default:
@@ -57,25 +59,37 @@ PROOF_INSTS(
 )
 
 
+#define TIDYING \
+do {            \
+PROOF_INSTS(    \
+    if (code) free(code); \
+    if (len) free(len);   \
+    if (flags) free(flags); \
+    if (data) free(data);\
+    if (decoded_ext_communitities) free(decoded_ext_communitities); \
+);\
+} while(0)
+
 uint64_t decode_extended_communities(args_t *args UNUSED) {
 
     int i;
 
-    uint8_t *code;
-    uint16_t *len;
-    uint8_t *flags;
-    uint8_t *data;
+    uint8_t *code = NULL;
+    uint16_t *len = NULL;
+    uint8_t *flags = NULL;
+    uint8_t *data = NULL;
 
     uint64_t *in_ext_communitites;
-    uint64_t *decoded_ext_communitities;
+    uint64_t *decoded_ext_communitities = NULL;
 
     ebpf_print("[WARNING] This code won't work!\n");
     code = get_arg(ARG_CODE);  // refactor
     flags = get_arg(ARG_FLAGS);
-    data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
+    data = get_arg(ARG_DATA);
 
     if (!code || !len || !flags || !data) {
+        TIDYING;
         return EXIT_FAILURE;
     }
 
@@ -83,6 +97,7 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
 
     if (*len % 8 != 0) {
         // malformed extended attribute
+        TIDYING;
         return EXIT_FAILURE;
     }
 
@@ -91,7 +106,10 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     in_ext_communitites = (uint64_t *) data;
 
     decoded_ext_communitities = ctx_malloc(*len);
-    if (!decoded_ext_communitities) next();
+    if (!decoded_ext_communitities) {
+        TIDYING;
+        next();
+    }
 
     for (i = 0; i < *len / 8; i++) {
         decoded_ext_communitities[i] = ebpf_ntohll(in_ext_communitites[i]);
@@ -102,6 +120,7 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
 
     add_attr(EXTENDED_COMMUNITIES, *flags, *len, (uint8_t *) decoded_ext_communitities);
 
+    TIDYING;
     return EXIT_SUCCESS;
 }
 

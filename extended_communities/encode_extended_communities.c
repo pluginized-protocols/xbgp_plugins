@@ -14,30 +14,34 @@ uint64_t encode_extended_communities(args_t *args __attribute__((unused)));
 PROOF_INSTS(
         struct path_attribute *get_attr(void);
 
-        void nondet_set_data__verif(void *data);
+        uint16_t nondet_u16(void);
 
         struct path_attribute *get_attr() {
-
+            uint16_t len;
             struct path_attribute *p_attr;
-            p_attr = malloc(sizeof(*p_attr) + 64);
+            len = nondet_u16();
+            p_attr = malloc(sizeof(*p_attr) + len);
 
             if (p_attr == NULL) return NULL;
 
             p_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
             p_attr->code = EXTENDED_COMMUNITIES_ATTR_ID;
-            p_attr->length = 64;
-            nondet_set_data__verif(p_attr->data);
+            p_attr->length = len;
 
             return p_attr;
         }
 #define NEXT_RETURN_VALUE 0
 )
 
+#define TIDYING \
+do {            \
+    if (attribute) free(attribute); \
+    if (attr_buf)  free(attr_buf);\
+} while(0)
 
 uint64_t encode_extended_communities(args_t *args UNUSED) {
-
     uint32_t counter = 0;
-    uint8_t *attr_buf;
+    uint8_t *attr_buf = NULL;
     uint16_t tot_len = 0;
     uint64_t *ext_communities;
     int i;
@@ -46,22 +50,33 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
     attribute = get_attr();
 
     if (!attribute) return 0;
+    if (attribute->length < 8 || attribute->length % 8 != 0) {
+        TIDYING;
+        return 0; // min length extended communities is 8 bytes || malformed attribute (extcomm must be a multiple of 8)
+    }
 
-    if (attribute->code != EXTENDED_COMMUNITIES) next();
+    if (attribute->code != EXTENDED_COMMUNITIES) {
+        TIDYING;
+        next();
+        return 0;
+    }
 
     tot_len += 2; // Type hdr
     tot_len += attribute->length < 256 ? 1 : 2; // Length hdr
     tot_len += attribute->length;
 
     attr_buf = ctx_calloc(1, tot_len);
-    if (!attr_buf) return 0;
+    if (!attr_buf) {
+        TIDYING;
+        return 0;
+    }
 
     attr_buf[counter++] = attribute->flags;
     attr_buf[counter++] = attribute->code;
 
     if (attribute->length < 256) attr_buf[counter++] = (uint8_t) attribute->length;
     else {
-        attr_buf[counter] = attribute->length;
+        *(uint16_t *)(attr_buf + counter) = attribute->length;
         counter += 2;
     }
 
@@ -74,6 +89,7 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     if (counter != tot_len) {
         ebpf_print("Size mismatch\n");
+        TIDYING;
         return 0;
     }
 
@@ -83,14 +99,14 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
 
-    //ctx_free(attr_buf);
+    TIDYING;
     return counter;
 }
 
 PROOF_INSTS(
         int main(void) {
             args_t args = {};
-            uint64_t ret_val = decode_extended_communities(&args);
+            uint64_t ret_val = encode_extended_communities(&args);
             return ret_val;
         }
 )

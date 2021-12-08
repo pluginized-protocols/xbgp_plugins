@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <math.h>
 #include <float.h>
+#include <byteswap.h>
 
 #define FAKE_POINTER ((void *) 0x1)
 #define FAKE_CONTEXT FAKE_POINTER // we fake the context so that cbmc can walk to the non null branch
@@ -89,7 +90,7 @@ int numb(unsigned int nb, int base, char *buf, size_t len) {
     conv_len = j;
 
     /* reverse tmp */
-    while (j --> 0 && len > 0) {
+    while (j-- > 0 && len > 0) {
         *buf++ = tmp[j];
         len -= 1;
     }
@@ -145,6 +146,7 @@ int ebpf_inet_ntop(uint8_t *ipaddr_, int type, char *buf, size_t len) {
 }
 
 #include "glib_c_inet_pton.c"
+
 int ebpf_inet_pton(int af, const char *src, void *dst, size_t buf_len) {
     int s;
     size_t min_len;
@@ -580,19 +582,28 @@ void ctx_shmrm(key_t key) {
 }
 
 uint16_t ebpf_ntohs(uint16_t value) {
-    return ntohs(value);
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    return bswap_16(value);  // Compiler builtin GCC/Clang
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    return value;
+#else
+#    error unsupported endianness
+#endif
 }
 
 uint32_t ebpf_ntohl(uint32_t value) {
-    return ntohl(value);
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    return bswap_32(value);  // Compiler builtin GCC/Clang
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    return value;
+#else
+#    error unsupported endianness
+#endif
 }
 
 uint64_t ebpf_ntohll(uint64_t value) {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    return (
-            ((u_int64_t) (ntohl((int) ((value << 32u) >> 32u))) << 32u) |
-            (unsigned int) ntohl(((int) (value >> 32u)))
-    );
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    return bswap_64(value);  // Compiler builtin GCC/Clang
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     return value;
 #else
@@ -601,22 +612,32 @@ uint64_t ebpf_ntohll(uint64_t value) {
 }
 
 uint16_t ebpf_htons(uint16_t val) {
-    return htons(val);
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    return bswap_16(val);  // Compiler builtin GCC/Clang
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    return value;
+#else
+#    error unsupported endianness
+#endif
 }
 
 uint32_t ebpf_htonl(uint32_t val) {
-    return htonl(val);
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    return bswap_32(val);  // Compiler builtin GCC/Clang
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    return value;
+#else
+#    error unsupported endianness
+#endif
 }
 
 uint64_t ebpf_htonll(uint64_t val) {
-#if __BYTE_ORDER == __ORDER_LITTLE_ENDIAN__
-    return (
-            ((((uint64_t) htonl(val)) << 32u) + htonl((val) >> 32u))
-    );
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    return bswap_64(val);  // Compiler builtin GCC/Clang
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    return val;
+    return value;
 #else
-#error unsupported endianness
+#    error unsupported endianness
 #endif
 }
 
