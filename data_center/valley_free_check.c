@@ -16,33 +16,36 @@
 uint64_t valley_free_check(args_t *args UNUSED);
 
 PROOF_INSTS(
-        uint8_t *nondet_get_buf__verif();
-        struct ubpf_peer_info *nondet_get_pinfo__verif();
-        uint16_t nondet_get_u16__verif();
+        uint16_t nondet_get_u16__verif(void);
 
         struct ubpf_peer_info *get_peer_info(int *nb_peers) {
-            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            unsigned char *data;
+            struct ubpf_peer_info *pinfo;
+            data = malloc(2*sizeof(*pinfo));
+            if (!data) return NULL;
+            pinfo = (struct ubpf_peer_info *) data;
             pinfo->peer_type = IBGP_SESSION;
+            pinfo->local_bgp_session = (struct ubpf_peer_info *) (data + sizeof(*pinfo));
             return pinfo;
         }
 
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-            pinfo->peer_type = IBGP_SESSION;
-            return pinfo;
+            return get_peer_info(1);
         }
 
 
         struct path_attribute *get_attr_from_code(uint8_t code) {
+            uint16_t dlen = nondet_get_u16__verif();
             struct path_attribute *p_attr;
-            p_attr = malloc(sizeof(*p_attr));
+            p_attr = malloc(sizeof(*p_attr) + dlen);
+
+            if (!p_attr) return NULL;
 
             switch (code) {
                 case AS_PATH_ATTR_ID:
                     p_attr->code = AS_PATH_ATTR_ID;
                     p_attr->flags = ATTR_TRANSITIVE;
-                    p_attr->length = nondet_get_u16__verif() * 4;
-                    memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
+                    p_attr->length = dlen;
                     return p_attr;
                     break;
                 default:
@@ -52,9 +55,16 @@ PROOF_INSTS(
             return NULL;
         }
 
+        void free_pattr(struct path_attribute *pa) {
+            if (pa) free(pa);
+        }
+
+        void free_pinfo(struct ubpf_peer_info *pinfo) {
+            if (pinfo) free(pinfo);
+        }
+
 #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 )
-
 
 enum type_router {
     TYPE_SPINE,
@@ -132,6 +142,8 @@ flatten_as_path(const uint8_t *as_path, unsigned int length, unsigned int *asp_f
         if (segment_length <= 0) return -1;
         if (segment_length > 255) return -1;
 
+        if (bytes + 2 + (4*segment_length) > length) return -1;
+
         for (j = 0; j < segment_length && idx < flat_size && idx >= 0; j++) {
             unsigned int ofst = *(const unsigned int *) (as_path + bytes + 2 + (4 * j));
             asp_flat[idx] = get_u32_t2_friendly(ofst);
@@ -151,6 +163,15 @@ flatten_as_path(const uint8_t *as_path, unsigned int length, unsigned int *asp_f
 }
 
 
+#define TIDYUP                 \
+do { PROOF_INSTS(              \
+    free_pattr(attr);          \
+    free_pinfo(peer);          \
+    if (arr_aspath) free(arr_aspath);\
+)} while(0)
+
+
+
 uint64_t valley_free_check(args_t *args UNUSED) {
     int i;
     int nb_ases;
@@ -163,23 +184,39 @@ uint64_t valley_free_check(args_t *args UNUSED) {
 
     attr = get_attr_from_code(AS_PATH_ATTR_CODE);
     peer = get_src_peer_info();
-    if (!attr || !peer) return PLUGIN_FILTER_UNKNOWN;
+    if (!attr || !peer) {
+        TIDYUP;
+        return PLUGIN_FILTER_UNKNOWN;
+    }
     my_as = peer->local_bgp_session->as;
     as_path = attr->data;
     as_path_len = attr->length;
 
     arr_aspath = ctx_malloc(sizeof(*arr_aspath) * 1024);
-    if (!arr_aspath) return PLUGIN_FILTER_UNKNOWN;
+    if (!arr_aspath) {
+        TIDYUP;
+        return PLUGIN_FILTER_UNKNOWN;
+    }
 
     nb_ases = flatten_as_path(as_path, as_path_len, arr_aspath, 1024);
-    if (nb_ases == -1) return PLUGIN_FILTER_UNKNOWN;
+    if (nb_ases == -1) {
+        TIDYUP;
+        return PLUGIN_FILTER_UNKNOWN;
+    }
 
     // should always contains at least one AS !
-    if (!valley_check(arr_aspath[0], my_as)) return PLUGIN_FILTER_REJECT;
+    if (!valley_check(arr_aspath[0], my_as)) {
+        TIDYUP;
+        return PLUGIN_FILTER_REJECT;
+    }
 
     for (i = 1; i < nb_ases; i++) {
-        if (!valley_check(arr_aspath[i], my_as)) return PLUGIN_FILTER_REJECT;
+        if (!valley_check(arr_aspath[i], my_as)) {
+            TIDYUP;
+            return PLUGIN_FILTER_REJECT;
+        }
     }
+    TIDYUP;
     next();
     return PLUGIN_FILTER_REJECT;
 }
