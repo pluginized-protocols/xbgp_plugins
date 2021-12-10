@@ -51,18 +51,18 @@ PROOF_INSTS(
             }
             return 0;
         }
+
+        struct ubpf_peer_info *nondet_src_peer_info(void);
+
+        struct ubpf_peer_info *get_src_peer_info(void) {
+            return nondet_src_peer_info();
+        }
 )
 
-
-static __always_inline unsigned int is_negative(uint32_t number) {
-    return ((number & 0xffffffff) >> 31u) & 1u;
-}
-
-static __always_inline int32_t decode(uint32_t number) {
-    if (!is_negative(number)) return number;
-    return -(number & 0x7fffffffu);
-}
-
+#define TIDYING \
+do {            \
+    if(pinfo) free(pinfo); \
+} while(0)
 
 static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flags, const uint8_t *data) {
     struct ubpf_peer_info *pinfo;
@@ -75,7 +75,10 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
                 return -1;
             }
 
-            if (pinfo->peer_type == EBGP_SESSION) return -1;
+            if (pinfo->peer_type == EBGP_SESSION) {
+                TIDYING;
+                return -1;
+            }
             /* fallthrough */
         case BA_GEO_TAG: {
             if (len != 8) return -1; // malformed attribute
@@ -83,9 +86,7 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
             uint32_t raw_latitude;
             uint32_t raw_longitude;
 
-            int32_t geo_tag[2];
-            uint64_t *attr_data;
-            attr_data = (uint64_t *) geo_tag;
+            geo_tags_t geo_tags;
 
             raw_latitude = *((const uint32_t *) data);
             data += 4;
@@ -94,20 +95,35 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
             raw_latitude = ebpf_ntohl(raw_latitude);
             raw_longitude = ebpf_ntohl(raw_longitude);
 
-            geo_tag[0] = decode(raw_latitude);
-            geo_tag[1] = decode(raw_longitude);
+            geo_tags.coordinates[0] = raw_latitude;
+            geo_tags.coordinates[1] = raw_longitude;
+
+            if (!valid_coord(&geo_tags)) {
+                TIDYING;
+                return -1;
+            }
 
             PROOF_SEAHORN_INSTS(
                     p_assert(code == PREFIX_ORIGINATOR || code == BA_GEO_TAG);
             )
 
-            return add_attr(code, flags, len, (uint8_t *) attr_data) == -1 ? -1 : 0;
+            TIDYING;
+            return add_attr(code, flags, len, (uint8_t *) &geo_tags) == -1 ? -1 : 0;
         }
         default:
             return -1;
     }
     return 0;
 }
+
+#define TIDYING2 \
+do {             \
+    if (code) free(code); \
+    if (flags) free(flags); \
+    if (data) free(data); \
+    if (len) free(len); \
+} while(0)
+
 
 /**
  * Decode a given attribute passed by the protocol
@@ -116,7 +132,7 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
  *         EXIT_FAILURE otherwise. The protocol itself must decode this attribute.
  */
 uint64_t receive_attr(args_t *args UNUSED) {
-
+    uint64_t retval;
     uint8_t *code;
     uint16_t *len;
     uint8_t *flags;
@@ -128,18 +144,24 @@ uint64_t receive_attr(args_t *args UNUSED) {
     len = get_arg(ARG_LENGTH);
 
     if (!code || !len || !flags || !data) {
+        TIDYING2;
         return EXIT_FAILURE;
     }
 
-    if (*code != BA_GEO_TAG || *code != PREFIX_ORIGINATOR) return EXIT_FAILURE;
+    if (*code != BA_GEO_TAG || *code != PREFIX_ORIGINATOR) {
+        TIDYING2;
+        return EXIT_FAILURE;
+    }
 
-    return decode_attr(*code, *len, *flags, data) == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
+    retval = decode_attr(*code, *len, *flags, data) == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
+    TIDYING2;
+    return retval;
 }
 
 PROOF_INSTS(
         int main(void) {
             args_t args = {};
-            uint64_t ret_val = add_prefix_originator(&args);
+            uint64_t ret_val = receive_attr(&args);
 
             return ret_val;
         }

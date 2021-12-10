@@ -19,7 +19,7 @@ PROOF_INSTS(
             p_assert(code == BA_GEO_TAG);
             struct path_attribute *p_attr;
 
-            p_attr = malloc(sizeof(*p_attr));
+            p_attr = malloc(sizeof(*p_attr) + 8);
             if (!p_attr) return NULL;
 
             p_attr->code = BA_GEO_TAG;
@@ -32,12 +32,12 @@ PROOF_INSTS(
 
 )
 
-static __always_inline uint64_t euclidean_distance(const int32_t x1[2], const int32_t x2[2]) {
+#define TIDYING \
+do {            \
+   if (new_attr) free(new_attr); \
+   if (old_attr) free(old_attr); \
+} while(0)
 
-    uint64_t a = (x2[0] - x1[0]);
-    uint64_t b = (x2[1] - x1[1]);
-    return ebpf_sqrt((a * a) - (b * b), 16);
-}
 
 /**
  * Compare geo attribute instead of the med. This pluglet will be played
@@ -61,23 +61,35 @@ uint64_t compare_med(args_t *args __attribute__((unused))) {
 
     if (!new_attr || !old_attr) {
         ebpf_print("Wow! Trouble to get attributes");
+        TIDYING;
         return FAIL;
     }
 
     new_geo = (geo_tags_t *) new_attr->data;
     old_geo = (geo_tags_t *) old_attr->data;
 
-    new_dist = euclidean_distance(new_geo->coordinates, this_router_coordinate.coordinates);
-    old_dist = euclidean_distance(old_geo->coordinates, this_router_coordinate.coordinates);
+    if (!(valid_coord(new_geo) &&
+          valid_coord(old_geo) &&
+          valid_coord(&this_router_coordinate))) {
+        TIDYING;
+        return FAIL;
+    }
+
+    new_dist = euclidean_distance(new_geo, &this_router_coordinate);
+    old_dist = euclidean_distance(old_geo, &this_router_coordinate);
 
     if (new_dist > old_dist) {
         ebpf_print("Old route is kept\n");
+        TIDYING;
         return BGP_ROUTE_TYPE_OLD;
     }
     if (new_dist < old_dist) {
         ebpf_print("New route is used\n");
+        TIDYING;
         return BGP_ROUTE_TYPE_OLD;
     }
+
+    TIDYING;
     return BGP_ROUTE_TYPE_UNKNOWN;
 }
 
@@ -87,7 +99,7 @@ PROOF_INSTS(
             args_t args = {};
             uint64_t ret_val;
 
-            ret_val = med_compare(&args);
+            ret_val = compare_med(&args);
 
             PROOF_SEAHORN_INSTS(RET_VAL_FILTERS_CHECK(ret_val));
             return 0;

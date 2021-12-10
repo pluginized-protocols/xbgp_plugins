@@ -645,18 +645,27 @@ uint64_t ebpf_htonll(uint64_t val) {
     return NULL; // to be changed according to the plugin
 }*/
 
-uint64_t ebpf_sqrt(uint64_t a, unsigned int precision) {
-    double s_half;
-    double s;
-    uint64_t res;
+static unsigned int my_pow(unsigned x, unsigned y) {
+    int i;
+    unsigned res = 1;
 
-    if (a >= DBL_MAX) return 0;
-
-    s = a;
-    s_half = sqrt(s);
-    res = s_half * pow(10, precision);
+    for (i = 0; i < y; i++) {
+        res *= x;
+    }
 
     return res;
+}
+
+uint64_t nondet_sqrt(uint64_t a);
+
+uint64_t ebpf_sqrt(uint64_t a, unsigned int precision) {
+    /* playing with double is a mess... */
+    uint64_t ma = nondet_sqrt(a);
+#ifdef PROVERS_CBMC
+    __CPROVER_assume(ma < UINT32_MAX);
+#endif
+
+    return ma * my_pow(10, precision);
 }
 
 int get_extra_info_value(struct global_info *info__ UNUSED,
@@ -687,14 +696,20 @@ int write_to_buffer(uint8_t *ptr, size_t len) {
 }
 
 // simple function that walk to the data
+// doing stuff to trick the compiler to generate
+// code
 int set_attr(UNUSED struct path_attribute *attr) {
-    uint8_t minibuf[5];
-
+#define dec(j) ((j) == 0 ? (j) : (j)-1u)
+#define odd(j) ((j) % 2 != 0 ? 1 : 0)
+    unsigned char minibuf[5];
+    unsigned int i;
+    unsigned char dval;
     // i < 4096 limits the unrolling of loops
     // 4096 is the upper bound for BGP messages
-    for (int i = 0; i < attr->length && i < 4096; i++) {
-        minibuf[i % 5] = minibuf[(i - 1) % 5] + attr->data[i];
+    for (i = 0; i < attr->length && i < 4096; i++) {
+        dval = attr->data[i];
+        minibuf[i % 5u] = odd(dval) ? minibuf[dec(i) % 5] : dval;
     }
-    return 0;
+    return odd(minibuf[0]) ? -1 : 0;
 }
 

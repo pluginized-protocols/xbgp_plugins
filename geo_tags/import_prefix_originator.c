@@ -10,18 +10,26 @@
 uint64_t import_prefix_originator(args_t *args UNUSED);
 
 PROOF_INSTS(
-        struct ubpf_peer_info *get_peer_info(UNUSED int *nb_peers) {
+
+        uint8_t nondet_u8(void);
+
+        struct ubpf_peer_info *get_src_peer_info(UNUSED int *nb_peers) {
             struct ubpf_peer_info *pf;
             pf = malloc(sizeof(*pf));
             if (!pf) {
                 return NULL;
             }
-            pf->peer_type = EBGP_SESSION;
+            pf->peer_type = nondet_u8();
 
             return pf;
         }
+#define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 )
 
+#define TIDYING \
+do {            \
+  if (peer) free(peer);              \
+} while(0)
 
 uint64_t import_prefix_originator(args_t *args UNUSED) {
 
@@ -30,6 +38,11 @@ uint64_t import_prefix_originator(args_t *args UNUSED) {
     struct path_attribute *originating_prefix;
     uint8_t buf[sizeof(*originating_prefix) + sizeof(uint64_t)];
     struct ubpf_peer_info *peer = get_src_peer_info(&nb_peers);
+
+    if (!peer) {
+        next();
+        return PLUGIN_FILTER_UNKNOWN;
+    }
 
     originating_prefix = (struct path_attribute *) buf;
 
@@ -41,6 +54,7 @@ uint64_t import_prefix_originator(args_t *args UNUSED) {
                          "unk wtf ?";
 
         ebpf_print("Not an eBGP session %s (%u)\n", tp, peer->router_id);
+        TIDYING;
         next();
     }
 
@@ -61,13 +75,15 @@ uint64_t import_prefix_originator(args_t *args UNUSED) {
         ebpf_print("Error, Unable to add attribute\n");
     }
 
+    TIDYING;
+
     return PLUGIN_FILTER_ACCEPT;
 }
 
 PROOF_INSTS(
         int main(void) {
             args_t args = {};
-            uint64_t ret_val = add_prefix_originator(&args);
+            uint64_t ret_val = import_prefix_originator(&args);
 
             PROOF_SEAHORN_INSTS(
                     RET_VAL_FILTERS_CHECK(ret_val);
