@@ -107,6 +107,8 @@ int ebpf_inet_ntop(uint8_t *ipaddr_, int type, char *buf, size_t len) {
     unsigned lo;
     unsigned hi;
 
+    if (!ipaddr_) return 0;
+
     uint8_t *ipaddr = ipaddr_;
 
     switch (type) {
