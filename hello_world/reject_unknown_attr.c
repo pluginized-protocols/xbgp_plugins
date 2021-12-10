@@ -1,5 +1,27 @@
 #include <stdint.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "../prove_stuffs/prove.h"
+
+
+PROOF_INSTS(
+        uint8_t nondet_u8(void);
+        void *get_arg(unsigned int arg_type) {
+            if (arg_type != ARG_CODE) return NULL;
+
+            uint8_t *the_code;
+            the_code = malloc(sizeof(*the_code));
+            if (!the_code) return NULL;
+
+            *the_code = nondet_u8();
+            return the_code;
+        }
+
+)
+
+#define TIDYING \
+PROOF_INSTS( do { \
+    if (code) free(code);\
+}while(0);)
 
 
 /* startting point */
@@ -47,12 +69,29 @@ uint64_t reject_unknown_attr(args_t *args UNUSED) {
 
     if (!code) {
         // unable to retrieve the argument (internal failure)
+        TIDYING;
         return EXIT_FAILURE;
     }
 
     if (!is_known_attr(*code)) {
+        TIDYING
         return EXIT_FAILURE;
     }
 
+    TIDYING
     return 0;
 }
+
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret;
+
+            ret = reject_unknown_attr(&args);
+
+            p_assert (ret == EXIT_FAILURE || ret == 0);
+
+            return 0;
+
+        }
+)

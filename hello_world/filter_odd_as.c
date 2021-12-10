@@ -9,11 +9,11 @@
 #define MIN_ASPATH_LEN 4
 
 PROOF_INSTS(
-        uint16_t non_det_len();
+        uint16_t nondet_len();
 
         struct path_attribute *get_attr_from_code(uint8_t code) {
             struct path_attribute *obj;
-            uint16_t len = non_det_len();
+            uint16_t len = nondet_len();
             if (len > 4096 || len < MIN_ASPATH_LEN) return NULL;
             obj = malloc(sizeof(struct path_attribute) + len);
             if (obj == NULL) return NULL;
