@@ -99,7 +99,7 @@ int numb(unsigned int nb, int base, char *buf, size_t len) {
 }
 
 
-int ebpf_inet_ntop(uint8_t *ipaddr_, int type, char *buf, size_t len) {
+int ebpf_inet_ntop(uint8_t *ipaddr, int type, char *buf, size_t len) {
     static const char *hexchars = "0123456789abcdef";
     int i, j, k;
 
@@ -107,9 +107,10 @@ int ebpf_inet_ntop(uint8_t *ipaddr_, int type, char *buf, size_t len) {
     unsigned lo;
     unsigned hi;
 
-    if (!ipaddr_) return 0;
+    if (!ipaddr) return 0;
 
-    uint8_t *ipaddr = ipaddr_;
+    //uint8_t *ipaddr = ipaddr_;
+
 
     switch (type) {
         case AF_INET:

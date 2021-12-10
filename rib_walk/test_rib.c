@@ -33,6 +33,7 @@ static __always_inline void del_bgp_route(struct bgp_route *rte) {
 PROOF_INSTS(
         int nondet_int(void);
         uint16_t nondet_u16(void);
+        uint8_t nondet_u8(void);
 
         struct ubpf_prefix nondet_pfx(void);
 
@@ -55,6 +56,10 @@ PROOF_INSTS(
             }
 
             rte->pfx = nondet_pfx();
+            for (int op = 0; op < sizeof(rte->pfx.u); op++) {
+                rte->pfx.u[op] = nondet_u8();
+            }
+
             rte->attr_nb = nb_attr;
 
             /* reserve space for attributes */
@@ -230,11 +235,6 @@ uint64_t test_rib(UNUSED args_t *args) {
         }
 
         memset(ip_str, 0, sizeof(ip_str));
-
-        if (rte->pfx.afi != AF_INET && rte->pfx.afi != AF_INET6) {
-            del_bgp_route(rte);
-            break;
-        }
 
         if (ebpf_inet_ntop(rte->pfx.u, afi2af(rte->pfx.afi), ip_str, sizeof(ip_str)) != 0) {
             log_msg(L_INFO "Unable to convert IP prefix");
