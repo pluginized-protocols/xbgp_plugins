@@ -57,8 +57,9 @@ void *ebpf_memcpy(void *dst0, const void *src0, size_t length) {
     char *dst = dst0;
     const char *src = src0;
 
-    while (length-- > 0) {
+    while (length > 0) {
         *dst++ = *src++;
+        length = length == 0 ? 0 : length -1;
     }
     return dest;
 }

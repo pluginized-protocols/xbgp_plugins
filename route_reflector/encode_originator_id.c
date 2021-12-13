@@ -11,11 +11,11 @@
 uint64_t encode_originator_id(args_t *args __attribute__((unused)));
 
 PROOF_INSTS(
-        uint16_t nondet_get_u32__verif();
+        uint16_t nondet_get_u32__verif(void);
 
         struct path_attribute *get_attr() {
             struct path_attribute *p_attr;
-            p_attr = malloc(sizeof(*p_attr));
+            p_attr = malloc(sizeof(*p_attr) + sizeof(uint32_t));
             if (!p_attr) return NULL;
 
             p_attr->code = ORIGINATOR_ID;
@@ -26,41 +26,58 @@ PROOF_INSTS(
             return p_attr;
         }
 
-        struct ubpf_peer_info *gpi(void);
-
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pf = gpi();
+            struct ubpf_peer_info *pf;
+
+            pf = malloc(sizeof(*pf));
+            if (!pf) return NULL;
+
             pf->peer_type = IBGP_SESSION;
+            return pf;
         }
+
+        struct ubpf_peer_info *get_peer_info(int *nb_peers) {
+            return get_src_peer_info();
+        }
+
+#define NEXT_RETURN_VALUE FAIL;
 )
+
+#define TIDYING() PROOF_INSTS( do { \
+    if (attribute) free(attribute); \
+    if (to_info) free(to_info);     \
+    if (attr_buf) free(attr_buf);\
+} while(0);)
 
 
 uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
-
     uint32_t counter = 0;
-    uint8_t *attr_buf;
+    uint8_t *attr_buf = NULL;
     uint16_t tot_len = 0;
     uint32_t *originator_id;
     int nb_peer;
 
     struct path_attribute *attribute;
+    struct ubpf_peer_info *to_info = NULL;
     attribute = get_attr();
 
     if (!attribute) {
         ebpf_print("Unable to get attribute\n");
+        TIDYING();
         return 0;
     }
 
-    struct ubpf_peer_info *to_info;
     to_info = get_peer_info(&nb_peer);
 
     if (!to_info) {
         ebpf_print("Can't get src and peer info\n");
+        TIDYING()
         return 0;
     }
 
     if (to_info->peer_type != IBGP_SESSION) {
         ebpf_print("[ENCODE ORIGINATOR ID] Not an iBGP session\n");
+        TIDYING()
         next();
     }
 
@@ -74,6 +91,7 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     attr_buf = ctx_calloc(1, tot_len);
     if (!attr_buf) {
         ebpf_print("Memory alloc failed\n");
+        TIDYING()
         return 0;
     }
 
@@ -96,6 +114,7 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
 
     if (counter != tot_len) {
         ebpf_print("Size missmatch\n");
+        TIDYING();
         return 0;
     }
 
@@ -108,5 +127,15 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
         return 0;
     }
 
+    TIDYING()
     return counter;
 }
+
+
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = encode_originator_id(&args);
+            return ret_val;
+        }
+)

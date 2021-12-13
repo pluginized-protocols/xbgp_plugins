@@ -11,15 +11,17 @@
 uint64_t decode_cluster_list(args_t *args UNUSED);
 
 PROOF_INSTS(
-        void *nondet_get_buffer__verif();
-        uint16_t *nondet_get_u16__verif();
+        uint16_t nondet_u16__verif(void);
+        uint8_t nondet_u8(void);
+
+        static uint16_t data_length = 0;
 
         void *get_arg(unsigned int arg_type) {
             switch (arg_type) {
                 case ARG_CODE: {
                     uint8_t *code;
                     code = malloc(sizeof(*code));
-                    *code = CLUSTER_LIST;
+                    *code = nondet_u8();
                     return code;
                 }
                 case ARG_FLAGS: {
@@ -29,38 +31,63 @@ PROOF_INSTS(
                     return flags;
                 }
                 case ARG_DATA: {
-                    return nondet_get_buffer__verif();
+                    if (data_length == 0) return NULL;
+                    uint8_t *data = malloc(data_length);
+
+                    return data;
                 }
                 case ARG_LENGTH: {
-                    return nondet_get_u16__verif();
+                    uint16_t *length;
+                    if (data_length == 0) {
+                        data_length = nondet_u16__verif();
+                        p_assume(data_length % 4 == 0);
+                    }
+
+                    length = malloc(sizeof(*length));
+                    if (!length) return NULL;
+
+                    *length = data_length;
+                    return length;
                 }
             }
 
         }
 
-        struct ubpf_peer_info *gpi(void);
-
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pf = gpi();
+            struct ubpf_peer_info *pf;
+
+            pf = malloc(sizeof(*pf));
+            if (!pf) return NULL;
+
             pf->peer_type = IBGP_SESSION;
+            return pf;
         }
 
 
 #define NEXT_RETURN_VALUE EXIT_SUCCESS
 )
 
+#define TIDYING() \
+PROOF_INSTS(do {\
+ if (code) free(code); \
+ if (len) free(len);   \
+ if (flags) free(flags); \
+ if (data) free(data); \
+ if (src_info) free(src_info); \
+ if (cluster_list) free(cluster_list); \
+} while(0))
 
 uint64_t decode_cluster_list(args_t *args UNUSED) {
 
     int i;
-    struct ubpf_peer_info *src_info;
+    struct ubpf_peer_info *src_info = NULL;
 
-    uint8_t *code;
-    uint16_t *len;
-    uint8_t *flags;
-    uint8_t *data;
+    uint8_t *code = NULL;
+    uint16_t *len = NULL;
+    uint8_t *flags = NULL;
+    uint8_t *data = NULL;
 
-    uint32_t *cluster_list;
+    uint32_t *cluster_list = NULL;
     uint32_t *in_cluster_list;
 
     code = get_arg(ARG_CODE);
@@ -71,17 +98,30 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
     src_info = get_src_peer_info();
 
     if (!src_info || !code || !len || !flags || !data) {
+        TIDYING();
         return EXIT_FAILURE;
     }
 
-    if (src_info->peer_type != IBGP_SESSION) next(); // don't parse CLUSTER_LIST if originated from eBGP session
+    if (src_info->peer_type != IBGP_SESSION) {
+        TIDYING();
+        next(); // don't parse CLUSTER_LIST if originated from eBGP session
+    }
 
-    if (*code != CLUSTER_LIST) next();
+    if (*code != CLUSTER_LIST) {
+        TIDYING();
+        next();
+    }
 
-    if (*len % 4 != 0) return 0;
+    if (*len % 4 != 0) {
+        TIDYING();
+        return 0;
+    }
 
     cluster_list = ctx_malloc(*len);
-    if (!cluster_list) return EXIT_FAILURE;
+    if (!cluster_list) {
+        TIDYING();
+        return EXIT_FAILURE;
+    }
 
     in_cluster_list = (uint32_t *) data;
 
@@ -96,6 +136,7 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
 
 
     add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
+    TIDYING();
     return EXIT_SUCCESS;
 }
 

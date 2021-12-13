@@ -38,8 +38,10 @@ char *strncpy(char *dest, const char *src, size_t n)  {
   #ifdef PROVERS_CBMC
     #include <assert.h>
     #define p_assert(x) assert(x)
+    #define p_assume(x) __CPROVER_assume(x)
   #else
     #define p_assert(x)
+    #define p_assume(x)
   #endif
 #endif
 

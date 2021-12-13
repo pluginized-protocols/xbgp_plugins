@@ -14,32 +14,46 @@ uint64_t import_route_rr(args_t *args UNUSED);
 PROOF_INSTS(
         struct ubpf_peer_info *nondet_get_pinfo__verif();
         uint16_t nondet_get_u16__verif();
+        static uint16_t data_length = 0;
 
         struct ubpf_peer_info *get_peer_info(int *nb_peers) {
-            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+            struct ubpf_peer_info *pinfo;
+
+            pinfo = malloc(sizeof(*pinfo) * 2);
+            if (!pinfo) return NULL;
+
+            PROOF_CBMC_INSTS(__CPROVER_havoc_object(pinfo));
+
             pinfo->peer_type = IBGP_SESSION;
+            pinfo->local_bgp_session = &pinfo[1];
             return pinfo;
         }
 
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-            pinfo->peer_type = IBGP_SESSION;
-            return pinfo;
+            return get_peer_info(1);
         }
 
         struct path_attribute *get_attr_from_code(uint8_t code) {
             struct path_attribute *p_attr;
-            p_attr = malloc(sizeof(*p_attr));
 
             switch (code) {
-                case ORIGINATOR_ID:
+                case ORIGINATOR_ID_ATTR_ID:
                 case CLUSTER_LIST:
+                    if (data_length == 0) {
+                        data_length = nondet_get_u16__verif();
+                        p_assume(data_length % 4 == 0);
+                    }
+                    uint16_t final_length = code == ORIGINATOR_ID ? 4 : data_length;
+
+                    p_attr = malloc(sizeof(*p_attr) + final_length);
+                    if (!p_attr) return NULL;
+
                     p_attr->code = code;
-                    p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
-                    p_attr->length = code == ORIGINATOR_ID ? 4 : nondet_get_u16__verif();
-                    break;
+                    p_attr->flags = ATTR_OPTIONAL;
+                    p_attr->length = final_length;
+                    return p_attr;
                 default:
-                    p_assert(0);
+                    //p_assert(0);
                     return NULL;
             }
             return NULL;
@@ -47,6 +61,12 @@ PROOF_INSTS(
 
 #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 )
+
+#define TIDYING() PROOF_INSTS(do {                       \
+    if (pinfo) free(pinfo);                              \
+    if (originator) free(originator);                    \
+    if (cluster_list) free(cluster_list);                \
+}while(0);)
 
 uint64_t import_route_rr(args_t *args UNUSED) {
 
@@ -68,17 +88,25 @@ uint64_t import_route_rr(args_t *args UNUSED) {
 
     if (!pinfo) {
         ebpf_print("I don't have the required arguments to import with RR enabled");
+        TIDYING();
         return PLUGIN_FILTER_REJECT;
     }
 
     router_id = pinfo->local_bgp_session->router_id;
-    if (pinfo->peer_type == EBGP_SESSION) next();
-    if (!originator || !cluster_list) next(); /// XXX: check this
+    if (pinfo->peer_type == EBGP_SESSION) {
+        TIDYING();
+        next();
+    }
+    if (!originator || !cluster_list) {
+        TIDYING();
+        next(); /// XXX: check this
+    }
 
     originator_id = *(uint32_t *) originator->data;
 
     /* 1. Check router ID */
     if (originator_id == router_id) {
+        TIDYING();
         return PLUGIN_FILTER_REJECT;
     }
 
@@ -86,10 +114,12 @@ uint64_t import_route_rr(args_t *args UNUSED) {
     cluster_array = (uint32_t *) cluster_list->data;
     for (i = 0; i < cluster_list->length / 4; i++) {
         if (cluster_array[i] == router_id) {
+            TIDYING();
             return PLUGIN_FILTER_REJECT;
         }
     }
 
+    TIDYING();
     next(); // next filter to import
     return PLUGIN_FILTER_ACCEPT;
 }
