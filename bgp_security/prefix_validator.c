@@ -21,11 +21,11 @@ uint64_t prefix_validator(args_t *args UNUSED);
 
 PROOF_INSTS(
 #define NEXT_RETURN_VALUE FAIL
-        unsigned int non_det_uint(void);
+        unsigned int nondet_uint(void);
 
         struct path_attribute *get_attr_from_code(uint8_t code) {
             struct path_attribute *attr;
-            unsigned int ndet_len = non_det_uint();
+            unsigned int ndet_len = nondet_uint();
             if (code != AS_PATH_ATTR_CODE) {
                 return NULL;
             }
@@ -48,8 +48,8 @@ PROOF_INSTS(
 
             pfx->afi = XBGP_AFI_IPV4;
             pfx->safi = XBGP_SAFI_UNICAST;
-            pfx->prefixlen = non_det_uint() % 33;
-            *(uint32_t *) pfx->u = non_det_uint();
+            pfx->prefixlen = nondet_uint() % 33;
+            *(uint32_t *) pfx->u = nondet_uint();
 
             return pfx;
         }

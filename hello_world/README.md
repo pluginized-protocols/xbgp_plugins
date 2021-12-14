@@ -24,7 +24,6 @@ cbmc --depth 512 \
      --float-overflow-check \
      --nan-check \
      --pointer-primitive-check \
-     -I/hostmnt/libxbgp/ \
      -DPROVERS -DPROVERS_CBMC \
      filter_odd_as.c
 ```
@@ -49,7 +48,6 @@ sea bpf -g \
   --dsa=sea-cs \
   -m64 \
   -DPROVERS -DPROVERS_SEAHORN \
-  -I/hostmnt/libxbgp \
   filter_odd_as.c
 ```
 

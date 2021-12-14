@@ -273,7 +273,7 @@ uint64_t customer_provider_validator(args_t *args UNUSED) {
     my_as = peer->local_bgp_session->as;
 
 
-    if (get_extra_info("cust-prov", &info) != 0) return -1;
+    if (get_extra_info("cust-prov", &info) != 0) return PLUGIN_FILTER_UNKNOWN;
 
     switch (get_session_relation(from_as)) {
         case SESSION_MY_PROVIDER:
@@ -297,7 +297,7 @@ uint64_t customer_provider_validator(args_t *args UNUSED) {
 PROOF_INSTS(
         int main(void) {
             args_t args = {};
-            uint64_t ret_val = customer_provider(&args);
+            uint64_t ret_val = customer_provider_validator(&args);
             PROOF_SEAHORN_INSTS(
                     RET_VAL_FILTERS_CHECK(ret_val);
             )
