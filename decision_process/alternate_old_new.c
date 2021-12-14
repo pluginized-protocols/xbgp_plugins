@@ -5,11 +5,9 @@
 
 #include "../prove_stuffs/prove.h"
 
-/* starting point */
-uint64_t alternate_old_new(args_t *args UNUSED);
 
-static __always_inline int
-strncmp(const char *s1, const char *s2, register size_t n) {
+__always_inline int
+strncmp(const char *s1, const char *s2, size_t n) {
     register unsigned char u1, u2;
     if (n == 0) return 0;
     while (n > 0) {
@@ -23,6 +21,9 @@ strncmp(const char *s1, const char *s2, register size_t n) {
     }
     return 0;
 }
+
+/* starting point */
+uint64_t alternate_old_new(args_t *args UNUSED);
 
 PROOF_INSTS(
 #define NEXT_RETURN_VALUE BGP_ROUTE_TYPE_UNKNOWN
