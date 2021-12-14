@@ -24,7 +24,7 @@ PROOF_INSTS( do { \
 }while(0);)
 
 
-/* startting point */
+/* starting point */
 uint64_t reject_unknown_attr(args_t *args UNUSED);
 
 #define is_known_attr(code) ( \
@@ -61,7 +61,6 @@ uint64_t reject_unknown_attr(args_t *args UNUSED);
     ((code) == ATTR_SET_ATTR_ID))
 
 
-
 uint64_t reject_unknown_attr(args_t *args UNUSED) {
 
     uint8_t *code;
@@ -89,9 +88,7 @@ PROOF_INSTS(
 
             ret = reject_unknown_attr(&args);
 
-            p_assert (ret == EXIT_FAILURE || ret == 0);
-
-            return 0;
-
+            p_assert(ret == EXIT_FAILURE || ret == EXIT_SUCCESS);
+            return ret % UINT16_MAX;
         }
 )

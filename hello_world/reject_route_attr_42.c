@@ -61,7 +61,7 @@ PROOF_INSTS(
             ret = reject_route_attr_42(&args);
 
             PROOF_SEAHORN_INSTS(
-                    RET_VAL_FILTERS_CHECK(ret_val);
+                    RET_VAL_FILTERS_CHECK(ret);
             )
 
             return 0;
