@@ -30,7 +30,8 @@ PROOF_INSTS(
         }
 
         struct ubpf_peer_info *get_src_peer_info() {
-            return get_peer_info(1);
+            int i = 1;
+            return get_peer_info(&i);
         }
 
         struct path_attribute *get_attr_from_code(uint8_t code) {

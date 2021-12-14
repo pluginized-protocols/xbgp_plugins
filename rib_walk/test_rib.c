@@ -280,6 +280,7 @@ PROOF_INSTS(
             args_t args = {};
 
             ret = test_rib(&args);
+            p_assert(ret == EXIT_SUCCESS || ret == EXIT_FAILURE);
 
             return 0;
         }

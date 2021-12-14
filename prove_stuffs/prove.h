@@ -32,6 +32,7 @@ char *strncpy(char *dest, const char *src, size_t n)  {
 #ifdef PROVERS_SEAHORN
   #include "seahorn/seahorn.h"
   #define p_assert(x) sassert(x)
+  #define p_assume(x)
 
   #include "../prove_stuffs/prove_helpers.h"
 #else

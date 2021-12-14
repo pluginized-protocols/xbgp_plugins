@@ -135,9 +135,8 @@ uint64_t as_path_count(args_t *args UNUSED) {
 
 PROOF_INSTS(
         int main(void) {
-            uint64_t ret;
             args_t args = {};
-            ret = as_path_count(&args);
+            uint64_t ret = as_path_count(&args);
             p_assert(ret == EXIT_FAILURE || ret == EXIT_SUCCESS);
             return 0;
         }
