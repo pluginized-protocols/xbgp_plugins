@@ -27,7 +27,7 @@ PROOF_INSTS(
                     p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
                     p_attr->length = 8;
 
-                    *(uint32_t *)p_attr->data = nondet_u64__verif();
+                    *(uint64_t *)p_attr->data = nondet_u64__verif();
 
                     return p_attr;
                 default:

@@ -16,7 +16,7 @@ PROOF_INSTS(
         uint64_t nondet_get_int__verif(void);
 
         struct path_attribute *get_attr_from_code_by_route(uint8_t code, int rte) {
-            p_assert(code == BA_GEO_TAG);
+            if (code != BA_GEO_TAG) return NULL;
             struct path_attribute *p_attr;
 
             p_attr = malloc(sizeof(*p_attr) + 8);
@@ -33,10 +33,10 @@ PROOF_INSTS(
 )
 
 #define TIDYING \
-do {            \
+PROOF_INSTS(do {            \
    if (new_attr) free(new_attr); \
    if (old_attr) free(old_attr); \
-} while(0)
+} while(0);)
 
 
 /**
@@ -62,7 +62,7 @@ uint64_t compare_med(args_t *args __attribute__((unused))) {
     if (!new_attr || !old_attr) {
         ebpf_print("Wow! Trouble to get attributes");
         TIDYING;
-        return FAIL;
+        return BGP_ROUTE_TYPE_UNKNOWN;
     }
 
     new_geo = (geo_tags_t *) new_attr->data;
@@ -72,7 +72,7 @@ uint64_t compare_med(args_t *args __attribute__((unused))) {
           valid_coord(old_geo) &&
           valid_coord(&this_router_coordinate))) {
         TIDYING;
-        return FAIL;
+        return BGP_ROUTE_TYPE_UNKNOWN;
     }
 
     new_dist = euclidean_distance(new_geo, &this_router_coordinate);
@@ -86,7 +86,7 @@ uint64_t compare_med(args_t *args __attribute__((unused))) {
     if (new_dist < old_dist) {
         ebpf_print("New route is used\n");
         TIDYING;
-        return BGP_ROUTE_TYPE_OLD;
+        return BGP_ROUTE_TYPE_NEW;
     }
 
     TIDYING;
@@ -101,7 +101,11 @@ PROOF_INSTS(
 
             ret_val = compare_med(&args);
 
-            PROOF_SEAHORN_INSTS(RET_VAL_FILTERS_CHECK(ret_val));
+            PROOF_SEAHORN_INSTS(
+                    p_assert(ret_val == BGP_ROUTE_TYPE_OLD ||
+                             ret_val == BGP_ROUTE_TYPE_NEW ||
+                             ret_val == BGP_ROUTE_TYPE_UNKNOWN);
+            );
             return 0;
         }
 )

@@ -13,7 +13,7 @@ uint64_t write_attr(args_t *args __attribute__((unused)));
 
 PROOF_INSTS(
         uint8_t nondet_u8(void);
-        uint64_t *nondet_u64(void);
+        uint64_t nondet_u64(void);
 
         struct path_attribute *get_attr() {
             struct path_attribute *p_attr;
