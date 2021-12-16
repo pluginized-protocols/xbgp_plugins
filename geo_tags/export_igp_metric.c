@@ -48,6 +48,9 @@ do {               \
     free(peer);    \
 } while (0)
 
+PROOF_T2_INSTS(
+        void *rnd_ptr(void);
+)
 
 uint64_t export_igp_metric(args_t *args UNUSED) {
 
@@ -55,7 +58,12 @@ uint64_t export_igp_metric(args_t *args UNUSED) {
     struct ubpf_nexthop *nexthop;
     struct ubpf_peer_info *peer;
     nexthop = get_nexthop(NULL);
+
+#ifdef PROVERS_T2
+    peer = rnd_ptr();
+#else
     peer = get_src_peer_info(&nb_peers);
+#endif
 
     if (!nexthop || !peer) next();
 

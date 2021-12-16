@@ -171,7 +171,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
             return PLUGIN_FILTER_REJECT;
         }
         originator->code = ORIGINATOR_ID;
-        originator->flags = 0x80; // originator is non transitive !
+        originator->flags = ATTR_OPTIONAL; // originator is non transitive !
         originator->length = 4;
         *((uint32_t *) originator->data) = src_info->router_id;
 
@@ -188,7 +188,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
         }
     }
 
-    PROOF_SEAHORN_INSTS(
+    PROOF_INSTS(
             CHECK_ORIGINATOR(originator);
             CHECK_CLUSTER_LIST(new_cluster_list, 4 + (cluster_list ? cluster_list->length : 0));
     )

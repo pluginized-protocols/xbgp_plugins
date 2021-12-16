@@ -15,6 +15,8 @@
 #define SESSION_MY_RS 4
 #define SESSION_MY_RS_CLIENT 5
 
+#define MAX_ITERATION INT32_MAX
+
 /**
  *  Starting point of the BPF program
  */
@@ -83,7 +85,7 @@ static __always_inline int valid_pair(uint32_t asn, uint32_t prov) {
 
     if (get_extra_info_dict(&info, customer_as_str, &cust_info) != 0) return -1;
 
-    for (i = 0;; i++) {
+    for (i = 0; i < MAX_ITERATION; i++) {
         if (get_extra_info_lst_idx(&cust_info, i, &prov_info) != 0) return 0;
         if (get_extra_info_value(&prov_info, &provider_as, sizeof(provider_as)) != 0) {
             ebpf_print("Unable to copy provider as\n");

@@ -53,11 +53,23 @@ char *strncpy(char *dest, const char *src, size_t n)  {
  * time
  */
 
+#ifndef PROVERS_T2
+    #ifdef PROVERS
+        #define PROOF_INSTS(...) __VA_ARGS__
+    #else
+        #define PROOF_INSTS(...)
+    #endif
+#else
+    #define PROOF_INSTS(...)
+#endif
+
+/*
 #ifdef PROVERS
 #define PROOF_INSTS(...) __VA_ARGS__
 #else
 #define PROOF_INSTS(...)
 #endif
+*/
 
 #ifdef PROVERS_SEAHORN
 #define PROOF_SEAHORN_INSTS(...) __VA_ARGS__

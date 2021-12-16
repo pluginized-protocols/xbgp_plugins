@@ -44,6 +44,10 @@ int get_time(struct timespec *spec) {
     return clock_gettime(CLOCK_MONOTONIC, spec);
 }
 
+#ifdef PROVERS_T2
+#include <stdio.h>
+#define ebpf_print(...)
+#else
 void ebpf_print(const char *format, ...) {
     va_list list;
 
@@ -51,6 +55,7 @@ void ebpf_print(const char *format, ...) {
     vfprintf(stderr, format, list);
     va_end(list);
 }
+#endif
 
 void *ebpf_memcpy(void *dst0, const void *src0, size_t length) {
     char *dest = dst0;
@@ -100,6 +105,12 @@ int numb(unsigned int nb, int base, char *buf, size_t len) {
 }
 
 
+#ifdef PROVERS_T2
+/* T2 doesn't like ebpf_inet implementation */
+int ebpf_inet_ntop(uint8_t *ipaddr, int type, char *buf, size_t len) {
+    return 0;
+}
+#else
 int ebpf_inet_ntop(uint8_t *ipaddr, int type, char *buf, size_t len) {
     static const char *hexchars = "0123456789abcdef";
     int i, j, k;
@@ -148,6 +159,7 @@ int ebpf_inet_ntop(uint8_t *ipaddr, int type, char *buf, size_t len) {
 
     return 0;
 }
+#endif
 
 #include "glib_c_inet_pton.c"
 

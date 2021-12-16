@@ -12,6 +12,8 @@
 #define AS_PATH_CONFED_SEQUENCE    3
 #define AS_PATH_CONFED_SET    4
 
+#define MAX_ITER INT32_MAX
+
 #include "../prove_stuffs/prove.h"
 
 /**
@@ -71,9 +73,10 @@ as_path_get_last(struct path_attribute *attr, uint32_t *orig_as) {
     uint32_t val = 0;
 
     unsigned int bytes = 0;
+    PROOF_T2_INSTS(unsigned int trap = 0;)
     unsigned int tot_len = attr->length;
 
-    while (bytes < tot_len) {
+    while (bytes < tot_len PROOF_T2_INSTS(&& trap <= 4096)) {
         if (tot_len - bytes <= 2) break;
 
         uint type = pos[bytes++];
@@ -101,6 +104,7 @@ as_path_get_last(struct path_attribute *attr, uint32_t *orig_as) {
         }
 
         bytes += 4 * len;
+        PROOF_T2_INSTS(trap += 6;)
     }
 
     if (found)
@@ -165,7 +169,7 @@ uint64_t prefix_validator(args_t *args UNUSED) {
         return PLUGIN_FILTER_REJECT;
     }
 
-    for (i = 0;; i++) {
+    for (i = 0; i < MAX_ITER; i++) {
 
         if (get_extra_info_lst_idx(&list_vrp, i, &curr_vrp) != 0) {
 
