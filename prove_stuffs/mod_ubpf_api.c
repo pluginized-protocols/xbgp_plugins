@@ -711,6 +711,8 @@ int write_to_buffer(uint8_t *ptr, size_t len) {
     return 0;
 }
 
+
+#ifndef PROVERS_T2
 // simple function that walk to the data
 // doing stuff to trick the compiler to generate
 // code
@@ -728,4 +730,9 @@ int set_attr(UNUSED struct path_attribute *attr) {
     }
     return odd(minibuf[0]) ? -1 : 0;
 }
+#else
+int set_attr(UNUSED struct path_attribute *attr) {
+    return 0;
+}
+#endif
 

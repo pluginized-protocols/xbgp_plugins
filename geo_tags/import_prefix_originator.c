@@ -37,8 +37,11 @@ uint64_t import_prefix_originator(args_t *args UNUSED) {
     int nb_peers;
     struct path_attribute *originating_prefix;
     uint8_t buf[sizeof(*originating_prefix) + sizeof(uint64_t)];
+#ifndef PROVERS_T2
     struct ubpf_peer_info *peer = get_src_peer_info(&nb_peers);
-
+#else
+    struct ubpf_peer_info *peer = rnd_ptr();
+#endif
     if (!peer) {
         next();
         return PLUGIN_FILTER_UNKNOWN;

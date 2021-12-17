@@ -35,5 +35,6 @@ all: $(OBJ)
 clean:
 	@echo RM $(OBJ)
 	@rm -f $(OBJ)
+	@rm -f *.ll *.pre_t2 *.t2 *.bc
 
 .PHONY: all clean

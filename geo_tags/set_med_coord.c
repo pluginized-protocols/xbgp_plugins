@@ -2,7 +2,6 @@
 // Created by thomas on 15/05/20.
 //
 
-
 #include <stdint.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "router_bgp_config.h"
@@ -27,7 +26,7 @@ PROOF_INSTS(
                     p_attr->flags = ATTR_TRANSITIVE | ATTR_OPTIONAL;
                     p_attr->length = 8;
 
-                    *(uint64_t *)p_attr->data = nondet_u64__verif();
+                    *(uint64_t *) p_attr->data = nondet_u64__verif();
 
                     return p_attr;
                 default:
@@ -46,7 +45,6 @@ PROOF_INSTS(
 do { \
     if (attr) free(attr); \
 } while (0)
-
 
 
 /**
@@ -70,8 +68,8 @@ uint64_t set_med_coord(args_t *args UNUSED) {
 
     originator_coord = (struct geo_tags *) attr->data;
 
-    if (!(valid_coord(originator_coord)&&
-            valid_coord(&this_router_coordinate)) ) {
+    if (!(valid_coord(originator_coord) &&
+          valid_coord(&this_router_coordinate))) {
         TIDYING;
         return PLUGIN_FILTER_UNKNOWN;
     }
@@ -100,7 +98,8 @@ uint64_t set_med_coord(args_t *args UNUSED) {
         return PLUGIN_FILTER_UNKNOWN;
     }
     TIDYING;
-    next();TIDYING;
+    next();
+    TIDYING;
     return PLUGIN_FILTER_ACCEPT;
 }
 
