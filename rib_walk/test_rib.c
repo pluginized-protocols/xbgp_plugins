@@ -6,7 +6,6 @@
 
 #include "../prove_stuffs/prove.h"
 
-
 static __always_inline void del_bgp_route(struct bgp_route *rte) {
     int i;
     if (!rte) return;
@@ -107,7 +106,7 @@ uint64_t test_rib(UNUSED args_t *args);
 
 static __always_inline struct path_attribute *find_by_code(struct path_attribute **attrs, uint8_t code, int nb_attrs) {
     int i;
-    for (i = 0; i < nb_attrs; i++) {
+    for (i = 0; i < nb_attrs && i < 50; i++) {
         if (attrs[i]->code == code) {
             return attrs[i];
         }
@@ -116,30 +115,68 @@ static __always_inline struct path_attribute *find_by_code(struct path_attribute
 }
 
 
-static __always_inline size_t as_path2_str(struct path_attribute *attr, char *buf, size_t len) {
-    int i, j;
-    size_t offset = 0;
+static __always_inline unsigned int conv_asn(void *as_segment_, unsigned nb_as,
+                                    char *buf, unsigned long len) {
+    unsigned int j;
+    unsigned int chars_written;
+    unsigned int offset;
+    uint32_t cur_as;
+    uint32_t *as_segment =  as_segment_;
+
+    chars_written = 0;
+    offset = 0;
+
+    for (j = 0; j < nb_as && j < 256; j++) {
+#ifndef PROVERS_T2
+        cur_as = ebpf_ntohl(as_segment[j]);
+        chars_written = ubpf_sprintf(&buf[offset], len - offset, " %d", cur_as);
+#else
+        cur_as = as_segment[j];
+        chars_written = rnd_int();
+        if (chars_written <= 0) return 0;
+#endif
+        offset += chars_written;
+        if (offset >= len) return 0;
+    }
+    return offset;
+}
+
+
+static __always_inline size_t as_path2_str(struct path_attribute *attr, char *buf, unsigned long len) {
+    unsigned int offset = 0;
     uint8_t *as_path;
     uint32_t *as_segment;
-    uint8_t seg_type;
-    uint8_t seg_len;
-    int chars_written;
-    uint32_t cur_as;
+    unsigned char seg_type;
+    unsigned char seg_len;
     const char end_bracket[] = " ]";
+
+    PROOF_T2_INSTS(unsigned int trap = 0;)
 
     if (attr == NULL) {
         return 0;
-    } else if (attr->code != AS_PATH_ATTR_ID) {
+    }
+    if (attr->code != AS_PATH_ATTR_ID) {
         return 0;
     }
 
     as_path = attr->data;
     buf[offset++] = '[';
 
-    for (i = 0; i < attr->length;) {
-        if (attr->length - i < 2) return 0;
-        seg_type = as_path[i++];
-        seg_len = as_path[i++];
+    unsigned int bytes = 0;
+    unsigned int tot_len = attr->length;
+
+    while (bytes < tot_len PROOF_T2_INSTS(&& trap < 4096)) {
+        PROOF_T2_INSTS(trap += 6;)
+        if (tot_len - bytes <= 2) return 0;
+        seg_type = as_path[bytes++];
+        seg_len = as_path[bytes++];
+
+        if (seg_len <= 0)
+            continue;
+
+        if (bytes + (4*seg_len) > tot_len)
+            break; // / * woah malformed update * /
+        bytes += seg_len * 4;
 
         switch (seg_type) {
             case AS_PATH_SEGMENT_SET:
@@ -151,15 +188,16 @@ static __always_inline size_t as_path2_str(struct path_attribute *attr, char *bu
                 return 0;
         }
 
-        as_segment = (uint32_t *) &as_path[i];
-        if (attr->length - i < seg_len * 4) return 0;
-        for (j = 0; j < seg_len; j++) {
-            cur_as = ebpf_ntohl(as_segment[j]);
-            chars_written = ubpf_sprintf(&buf[offset], len - offset, " %d", cur_as);
-            offset += chars_written;
-            if (offset >= len) return len;
-        }
-        i += seg_len * 4;
+        as_segment = (uint32_t *) &as_path[bytes];
+
+        if (seg_len <= 0) return 0;
+
+        unsigned int tmp_offset;
+
+        tmp_offset = conv_asn(as_segment, seg_len, buf + offset, len - offset);
+        if (tmp_offset == 0) return len;
+        offset += tmp_offset;
+        if (offset >= len) return len;
     }
 
     if (len - sizeof(end_bracket) >= offset) {
@@ -211,6 +249,8 @@ static __always_inline int nexthop2str(struct path_attribute *attr, char *buf, s
 }
 
 uint64_t test_rib(UNUSED args_t *args) {
+    unsigned long int iter;
+#define MAXITER 18446744073709551615u  // assume MAX routes in routing table = 2^64 (~18 446 Peta routes) (actually 1M for IPv4 (2021))
     int rib_fd;
     struct bgp_route *rte;
     char ip_str[60];
@@ -226,7 +266,9 @@ uint64_t test_rib(UNUSED args_t *args) {
     as_path = ctx_malloc(512);
     if (!as_path) return -1;
 
-    while (rib_has_route(rib_fd)) {
+    iter = 0;
+    while (rib_has_route(rib_fd) && iter < MAXITER) {
+        iter += 1;
 
         rte = next_rib_route(rib_fd);
 
