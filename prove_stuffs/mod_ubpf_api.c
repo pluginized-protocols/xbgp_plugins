@@ -215,9 +215,13 @@ int ebpf_inet_pton(int af, const char *src, void *dst, size_t buf_len) {
 
 static inline int skip_atoi(const char **s) {
     int i = 0;
+#define MAX_REPR_UINT 10
+    int iter = 0;
 
-    while (is_digit(**s))
+    while (is_digit(**s) && iter < MAX_REPR_UINT) {
         i = i * 10 + *((*s)++) - '0';
+        iter++;
+    }
     return i;
 }
 

@@ -17,6 +17,14 @@
 
 #define MAX_ITERATION INT32_MAX
 
+
+#define __always_inline
+
+int snprintf(char *restrict str, size_t size,
+             const char *restrict format, ...);
+
+#define ubpf_sprintf(...) snprintf(__VA_ARGS__);
+
 /**
  *  Starting point of the BPF program
  */
