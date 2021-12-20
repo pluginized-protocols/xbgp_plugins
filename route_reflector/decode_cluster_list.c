@@ -125,7 +125,11 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
 
     in_cluster_list = (uint32_t *) data;
 
-    for (i = 0; i < *len / 4; i++) {
+    // T2 doesn't like exact width types
+    unsigned int mlen = *len;
+    mlen /= 4;
+
+    for (i = 0; i < mlen; i++) {
         cluster_list[i] = ebpf_ntohl(in_cluster_list[i]);
     }
 
