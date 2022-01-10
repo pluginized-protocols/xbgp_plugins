@@ -1,0 +1,4 @@
+include decision_process_add.plugin
+include filter_odd_as.plugin
+include reject_route_attr.plugin
+include reject_unknown_attr.plugin

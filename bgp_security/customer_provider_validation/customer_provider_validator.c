@@ -2,12 +2,11 @@
 // Created by thomas on 3/06/20.
 //
 
-#include "../byte_manip.h"
-#include <stddef.h>
-#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "../../byte_manip.h"
+#include "../../xbgp_compliant_api/xbgp_plugin_api.h"
 
-#include "common_security.h"
-#include "../prove_stuffs/prove.h"
+#include "../common_security.h"
+#include "../../prove_stuffs/prove.h"
 
 #define SESSION_MY_PROVIDER 1
 #define SESSION_MY_CUSTOMER 2
@@ -18,12 +17,12 @@
 #define MAX_ITERATION INT32_MAX
 
 
-#define __always_inline
+// T2 doesn't like variadic functions
+#ifdef PROVERS_T2
+#define ubpf_sprintf(...)
 
-int snprintf(char *restrict str, size_t size,
-             const char *restrict format, ...);
-
-#define ubpf_sprintf(...) snprintf(__VA_ARGS__);
+#define ebpf_print(...)
+#endif
 
 /**
  *  Starting point of the BPF program
@@ -139,19 +138,31 @@ static __always_inline int from_customer_check(uint32_t my_as, struct path_attri
 
     int current_res = 1;
 
-    const uint8_t *pos = attr->data;
-    const uint8_t *end = pos + attr->length;
+    const uint8_t * const pos = attr->data;
+
+    unsigned int bytes = 0;
+    unsigned int tot_length = attr->length;
 
     uint32_t prev_as = my_as;
     uint32_t curr_as;
 
-    while (pos < end) {
-        uint type = pos[0];
-        uint len = pos[1];
-        pos += 2;
+    PROOF_T2_INSTS(unsigned int trap = 0;)
+
+    while (bytes < tot_length PROOF_T2_INSTS(&& trap < 4096)) {
+        PROOF_T2_INSTS(trap += 6;)
+        unsigned char type = pos[bytes++];
+        unsigned char len = pos[bytes++];
 
         if (!len)
-            continue;
+            break;
+
+        if (len > 255) {
+            break; // should never happen but just in case for provers
+        }
+
+        if (tot_length - bytes <= len * 4) {
+            break;
+        }
 
         switch (type) {
             case AS_PATH_SET:
@@ -162,7 +173,9 @@ static __always_inline int from_customer_check(uint32_t my_as, struct path_attri
             case AS_PATH_CONFED_SEQUENCE:
                 curr_as = get_u32(pos + AS_N_SIZE * (len - 1));
 
-                switch (valid_pair(prev_as, curr_as)) {
+                int a = valid_pair(prev_as, curr_as);
+
+                switch (a) {
                     case -1:
                         current_res = -1;
                         break;
@@ -178,7 +191,7 @@ static __always_inline int from_customer_check(uint32_t my_as, struct path_attri
                 return -1;
         }
 
-        pos += AS_N_SIZE * len;
+        bytes += AS_N_SIZE * len;
     }
 
     return current_res;
@@ -195,19 +208,37 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
     int current_state = VALID_1;
     int curr_check;
 
-    const uint8_t *pos = attr->data;
-    const uint8_t *end = pos + attr->length;
+    const uint8_t * const pos = attr->data;
 
+    unsigned int bytes = 0;
+    unsigned int tot_length = attr->length;
+
+    PROOF_T2_INSTS(unsigned int trap = 0;)
+
+#ifdef PROVERS_T2
+    unsigned long prev_as = my_as;
+    unsigned long curr_as;
+#else
     uint32_t prev_as = my_as;
     uint32_t curr_as;
+#endif
 
-    while (pos < end) {
-        uint type = pos[0];
-        uint len = pos[1];
-        pos += 2;
+    while (bytes < tot_length PROOF_T2_INSTS(&& trap < 4096)) {
+        PROOF_T2_INSTS(trap += 6;)
+        unsigned char type = pos[bytes++];
+        unsigned char len = pos[bytes++];
 
-        if (!len)
-            continue;
+        if (!len) {
+            return -1; // malformed as_seg
+        }
+
+        if (len > 255) {
+            return -1; // should never happen but just in case for provers
+        }
+
+        if (tot_length - bytes <= len * 4) {
+            return -1;
+        }
 
         switch (type) {
             case AS_PATH_SET:
@@ -217,9 +248,9 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
             case AS_PATH_SEQUENCE:
             case AS_PATH_CONFED_SEQUENCE:
                 curr_as = get_u32(pos + AS_N_SIZE * (len - 1));
+                curr_check = valid_pair(prev_as, curr_as);
 
                 if (current_state == VALID_1) {
-                    curr_check = valid_pair(prev_as, curr_as);
                     if (curr_check == -1) {
                         current_state = UNK_1;
                     } else if (curr_check == 0) {
@@ -229,7 +260,6 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
                     }
 
                 } else if (current_state == UNK_1) {
-                    curr_check = valid_pair(prev_as, curr_as);
                     if (curr_check == 0) {
                         current_state = UNK_2;
                     } else if (curr_check == -2) {
@@ -237,7 +267,6 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
                     }
 
                 } else if (current_state == VALID_2) {
-                    curr_check = valid_pair(curr_as, prev_as);
                     if (curr_check == 0) {
                         return 0;
                     } else if (curr_check == -1) {
@@ -247,7 +276,6 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
                     }
 
                 } else if (current_state == UNK_2) {
-                    curr_check = valid_pair(curr_as, prev_as);
                     if (curr_check == 0) {
                         return 0;
                     } else if (curr_check == -2) {
@@ -262,7 +290,7 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
                 return -1;
         }
 
-        pos += AS_N_SIZE * len;
+        bytes += AS_N_SIZE * len;
     }
 
     return current_state == VALID_1 || current_state == VALID_2 ? 1 : -1;

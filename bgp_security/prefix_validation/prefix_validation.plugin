@@ -1,0 +1,24 @@
+{
+  "jit_all": true,
+  "name": "prefix_origin",
+  "extra_mem": 4096,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "rpki_like": {
+      "obj": "prefix_validator.o",
+      "jit": true,
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_pre_inbound_filter": {
+      "replace": {
+        "0": "rpki_like"
+      }
+    }
+  }
+}

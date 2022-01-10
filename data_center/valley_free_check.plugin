@@ -1,0 +1,22 @@
+{
+  "jit_all": false,
+  "name": "filter_non_valley_free",
+  "extra_mem": 128,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "simple_reject_42": {
+      "obj": "valley_free_check.o",
+      "jit": true,
+      "permissions": [
+        "read", "write", "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_pre_inbound_filter": {
+      "replace": {
+        "0": "filter_non_valley_free"
+      }
+    }
+  }
+}

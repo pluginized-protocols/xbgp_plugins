@@ -611,6 +611,7 @@ uint16_t ebpf_ntohs(uint16_t value) {
 #endif
 }
 
+#ifndef PROVERS_T2
 uint32_t ebpf_ntohl(uint32_t value) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     return bswap_32(value);  // Compiler builtin GCC/Clang
@@ -620,6 +621,11 @@ uint32_t ebpf_ntohl(uint32_t value) {
 #    error unsupported endianness
 #endif
 }
+#else
+uint32_t ebpf_ntohl(uint32_t value) {
+    return 0;
+}
+#endif
 
 uint64_t ebpf_ntohll(uint64_t value) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN

@@ -1,0 +1,24 @@
+{
+  "jit_all": true,
+  "name": "client_choice",
+  "extra_mem": 4096,
+  "shared_mem": 4096,
+  "obj_code_list": {
+    "alternate": {
+      "obj": "alternate_old_new.o",
+      "jit": true,
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_local_pref_decision": {
+      "replace": {
+        "0": "alternate"
+      }
+    }
+  }
+}

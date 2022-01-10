@@ -1,0 +1,24 @@
+{
+  "jit_all": false,
+  "name": "filter_42",
+  "extra_mem": 128,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "simple_reject_42": {
+      "obj": "reject_route_attr_42.o",
+      "jit": true,
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_decode_attr": {
+      "replace": {
+        "20": "simple_reject_42"
+      }
+    }
+  }
+}

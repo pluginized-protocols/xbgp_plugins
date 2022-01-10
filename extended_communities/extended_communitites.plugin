@@ -1,0 +1,36 @@
+{
+  "jit_all": true,
+  "name": "extended_communities",
+  "extra_mem": 128,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "decoder": {
+      "obj": "decode_extended_communities.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "encoder": {
+      "obj": "encode_extended_communities.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_encode_attr": {
+      "replace": {
+        "0": "encoder"
+      }
+    },
+    "bgp_decode_attr": {
+      "replace": {
+        "0": "decoder"
+      }
+    }
+  }
+}

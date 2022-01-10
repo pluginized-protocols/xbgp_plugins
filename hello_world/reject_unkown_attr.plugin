@@ -1,0 +1,24 @@
+{
+  "jit_all": false,
+  "name": "reject_unk_attr",
+  "extra_mem": 128,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "reject_unk_attr": {
+      "obj": "reject_unknown_attr.o",
+      "jit": true,
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_decode_attr": {
+      "replace": {
+        "30": "reject_unk_attr"
+      }
+    }
+  }
+}

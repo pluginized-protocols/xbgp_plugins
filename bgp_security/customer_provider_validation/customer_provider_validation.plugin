@@ -1,0 +1,24 @@
+{
+  "name": "customer_provider_validator",
+  "jit_all": false,
+  "extra_mem": 4096,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "cust_prov_check": {
+      "obj": "customer_provider_validator.c",
+      "jit": true,
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_pre_inbound_filter": {
+      "replace": {
+        "10": "cust_prov_check"
+      }
+    }
+  }
+}

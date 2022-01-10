@@ -1,0 +1,71 @@
+{
+  "jit_all": true,
+  "name": "geo_tags",
+  "extra_mem": 512,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "export_igp_metric": {
+      "obj": "export_igp_metric.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "import_prefix_originator": {
+      "obj": "import_prefix_originator.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "receive_attr": {
+      "obj": "receive_attr.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "set_med_coord": {
+      "obj": "set_med_coord.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "write_attr": {
+      "obj": "write_attr.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_decode_attr": {
+      "replace": {
+        "0": "receive_attr"
+      }
+    },
+    "bgp_pre_inbound_filter": {
+      "replace": {
+        "0": "import_prefix_originator"
+      }
+    },
+    "bgp_pre_outbound_filter": {
+      "replace": {
+        "0": "set_med_coord",
+        "10": "export_igp_metric"
+      }
+    },
+    "bgp_encode_attr": {
+      "replace": {
+        "0": "write_attr"
+      }
+    }
+  }
+}

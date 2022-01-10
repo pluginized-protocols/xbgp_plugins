@@ -1,0 +1,31 @@
+{
+  "jit_all": false,
+  "name": "monitoring_stuffs",
+  "extra_mem": 512,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "as_path_cnt": {
+      "obj": "as_path_count.o",
+      "jit": true,
+      "permissions": [
+        "read",
+        "usr_ptr"
+      ]
+    },
+    "route_origin": {
+      "obj": "route_origin_monitor.o",
+      "permissions": [
+        "read",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_pre_inbound_filter": {
+      "replace": {
+        "0": "route_origin",
+        "10": "as_path_cnt"
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "jit_all": false,
+  "name": "filter_odd_as",
+  "extra_mem": 128,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "filter_as": {
+      "obj": "filter_odd_as.o",
+      "jit": true,
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_decode_attr": {
+      "replace": {
+        "10": "filter_as"
+      }
+    }
+  }
+}

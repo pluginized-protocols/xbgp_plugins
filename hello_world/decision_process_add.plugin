@@ -1,0 +1,24 @@
+{
+  "jit_all": false,
+  "name": "decision_process_add",
+  "extra_mem": 128,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "d_add": {
+      "obj": "decision_process_add.o",
+      "jit": true,
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_decode_attr": {
+      "replace": {
+        "0": "d_add"
+      }
+    }
+  }
+}
