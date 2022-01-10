@@ -5,7 +5,10 @@ info() {
 }
 
 list_dir() {
-  find "$1" -type d ! -path '*docs*' ! -path '*git*' ! -path '*venv*' ! -path '*cmake*' ! -path '*idea*' ! -path '*xbgp_compliant_api*' ! -path '*prove_stuffs*'
+  find "$1" -type d ! -path '*docs*' ! \
+    -path '*git*' ! -path '*venv*' ! \
+    -path '*cmake*' ! -path '*idea*' ! \
+    -path '*xbgp_compliant_api*' ! -path '*prove_stuffs*'
 }
 
 mapfile -t < <(list_dir . | sed -E "s/^\.$//g")
