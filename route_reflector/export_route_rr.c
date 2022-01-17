@@ -118,7 +118,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
 
     new_cluster_list = ctx_malloc(sizeof(struct path_attribute) + cl_len);
     if (!new_cluster_list) {
-        ebpf_print("Unable to get memory for cluster list (%d + %d)\n", sizeof(struct path_attribute), cl_len);
+        ebpf_print("Unable to get memory for cluster list (%d + %d)\n", LOG_U64(sizeof(struct path_attribute)), LOG_INT(cl_len));
         TIDYING();
         return PLUGIN_FILTER_UNKNOWN;
     }
@@ -141,7 +141,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
             for (i = 0; i < cluster_list->length / 4; i++) {
                 if (cluster_array[i] == pinfo->local_bgp_session->router_id) {
                     ebpf_print("My router-id %d is in the cluster list (rcv %d)!\n",
-                               pinfo->local_bgp_session->router_id, src_info->router_id);
+                               LOG_U32(pinfo->local_bgp_session->router_id), LOG_U32(src_info->router_id));
                     TIDYING();
                     return PLUGIN_FILTER_UNKNOWN;
                 }
@@ -154,8 +154,9 @@ uint64_t export_route_rr(args_t *args UNUSED) {
         /* route coming from a non client, send to clients only */
         if (!is_rr_client(pinfo->router_id)) { // only check the first peer of the subgroup
             /* the neighbor is not rr client, don't send the route*/
-            ebpf_print("Reject: received from (%d) not rr client and to non rr client (%d)\n", src_info->router_id,
-                       pinfo->router_id);
+            ebpf_print("Reject: received from (%d) not rr client and to non rr client (%d)\n",
+                       LOG_U32(src_info->router_id),
+                       LOG_U32(pinfo->router_id));
             TIDYING();
             return PLUGIN_FILTER_REJECT;
         }

@@ -48,7 +48,7 @@ int get_time(struct timespec *spec) {
 #include <stdio.h>
 #define ebpf_print(...)
 #else
-void ebpf_print(const char *format, ...) {
+void ebpf_print_intern(const char *format, ...) {
     va_list list;
 
     va_start(list, format);

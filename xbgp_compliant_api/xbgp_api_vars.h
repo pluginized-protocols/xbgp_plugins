@@ -2,9 +2,9 @@
 #ifndef __XBGP_API_VARS_H
 #define __XBGP_API_VARS_H
 
-#include "ubpf_public.h"
 #include "xbgp_plugin_host_api.h"
 #include "xbgp_defs.h"
+#include "xbgp_api_function_helper.h"
 
 // announce nlri + loc_rib...
 

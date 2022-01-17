@@ -7,8 +7,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <context_hdr.h>
-#include <xbgp_compliant_api/xbgp_defs.h>
+
+#include "xbgp_defs.h"
 
 /**
  * Adds a new attribute to the route processed by the current plugin

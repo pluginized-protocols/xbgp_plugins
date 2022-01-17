@@ -126,7 +126,7 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     }
 
     if (counter != tot_len) {
-        ebpf_print("Size missmatch counter %d totlen %d\n", counter, tot_len);
+        ebpf_print("Size missmatch counter %d totlen %d\n", LOG_U32(counter), LOG_U32(tot_len));
         TIDYING();
         return 0;
     }

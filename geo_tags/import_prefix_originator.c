@@ -56,7 +56,7 @@ uint64_t import_prefix_originator(args_t *args UNUSED) {
                          peer->peer_type == LOCAL_SESSION ? "local" :
                          "unk wtf ?";
 
-        ebpf_print("Not an eBGP session %s (%u)\n", tp, peer->router_id);
+        ebpf_print("Not an eBGP session %s (%u)\n", LOG_PTR(tp), LOG_U32(peer->router_id));
         TIDYING;
         next();
     }
