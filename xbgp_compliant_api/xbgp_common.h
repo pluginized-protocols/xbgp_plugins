@@ -15,6 +15,6 @@
 #define HELPER_ATTR_READ 4
 #define HELPER_ATTR_MASK 7
 
-typedef struct context *context_t;
+typedef struct context context_t;
 
 #endif //XBGP_PLUGINS_XBGP_COMMON_H
