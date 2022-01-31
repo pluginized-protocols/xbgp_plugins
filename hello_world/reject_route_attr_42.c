@@ -47,7 +47,7 @@ uint64_t reject_route_attr_42(args_t *args UNUSED) {
         return PLUGIN_FILTER_REJECT;
     }
 
-    ebpf_print("Update accepted\n");
+    // ebpf_print("Update accepted\n");
     TIDYING;
     return PLUGIN_FILTER_ACCEPT;
 

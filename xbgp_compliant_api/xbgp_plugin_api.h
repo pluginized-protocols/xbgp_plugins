@@ -127,7 +127,7 @@ extern struct ubpf_peer_info *get_peer_info(int *nb_peers);
  * @return NULL if the function is unable to pass those data to the plugin
  *         Otherwise a pointer is returned
  */
-extern struct ubpf_peer_info *get_src_peer_info();
+extern struct ubpf_peer_info *get_src_peer_info(void);
 
 /**
  * Modifies the information the local BGP router maintains for a peer.

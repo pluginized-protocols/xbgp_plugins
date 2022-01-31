@@ -62,7 +62,7 @@ uint64_t export_igp_metric(args_t *args UNUSED) {
 #ifdef PROVERS_T2
     peer = rnd_ptr();
 #else
-    peer = get_src_peer_info(&nb_peers);
+    peer = get_src_peer_info();
 #endif
 
     if (!nexthop || !peer) next();
