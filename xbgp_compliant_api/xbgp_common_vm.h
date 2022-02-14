@@ -47,6 +47,8 @@ extern int send_to_monitor(const void *data, size_t len, unsigned int type);
 
 extern int get_time(struct timespec *spec);
 
+extern int get_realtime(struct timespec *spec);
+
 extern clock_t bpf_clock(void);
 
 extern void *ebpf_memcpy(void *dst0, const void *src0, size_t length);

@@ -1,0 +1,58 @@
+{
+  "jit_all": false,
+  "name": "propagation_time",
+  "extra_mem": 4096,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "compute_arrival_time": {
+      "obj": "compute_arrival_time",
+      "permission": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "encode_arrival_time": {
+      "obj": "encode_arrival_time.o",
+      "permission": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "decode_arrival_time": {
+      "obj": "decode_arrival_time.o",
+      "permission": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "encode_propagation_time_communities": {
+      "obj": "encode_propagation_time_communities",
+      "permission": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_decode_attr": {
+      "replace": {
+        "0": "decode_arrival_attr"
+      },
+      "bgp_pre_inbound_filter": {
+        "replace": {
+          "0": "compute_arrival_time"
+        },
+        "bgp_encode_attr": {
+          "replace": {
+            "0": "encode_arrival_time_attr",
+            "10": "encode_propagation_time_communities"
+          }
+        }
+      }
+    }
+  }
+}
