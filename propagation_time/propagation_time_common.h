@@ -28,13 +28,13 @@ struct attr_arrival {
     uint32_t from_as;
 };
 
-#define NS_TO_MS 1000000
+#define NS_TO_MS ((unsigned int)1000000)
 
 #define timespec2ms(a) ({             \
     uint16_t resms__ = 0;             \
     uint64_t ms__ = 0;                \
     ms__ = (a)->tv_sec;               \
-    ms__ += (a)->tv_nsec / NS_TO_MS;  \
+    ms__ += (uint64_t) (a)->tv_nsec / NS_TO_MS;  \
                                       \
     if (ms__ <= UINT16_MAX) {         \
         resms__ = ms__;               \
