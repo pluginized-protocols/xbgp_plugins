@@ -30,7 +30,7 @@ def generate_plugin(plugin_base: str, manifest: str, headers: list):
     """ collect prove stuff """
     prove_stuffs = [file for file in os.listdir('prove_stuffs') if file[-2:] in ['.h', '.c']]
 
-    with tarfile.open('plugins/%s.tar.bz2' % plugin_name, 'x:bz2', dereference=True) as tar:
+    with tarfile.open('plugins/%s.tar.bz2' % plugin_name, 'w:bz2', dereference=True) as tar:
         """ add source code to archive """
         for obj in objs:
             tar.add(os.path.join(plugin_base, obj), '%s/%s' % (plugin_name, obj))
