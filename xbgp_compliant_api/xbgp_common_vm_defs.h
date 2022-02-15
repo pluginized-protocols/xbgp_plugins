@@ -152,12 +152,20 @@ struct global_info {
     int type;
 };
 
+/* hidden arguments of the insertion point,
+ * to be retrieved with get_arg function */
 typedef struct entry_arg entry_arg_t;
 
 typedef struct {
     entry_arg_t *args;
     int nargs;
 } args_t;
+
+/* argument passed to the main function of the plugin */
+typedef struct {
+    uint64_t replace_return_value;
+    int insertion_point_id;
+} exec_info_t;
 
 enum RESERVED_RETURN_VAL {
     BPF_UNDEF = 0,

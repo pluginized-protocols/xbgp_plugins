@@ -119,4 +119,6 @@ extern int sk_close(int sfd);
 
 extern int reschedule_plugin(time_t *time);
 
+extern int whereami(void);
+
 #endif //XBGP_PLUGINS_XBGP_COMMON_VM_H

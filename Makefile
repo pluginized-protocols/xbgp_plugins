@@ -7,7 +7,8 @@ PLUGIN_DIR = bgp_security \
     hello_world \
     monitoring \
     rib_walk \
-    route_reflector
+    route_reflector \
+    propagation_time
 
 
 .PHONY: all build clean
