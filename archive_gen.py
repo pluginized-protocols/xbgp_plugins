@@ -1,4 +1,4 @@
-#! /bin/python
+#! /usr/bin/env python3
 
 import os
 from re import search
@@ -44,16 +44,17 @@ def generate_plugin(plugin_base: str, manifest: str, headers: list):
         for file in prove_stuffs:
             tar.add(os.path.join('prove_stuffs', file))
         tar.add('byte_manip.h')
-if not os.path.exists('plugins'): os.mkdir('plugins')
 
-dirs = list(filter(lambda entry: os.path.isdir(entry), os.listdir()))
-for plugin_base in filter(lambda y: len(list(filter(lambda x: search(x, y) is not None, skipped))) == 0, dirs):
-    content = os.listdir(plugin_base)
-    headers = [os.path.join(plugin_base, header) for header in filter(lambda file: file[-2:] == '.h', content)]
-    for entry in content:
-        if '.plugin' in entry:
-            generate_plugin(plugin_base, entry, headers)
-        elif os.path.isdir(new_plugin_base := os.path.join(plugin_base, entry)):
-            for entry in os.listdir(new_plugin_base):
-                if '.plugin' in entry:
-                    generate_plugin(new_plugin_base, entry, headers)
+if __name__ == "__main__":
+    if not os.path.exists('plugins'): os.mkdir('plugins')
+    dirs = list(filter(lambda entry: os.path.isdir(entry), os.listdir()))
+    for plugin_base in filter(lambda y: len(list(filter(lambda x: search(x, y) is not None, skipped))) == 0, dirs):
+        content = os.listdir(plugin_base)
+        headers = [os.path.join(plugin_base, header) for header in filter(lambda file: file[-2:] == '.h', content)]
+        for entry in content:
+            if '.plugin' in entry:
+                generate_plugin(plugin_base, entry, headers)
+            elif os.path.isdir(new_plugin_base := os.path.join(plugin_base, entry)):
+                for entry in os.listdir(new_plugin_base):
+                    if '.plugin' in entry:
+                        generate_plugin(new_plugin_base, entry, headers)
