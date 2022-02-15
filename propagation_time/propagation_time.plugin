@@ -5,7 +5,7 @@
   "shared_mem": 0,
   "obj_code_list": {
     "compute_arrival_time": {
-      "obj": "compute_arrival_time",
+      "obj": "compute_arrival_time.o",
       "permission": [
         "read",
         "write",
@@ -13,7 +13,7 @@
       ]
     },
     "encode_arrival_time": {
-      "obj": "encode_arrival_time.o",
+      "obj": "encode_arrival_time_attr.o",
       "permission": [
         "read",
         "write",
@@ -21,7 +21,7 @@
       ]
     },
     "decode_arrival_time": {
-      "obj": "decode_arrival_time.o",
+      "obj": "decode_arrival_attr.o",
       "permission": [
         "read",
         "write",
@@ -29,7 +29,7 @@
       ]
     },
     "encode_propagation_time_communities": {
-      "obj": "encode_propagation_time_communities",
+      "obj": "encode_propagation_time_communities.o",
       "permission": [
         "read",
         "write",
