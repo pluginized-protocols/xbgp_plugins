@@ -13,7 +13,7 @@ PROOF_INSTS(
 
         uint8_t nondet_u8(void);
 
-        struct ubpf_peer_info *get_src_peer_info(UNUSED int *nb_peers) {
+        struct ubpf_peer_info *get_src_peer_info() {
             struct ubpf_peer_info *pf;
             pf = malloc(sizeof(*pf));
             if (!pf) {
