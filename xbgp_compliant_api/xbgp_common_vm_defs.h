@@ -163,6 +163,7 @@ typedef struct {
 
 /* argument passed to the main function of the plugin */
 typedef struct {
+    int return_val_set;
     uint64_t replace_return_value;
     int insertion_point_id;
 } exec_info_t;
