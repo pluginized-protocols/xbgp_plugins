@@ -1,0 +1,71 @@
+{
+  "jit_all": true,
+  "name": "decision_process_metrics",
+  "extra_mem": 4096,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "encode_tie_reason_community": {
+      "obj": "encode_tie_reason_community.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "tie_breaker": {
+      "obj": "tie_breaker.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_pre_outbound_filter": {
+      "replace": {
+        "0": "tie_breaker"
+      }
+    },
+    "bgp_local_pref_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    },
+    "bgp_as_path_length_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    },
+    "bgp_med_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    },
+    "bgp_use_origin_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    },
+    "bgp_prefer_external_peer_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    },
+    "bgp_igp_cost_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    },
+    "bgp_router_id_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    },
+    "bgp_ipaddr_decision": {
+      "post": {
+        "0": "encode_tie_reason_community"
+      }
+    }
+  }
+}

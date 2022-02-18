@@ -2,6 +2,7 @@
 PLUGIN_DIR = bgp_security \
     data_center \
     decision_process \
+    decision_process_metrics \
     extended_communities \
     geo_tags \
     hello_world \
