@@ -12,7 +12,7 @@ PLUGIN_DIR = bgp_security \
     propagation_time
 
 
-.PHONY: all build clean
+.PHONY: all build clean zip
 
 all: build
 
@@ -23,6 +23,10 @@ build:
 			$(MAKE) -C $$a; \
 		fi; \
 	done;
+
+zip: build
+	@echo ARCHIVE_GEN
+	@./archive_gen.py
 
 clean:
 	@for a in $(PLUGIN_DIR); do \
