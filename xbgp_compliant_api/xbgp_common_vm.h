@@ -109,13 +109,13 @@ int ebpf_inet_pton(int af, const char *src, void *dst, size_t buf_len);
 
 extern int super_log(const char *msg, struct vargs *args);
 
-extern int sk_open(sk_type_t proto, int af, const struct sockaddr *addr, socklen_t len);
+extern int sock_open(sk_type_t proto, int af, const struct sockaddr *addr, socklen_t len);
 
-extern int sk_write(int sfd, const void *buf, size_t len);
+extern int sock_write(int sfd, const void *buf, size_t len);
 
-extern int sk_read(int sfd, void *buf, size_t len);
+extern int sock_read(int sfd, void *buf, size_t len);
 
-extern int sk_close(int sfd);
+extern int sock_close(int sfd);
 
 extern int reschedule_plugin(time_t *time);
 
