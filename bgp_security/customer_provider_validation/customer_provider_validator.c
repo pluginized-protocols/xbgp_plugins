@@ -2,11 +2,17 @@
 // Created by thomas on 3/06/20.
 //
 
-#include "../../byte_manip.h"
+#ifdef PROVERS
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "common_security.h"
+#include "../byte_manip.h"
+#include "../prove_stuffs/prove.h"
+#else
 #include "../../xbgp_compliant_api/xbgp_plugin_api.h"
-
 #include "../common_security.h"
+#include "../../byte_manip.h"
 #include "../../prove_stuffs/prove.h"
+#endif
 
 #define SESSION_MY_PROVIDER 1
 #define SESSION_MY_CUSTOMER 2

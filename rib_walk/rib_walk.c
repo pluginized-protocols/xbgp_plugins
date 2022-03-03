@@ -87,7 +87,7 @@ PROOF_INSTS(
 
 
 /* starting point */
-uint64_t test_rib(UNUSED args_t *args);
+uint64_t rib_walk(UNUSED args_t *args);
 
 #define afi2af(afi) ({          \
   int af__;                     \
@@ -248,7 +248,7 @@ static __always_inline int nexthop2str(struct path_attribute *attr, char *buf, s
     return ebpf_inet_ntop(attr->data, AF_INET, buf, len);
 }
 
-uint64_t test_rib(UNUSED args_t *args) {
+uint64_t rib_walk(UNUSED args_t *args) {
     unsigned long int iter;
 #define MAXITER 18446744073709551615u  // assume MAX routes in routing table = 2^64 (~18 446 Peta routes) (actually 1M for IPv4 (2021))
     int rib_fd;
@@ -321,7 +321,7 @@ PROOF_INSTS(
             uint64_t ret;
             args_t args = {};
 
-            ret = test_rib(&args);
+            ret = rib_walk(&args);
             p_assert(ret == EXIT_SUCCESS || ret == EXIT_FAILURE);
 
             return 0;

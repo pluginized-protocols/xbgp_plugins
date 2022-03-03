@@ -4,8 +4,8 @@
   "extra_mem": 4096,
   "shared_mem": 0,
   "obj_code_list": {
-    "encode_tie_reason_community": {
-      "obj": "encode_tie_reason_community.o",
+    "export_tie_stats_community": {
+      "obj": "export_tie_stats_community.o",
       "permissions": [
         "read",
         "write",
@@ -29,42 +29,42 @@
     },
     "bgp_local_pref_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     },
     "bgp_as_path_length_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     },
     "bgp_med_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     },
     "bgp_use_origin_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     },
     "bgp_prefer_external_peer_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     },
     "bgp_igp_cost_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     },
     "bgp_router_id_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     },
     "bgp_ipaddr_decision": {
       "post": {
-        "0": "encode_tie_reason_community"
+        "0": "export_tie_stats_community"
       }
     }
   }
