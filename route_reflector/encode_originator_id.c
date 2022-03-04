@@ -90,7 +90,7 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     if (originator_attr) {
         *(uint32_t *) (&originator_id[counter]) = *(uint32_t *)originator_attr->data;
     } else {
-        *(uint32_t *) (&originator_id[counter]) = src_info->router_id;
+        *(uint32_t *) (&originator_id[counter]) = ebpf_htonl(src_info->router_id);
     }
 
     counter += 4;

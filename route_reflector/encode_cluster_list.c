@@ -90,7 +90,7 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     to_info = get_peer_info(&nb_peer);
 
     if (!to_info) {
-        ebpf_print("Can't get src and peer info\n");
+        ebpf_print("Can't get src peer info\n");
         TIDYING()
         next();
         return 0;
