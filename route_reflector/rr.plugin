@@ -2,7 +2,7 @@
   "jit_all": true,
   "name": "route_reflector",
   "extra_mem": 4096,
-  "shared_med": 0,
+  "shared_mem": 8192,
   "obj_code_list": {
     "import_route_rr": {
       "obj": "import_route_rr.o",
@@ -64,7 +64,7 @@
         "0": "export_route_rr"
       }
     },
-    "bgp_encode_attr": {
+    "bgp_encode_custom_attr": {
       "replace": {
         "0": "encode_cluster_list",
         "10": "encode_originator_id"

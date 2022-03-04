@@ -58,30 +58,41 @@ PROOF_INSTS(
     if (attr_buf) free(attr_buf);\
 } while(0);)
 
-uint64_t encode_cluster_list(args_t *args UNUSED) {
+#define KEY_MEM_EXPORT 598
+#define SIZE_MEM_EXPORT 6144
 
+static __always_inline void *get_mem(void) {
+    void *mem;
+    mem = ctx_shmget(KEY_MEM_EXPORT);
+    if (mem) return mem;
+
+    mem = ctx_shmnew(KEY_MEM_EXPORT, SIZE_MEM_EXPORT);
+    if (!mem) {
+        ebpf_print("[FATAL !] Unable to create extended memory !\n");
+        return NULL;
+    }
+    return mem;
+}
+
+uint64_t encode_cluster_list(args_t *args UNUSED) {
     uint32_t counter = 0;
-    uint8_t *attr_buf = NULL;
     uint16_t tot_len = 0;
-    uint32_t *cluster_list;
-    int i;
+    unsigned int i;
     int nb_peer;
+    unsigned char *extra_space;
+    unsigned char *attr_buf;
+    unsigned int length_clist;
 
     struct ubpf_peer_info *to_info = NULL;
-    struct path_attribute *attribute;
-    attribute = get_attr();
-
-    if (!attribute) {
-        ebpf_print("No attribute ?\n");
-        TIDYING();
-        return 0;
-    }
+    struct path_attribute *cluster_list_attr = NULL;
+    uint32_t *cluster_list;
 
     to_info = get_peer_info(&nb_peer);
 
     if (!to_info) {
         ebpf_print("Can't get src and peer info\n");
         TIDYING()
+        next();
         return 0;
     }
 
@@ -90,44 +101,58 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
         next();
     }
 
-    if (attribute->code != CLUSTER_LIST) {
-        TIDYING();
-        next();
-    }
-
-    if (attribute->length >= UINT16_MAX - 2 - (attribute->length < 256 ? 1 : 2)) {
-        TIDYING();
-        return 0;
-    }
+    cluster_list_attr = get_attr_from_code(CLUSTER_LIST_ATTR_ID);
 
     tot_len += 2; // Type hdr
-    tot_len += attribute->length < 256 ? 1 : 2; // Length hdr
-    tot_len += attribute->length;
 
-    attr_buf = ctx_calloc(1, tot_len);
-    if (!attr_buf) {
-        TIDYING();
+    if (cluster_list_attr) {
+        length_clist = cluster_list_attr->length + 4;
+        tot_len += length_clist < 256 ? 1 : 2;
+        tot_len += length_clist;
+
+    } else {
+        tot_len += 1; // length size
+        tot_len += 4;
+        length_clist = 4;
+    }
+
+    extra_space = get_mem();
+    if (!extra_space) {
+        ebpf_print("Unable to get extra space\n");
+        next();
         return 0;
     }
 
-    attr_buf[counter++] = attribute->flags;
-    attr_buf[counter++] = attribute->code;
+    /*if (attribute->length >= UINT16_MAX - 2 - (attribute->length < 256 ? 1 : 2)) {
+        TIDYING();
+        return 0;
+    }*/
 
-    if (attribute->length < 256) attr_buf[counter++] = (uint8_t) attribute->length;
+    attr_buf = extra_space;
+
+    attr_buf[counter++] = ATTR_OPTIONAL;
+    attr_buf[counter++] = CLUSTER_LIST_ATTR_ID;
+
+    if (length_clist < 256) attr_buf[counter++] = length_clist;
     else {
-        memcpy(attr_buf + counter, &attribute->length, sizeof(attribute->length));
+        *(uint16_t *)(&attr_buf[counter]) = ebpf_htons(length_clist);
         counter += 2;
     }
 
-    cluster_list = (uint32_t *) attribute->data;
-    for (i = 0; i < attribute->length / 4; i++) {
-        *((uint32_t *) (attr_buf + counter)) = ebpf_htonl(cluster_list[i]);
-        counter += 4;
+    *(uint32_t *) (&attr_buf[counter]) = ebpf_htonl(to_info->local_bgp_session->router_id);
+    counter += 4;
+    if (cluster_list_attr) {
+        cluster_list = (uint32_t *) cluster_list_attr->data;
+        for (i = 0; i < cluster_list_attr->length / 4; i++) {
+            *((uint32_t *) (attr_buf + counter)) = ebpf_htonl(cluster_list[i]);
+            counter += 4;
+        }
     }
 
     if (counter != tot_len) {
         ebpf_print("Size missmatch counter %d totlen %d\n", LOG_U32(counter), LOG_U32(tot_len));
         TIDYING();
+        next();
         return 0;
     }
 
@@ -138,9 +163,11 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     if (write_to_buffer(attr_buf, counter) == -1) {
         ebpf_print("Write failed\n");
         TIDYING();
+        next();
         return 0;
     }
     TIDYING();
+    next();
     return counter;
 }
 

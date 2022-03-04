@@ -84,7 +84,7 @@ uint64_t decision_process_add(args_t *args UNUSED);
 })
 
 #define check_community(arr, len, community) ({              \
-  int i__;                                                   \
+  unsigned int i__;                                          \
   uint16_t val_ret__ = 0;                                    \
   uint32_t commu__;                                          \
   uint32_t *arru32 = (uint32_t *) (arr);                     \

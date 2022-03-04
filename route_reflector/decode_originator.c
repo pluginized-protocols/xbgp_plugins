@@ -90,21 +90,20 @@ uint64_t decode_originator(args_t *args UNUSED) {
     data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
 
-    src_info = get_src_peer_info();
-
     if (!code || !len || !flags || !data) {
         TIDYING();
         return EXIT_FAILURE;
     }
 
-    if (src_info->peer_type != IBGP_SESSION) {
-        TIDYING();
-        next(); // don't parse ORIGINATOR_LIST if originated from eBGP session
-    }
-
     if (*code != ORIGINATOR_ID) {
         TIDYING();
         next();
+    }
+
+    src_info = get_src_peer_info();
+    if (!src_info || src_info->peer_type != IBGP_SESSION) {
+        TIDYING();
+        next(); // don't parse ORIGINATOR_LIST if originated from eBGP session
     }
 
     if (*len != 4) return 0;

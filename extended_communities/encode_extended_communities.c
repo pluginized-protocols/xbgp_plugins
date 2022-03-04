@@ -44,7 +44,7 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
     uint8_t *attr_buf = NULL;
     uint16_t tot_len = 0;
     uint64_t *ext_communities;
-    int i;
+    unsigned int i;
 
     struct path_attribute *attribute;
     attribute = get_attr();

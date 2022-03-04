@@ -73,17 +73,16 @@ PROOF_INSTS(
 
 
 uint64_t export_route_rr(args_t *args UNUSED) {
-
-    int i, nb_peers, cl_len;
+    unsigned int i;
+    int nb_peers;
     uint32_t *cluster_array;
 
     struct path_attribute *originator = NULL;
     struct path_attribute *cluster_list = NULL;
 
-    struct path_attribute *new_cluster_list = NULL;
-
     struct ubpf_peer_info *pinfo = get_peer_info(&nb_peers);
     struct ubpf_peer_info *src_info = get_src_peer_info();
+
 
     if (!pinfo || !src_info) {
         ebpf_print("Unable to get peer info\n");
@@ -107,26 +106,19 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     originator = get_attr_from_code(ORIGINATOR_ID);
     cluster_list = get_attr_from_code(CLUSTER_LIST);
 
-    if(cluster_list) {
+    if (originator) {
+        if (*(uint32_t *) originator->data != src_info->router_id) {
+            ebpf_print("Originator ID is the SAME, update rejected\n");
+            return PLUGIN_FILTER_REJECT;
+        }
+    }
+
+    if (cluster_list) {
         if (cluster_list->length > UINT16_MAX - 4) {
             TIDYING();
             return PLUGIN_FILTER_UNKNOWN;
         }
     }
-
-    cl_len = 4 + (cluster_list ? cluster_list->length : 0);
-
-    new_cluster_list = ctx_malloc(sizeof(struct path_attribute) + cl_len);
-    if (!new_cluster_list) {
-        ebpf_print("Unable to get memory for cluster list (%d + %d)\n", LOG_U64(sizeof(struct path_attribute)), LOG_INT(cl_len));
-        TIDYING();
-        return PLUGIN_FILTER_UNKNOWN;
-    }
-    new_cluster_list->code = CLUSTER_LIST_ATTR_ID;
-    new_cluster_list->flags = 0x80;
-    new_cluster_list->length = cl_len;
-
-    //ebpf_print("memory for cluster list (%d + %d)\n", sizeof(struct path_attribute), cl_len);
 
     if (cluster_list != NULL) {
         if (cluster_list->length > 0) {
@@ -153,7 +145,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     if (!is_rr_client(src_info->router_id)) {
         /* route coming from a non client, send to clients only */
         if (!is_rr_client(pinfo->router_id)) { // only check the first peer of the subgroup
-            /* the neighbor is not rr client, don't send the route*/
+            /* the neighbor is not rr client, don't send the route */
             ebpf_print("Reject: received from (%d) not rr client and to non rr client (%d)\n",
                        LOG_U32(src_info->router_id),
                        LOG_U32(pinfo->router_id));
@@ -162,41 +154,11 @@ uint64_t export_route_rr(args_t *args UNUSED) {
         }
     }
 
-    if (!originator) {
-        // must set the ORIGINATOR ID
-        originator = ctx_malloc(sizeof(struct path_attribute) + sizeof(uint32_t));
-        if (!originator) {
-            // fail !!!
-            ebpf_print("Unable to allocate memory for ORIGINATOR_ID\n");
-            TIDYING();
-            return PLUGIN_FILTER_REJECT;
-        }
-        originator->code = ORIGINATOR_ID;
-        originator->flags = ATTR_OPTIONAL; // originator is non transitive !
-        originator->length = 4;
-        *((uint32_t *) originator->data) = src_info->router_id;
-
-    }
-
-    uint32_t *cl = (uint32_t *) new_cluster_list->data;
-    /* prepend our router_id */
-    cl[0] = src_info->local_bgp_session->router_id; //pinfo->local_bgp_session->router_id;
-
-
-    if (cluster_list != NULL) {
-        if (cluster_list->length != 0) {
-            ebpf_memcpy(&cl[1], cluster_list->data, cluster_list->length);
-        }
-    }
-
     PROOF_INSTS(
             CHECK_ORIGINATOR(originator);
             CHECK_CLUSTER_LIST(new_cluster_list, 4 + (cluster_list ? cluster_list->length : 0));
     )
 
-
-    set_attr(originator);
-    set_attr(new_cluster_list);
     TIDYING();
     next();
     return PLUGIN_FILTER_ACCEPT;
