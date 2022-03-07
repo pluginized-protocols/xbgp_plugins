@@ -6,9 +6,9 @@
 #include "propagation_time_common.h"
 
 /* entry point */
-uint64_t decode_arrival_time(args_t *args UNUSED);
+uint64_t decode_arrival_attr(args_t *args UNUSED);
 
-uint64_t decode_arrival_time(args_t *args UNUSED) {
+uint64_t decode_arrival_attr(args_t *args UNUSED) {
     struct ubpf_peer_info *src_info = NULL;
     char attr_space[sizeof(struct path_attribute) + sizeof(struct attr_arrival)];
     struct path_attribute *attr;
