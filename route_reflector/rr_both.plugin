@@ -1,0 +1,71 @@
+{
+  "jit_all": true,
+  "name": "route_reflector",
+  "extra_mem": 4096,
+  "shared_mem": 8192,
+  "obj_code_list": {
+    "import_route_rr": {
+      "obj": "import_route_rr.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "export_route_rr": {
+      "obj": "export_route_rr.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "encode_originator_clist": {
+      "obj": "encode_originator_clist.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "decode_cluster_list": {
+      "obj": "decode_cluster_list.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    },
+    "decode_originator_id": {
+      "obj": "decode_originator.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_pre_inbound_filter": {
+      "replace": {
+        "0": "import_route_rr"
+      }
+    },
+    "bgp_pre_outbound_filter": {
+      "replace": {
+        "0": "export_route_rr"
+      }
+    },
+    "bgp_encode_custom_attr": {
+      "replace": {
+        "0": "encode_originator_clist"
+      }
+    },
+    "bgp_decode_attr": {
+      "replace": {
+        "0": "decode_cluster_list",
+        "10": "decode_originator_id"
+      }
+    }
+  }
+}
