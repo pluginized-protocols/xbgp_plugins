@@ -4,8 +4,14 @@
 
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_metrics.h"
+#include "../prove_stuffs/prove.h"
+#include "../prove_stuffs/prove_helpers.h"
 
 uint64_t tie_breaker(exec_info_t *info);
+
+PROOF_INSTS(
+#define NEXT_RETURN_VALUE EXIT_SUCCESS
+        )
 
 uint64_t tie_breaker(exec_info_t *info) {
     uint64_t *stats;
@@ -101,3 +107,18 @@ uint64_t tie_breaker(exec_info_t *info) {
 
     return BPF_FAILURE;
 }
+
+PROOF_INSTS(
+        int main(void) {
+
+            exec_info_t info = {};
+            uint64_t ret_val = tie_breaker(&info);
+
+            p_assert(ret_val == 0 ||
+            ret_val == BPF_FAILURE);
+
+            ctx_shmrm(SHM_KEY_TIE_BREAKER_STATS);
+
+            return 0;
+        }
+        )
