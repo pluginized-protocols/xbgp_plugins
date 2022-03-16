@@ -20,16 +20,8 @@
         "usr_ptr"
       ]
     },
-    "encode_cluster_list": {
-      "obj": "encode_cluster_list.o",
-      "permissions": [
-        "read",
-        "write",
-        "usr_ptr"
-      ]
-    },
-    "encode_originator_id": {
-      "obj": "encode_originator_id.o",
+    "encode_originator_clist": {
+      "obj": "encode_originator_clist.o",
       "permissions": [
         "read",
         "write",
@@ -66,8 +58,7 @@
     },
     "bgp_encode_custom_attr": {
       "replace": {
-        "0": "encode_cluster_list",
-        "10": "encode_originator_id"
+        "0": "encode_originator_clist"
       }
     },
     "bgp_decode_attr": {

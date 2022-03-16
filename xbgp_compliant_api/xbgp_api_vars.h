@@ -264,6 +264,7 @@ static insertion_point_info_t insertion_points[] = {
         {.insertion_point_str="bgp_pre_decision", .insertion_point_id = BGP_POST_DECISION},
         {.insertion_point_str="bgp_decode_attr", .insertion_point_id = BGP_DECODE_ATTR},
         {.insertion_point_str="bgp_encode_attr", .insertion_point_id = BGP_ENCODE_ATTR},
+        {.insertion_point_str="bgp_encode_custom_attr", .insertion_point_id = BGP_ENCODE_CUSTOM_ATTR},
         {.insertion_point_str="bgp_pre_inbound_filter", .insertion_point_id = BGP_PRE_INBOUND_FILTER},
         {.insertion_point_str="bgp_pre_outbound_filter", .insertion_point_id = BGP_PRE_OUTBOUND_FILTER},
         {.insertion_point_str="bgp_decode_message", .insertion_point_id = BGP_DECODE_MESSAGE},

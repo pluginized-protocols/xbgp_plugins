@@ -97,6 +97,7 @@ enum ubpf_plugins {
     BGP_POST_DECISION,
     BGP_DECODE_ATTR,
     BGP_ENCODE_ATTR,
+    BGP_ENCODE_CUSTOM_ATTR,
     BGP_PRE_INBOUND_FILTER,
     BGP_PRE_OUTBOUND_FILTER,
     BGP_DECODE_MESSAGE,
@@ -157,7 +158,7 @@ struct bgp_message {
 struct path_attribute {
     uint8_t code;
     uint8_t flags;
-    uint16_t length;
+    unsigned int length;
     uint8_t data[0];
 };
 

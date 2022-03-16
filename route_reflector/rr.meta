@@ -1,1 +1,7 @@
 include rr.plugin
+
+# if you want to encode originator id and
+# cluster list with the same extension code
+# uncomment the following line and comment
+# the first line of this file
+# include rr_both.plugin

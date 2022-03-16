@@ -52,26 +52,20 @@ PROOF_INSTS(
 
 uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     uint32_t counter = 0;
-    uint8_t *attr_buf = NULL;
-    uint16_t tot_len = 0;
-    uint32_t *originator_id;
     int nb_peer;
 
-    struct path_attribute *attribute;
-    struct ubpf_peer_info *to_info = NULL;
-    attribute = get_attr();
+    unsigned char originator_id[7];
+    struct path_attribute *originator_attr;
 
-    if (!attribute) {
-        ebpf_print("Unable to get attribute\n");
-        TIDYING();
-        return 0;
-    }
+    struct ubpf_peer_info *to_info = NULL;
+    struct ubpf_peer_info *src_info = NULL;
 
     to_info = get_peer_info(&nb_peer);
 
     if (!to_info) {
-        ebpf_print("Can't get src and peer info\n");
+        ebpf_print("Can't get dst peer info\n");
         TIDYING()
+        next();
         return 0;
     }
 
@@ -81,53 +75,45 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
         next();
     }
 
-
-    if (attribute->code != ORIGINATOR_ID) next();
-
-    tot_len += 2; // Type hdr
-    tot_len += attribute->length < 256 ? 1 : 2; // Length hdrs
-    tot_len += attribute->length;
-
-    attr_buf = ctx_calloc(1, tot_len);
-    if (!attr_buf) {
-        ebpf_print("Memory alloc failed\n");
-        TIDYING()
-        return 0;
+    src_info = get_src_peer_info();
+    if (!src_info) {
+        ebpf_print("[ENCODE ORIGINATOR ID] Unable to get src peer info\n");
+        next();
     }
 
-    attr_buf[counter++] = attribute->flags;
-    attr_buf[counter++] = attribute->code;
+    originator_attr = get_attr_from_code(ORIGINATOR_ID_ATTR_ID);
 
-    if (attribute->length < 256) attr_buf[counter++] = (uint8_t) attribute->length;
-    else {
-        attr_buf[counter] = attribute->length;
-        counter += 2;
+    originator_id[counter++] = ATTR_OPTIONAL;
+    originator_id[counter++] = ORIGINATOR_ID_ATTR_ID;
+    originator_id[counter++] = 4;
+
+    if (originator_attr) {
+        *(uint32_t *) (&originator_id[counter]) = *(uint32_t *)originator_attr->data;
+    } else {
+        *(uint32_t *) (&originator_id[counter]) = ebpf_htonl(src_info->router_id);
     }
-
-    originator_id = (uint32_t *) attribute->data;
-    uint32_t originator_id_net = ebpf_htonl(*originator_id);
-    // ebpf_print("Originator id %u (htonl %u)\n", *originator_id, ebpf_htonl(*originator_id));
-    // *((uint32_t *)(attr_buf + counter)) = ebpf_htonl(*originator_id);
-    memcpy(attr_buf + counter, &originator_id_net, sizeof(originator_id_net));
 
     counter += 4;
-
-    if (counter != tot_len) {
+    if (counter != 7) {
         ebpf_print("Size missmatch\n");
         TIDYING();
+        next();
         return 0;
     }
 
     PROOF_SEAHORN_INSTS(
-            BUF_CHECK_ORIGINATOR(attr_buf);
+            p_assert(counter == 7);
+            BUF_CHECK_ORIGINATOR(originator_id);
     )
 
-    if (write_to_buffer(attr_buf, counter) == -1) {
+    if (write_to_buffer(originator_id, sizeof(originator_id)) == -1) {
         ebpf_print("Write failed\n");
+        next();
         return 0;
     }
 
     TIDYING()
+    next();
     return counter;
 }
 

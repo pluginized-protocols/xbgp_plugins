@@ -53,8 +53,7 @@ PROOF_T2_INSTS(
 )
 
 uint64_t export_igp_metric(args_t *args UNUSED) {
-
-    int nb_peers;
+    // int nb_peers;
     struct ubpf_nexthop *nexthop;
     struct ubpf_peer_info *peer;
     nexthop = get_nexthop(NULL);
