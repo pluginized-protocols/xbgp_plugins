@@ -8,7 +8,7 @@
 #define ARRIVAL_TIME_ATTR 45
 
 #define ATTR_HDR_LEN 3
-#define ARRIVAL_TIME_ATTR_LEN 16
+#define ARRIVAL_TIME_ATTR_LEN 20
 
 #define COMMUNITY_ARRIVAL_TAG 65000
 
@@ -91,10 +91,10 @@ static __always_inline int write_attr(uint8_t code, uint8_t flags, uint16_t leng
     uint8_t *attr_buf;
     uint8_t *attr_offset;
     int big_length;
-    int tot_length;
+    size_t tot_length;
     int res;
 
-    int hdr_length = ATTR_HDR_LEN;
+    size_t hdr_length = ATTR_HDR_LEN;
     if ((big_length = length > UINT8_MAX)) hdr_length += 1;
 
     tot_length = length + hdr_length;
