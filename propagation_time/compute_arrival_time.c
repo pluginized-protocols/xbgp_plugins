@@ -5,9 +5,54 @@
 
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "propagation_time_common.h"
+#include "../prove_stuffs/prove.h"
 
 
 uint64_t compute_arrival_time(args_t *);
+
+PROOF_INSTS(
+#define NEXT_RETURN_VALUE FAIL
+        uint16_t nondet_u16(void);
+        unsigned int nondet_uint(void);
+        long nondet_long(void);
+
+        struct path_attribute *get_attr() {
+            uint16_t len;
+            struct path_attribute *p_attr;
+            len = nondet_u16();
+            p_attr = malloc(sizeof(*p_attr) + len);
+
+            if (p_attr == NULL) return NULL;
+
+            p_attr->flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+            p_attr->code = ARRIVAL_TIME_ATTR;
+            p_attr->length = sizeof(struct attr_arrival);
+
+            return p_attr;
+        }
+
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *attr;
+            attr = get_attr();
+            return attr;
+        }
+
+        int get_realtime(struct timespec *spec) {
+            spec->tv_sec = nondet_uint();
+            spec-> tv_nsec = nondet_long();
+            return 0;
+        }
+
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pf;
+
+            pf = malloc(sizeof(*pf));
+            if (!pf) return NULL;
+
+            pf->peer_type = EBGP_SESSION;
+            return pf;
+        }
+        )
 
 uint64_t compute_arrival_time(args_t *args UNUSED) {
     char attr_space[sizeof(struct path_attribute) + sizeof(struct attr_arrival)];
@@ -64,3 +109,16 @@ uint64_t compute_arrival_time(args_t *args UNUSED) {
     return PLUGIN_FILTER_UNKNOWN;
 }
 
+PROOF_INSTS(
+        int main(void) {
+            args_t args = {};
+            uint64_t ret_val = compute_arrival_time(&args);
+
+            p_assert(ret_val == 0 ||
+            ret_val == PLUGIN_FILTER_UNKNOWN);
+
+            ctx_shmrm(42);
+
+            return 0;
+        }
+        )
