@@ -20,16 +20,16 @@ PROOF_INSTS(
             obj->length = len;
             return obj;
         }
-
-        void free_path_attr(struct path_attribute *p) {
-            if (p) {
-                free(p);
-            }
-        }
 )
 
 /* starting point */
 uint64_t filter_odd_as(args_t *args UNUSED);
+
+#define TIDYING() \
+PROOF_INSTS(do {            \
+    if (as_path) free(as_path); \
+} while(0);)
+
 
 uint64_t filter_odd_as(args_t *args UNUSED) {
 
@@ -44,7 +44,7 @@ uint64_t filter_odd_as(args_t *args UNUSED) {
     if (as_path == NULL) return PLUGIN_FILTER_UNKNOWN;
 
     if (as_path->length <= 0) {
-        PROOF_INSTS(free_path_attr(as_path););
+        TIDYING();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
@@ -53,7 +53,7 @@ uint64_t filter_odd_as(args_t *args UNUSED) {
     i = 0;
     while (i < as_path->length && i >= 0) {
         if (as_path->length - i <= 2) {
-            PROOF_INSTS(free_path_attr(as_path););
+            TIDYING();
             return PLUGIN_FILTER_UNKNOWN;
         }
 
@@ -62,7 +62,7 @@ uint64_t filter_odd_as(args_t *args UNUSED) {
 
         for (j = 0; j < segment_length && segment_length > 0; j++) {
             if (as_path->length - i <= 4) {
-                PROOF_INSTS(free_path_attr(as_path););
+                TIDYING();
                 return PLUGIN_FILTER_UNKNOWN;
             }
             uint32_t o = *(uint32_t *) (as_path_data + i);
@@ -72,11 +72,11 @@ uint64_t filter_odd_as(args_t *args UNUSED) {
     }
 
     if (asn % 2 == 0) {
-        PROOF_INSTS(free_path_attr(as_path););
+        TIDYING();
         return PLUGIN_FILTER_ACCEPT;
     }
 
-    PROOF_INSTS(free_path_attr(as_path););
+    TIDYING();
     return PLUGIN_FILTER_REJECT;
 }
 

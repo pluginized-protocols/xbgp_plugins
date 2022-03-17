@@ -69,12 +69,12 @@ PROOF_INSTS(
 
 #define TIDYING() \
 PROOF_INSTS(do {\
- if (code) free(code); \
- if (len) free(len);   \
- if (flags) free(flags); \
- if (data) free(data); \
- if (src_info) free(src_info); \
- if (cluster_list) free(cluster_list); \
+     if (code) free(code); \
+     if (len) free(len);   \
+     if (flags) free(flags); \
+     if (data) free(data); \
+     if (src_info) free(src_info); \
+     if (cluster_list) free(cluster_list); \
 } while(0))
 
 uint64_t decode_cluster_list(args_t *args UNUSED) {
@@ -95,12 +95,22 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
     data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
 
-    if (!code || !len || !flags || !data) {
+    COPY_BUFFER(data, *len);
+    src_info = get_src_peer_info();
+
+    if (!src_info || !code || !len || !flags || !data) {
         TIDYING();
         return EXIT_FAILURE;
     }
 
+    if (src_info->peer_type != IBGP_SESSION) {
+        CHECK_COPY(data);
+        TIDYING();
+        next(); // don't parse CLUSTER_LIST if originated from eBGP session
+    }
+
     if (*code != CLUSTER_LIST) {
+        CHECK_COPY(data);
         TIDYING();
         next();
     }
@@ -112,12 +122,16 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
     }
 
     if (*len % 4 != 0) {
+        CHECK_COPY(data);
         TIDYING();
         return 0;
     }
 
     cluster_list = ctx_malloc(*len);
+    CREATE_BUFFER(cluster_list, *len);
+
     if (!cluster_list) {
+        CHECK_COPY(data);
         TIDYING();
         return EXIT_FAILURE;
     }
@@ -132,6 +146,7 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
         cluster_list[i] = ebpf_ntohl(in_cluster_list[i]);
     }
 
+    CHECK_BUFFER(cluster_list, *len);
     PROOF_SEAHORN_INSTS(
             p_assert(*len % 4 == 0);
             p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
@@ -139,6 +154,8 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
 
 
     add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
+
+    CHECK_COPY(data);
     TIDYING();
     return EXIT_SUCCESS;
 }

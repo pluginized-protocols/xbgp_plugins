@@ -52,7 +52,8 @@ PROOF_INSTS(
 )
 
 
-#define TIDYING() PROOF_INSTS( do { \
+#define TIDYING() \
+PROOF_INSTS( do { \
     if (attribute) free(attribute); \
     if (to_info) free(to_info);     \
     if (attr_buf) free(attr_buf);\
@@ -128,6 +129,8 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
         return 0;
     }*/
 
+
+    CREATE_BUFFER(attr_buf, tot_len);
     attr_buf = extra_space;
 
     attr_buf[counter++] = ATTR_OPTIONAL;
@@ -156,10 +159,9 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
         return 0;
     }
 
-    PROOF_SEAHORN_INSTS(
-            BUF_CHECK_ORIGINATOR(attr_buf);
-    )
+    CHECK_ATTR(attr_buf);
 
+    CHECK_BUFFER(attr_buf, counter);
     if (write_to_buffer(attr_buf, counter) == -1) {
         ebpf_print("Write failed\n");
         TIDYING();

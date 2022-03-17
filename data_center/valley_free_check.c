@@ -55,13 +55,7 @@ PROOF_INSTS(
             return NULL;
         }
 
-        void free_pattr(struct path_attribute *pa) {
-            if (pa) free(pa);
-        }
 
-        void free_pinfo(struct ubpf_peer_info *pinfo) {
-            if (pinfo) free(pinfo);
-        }
 
 #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 )
@@ -163,12 +157,12 @@ flatten_as_path(const uint8_t *as_path, unsigned int length, unsigned int *asp_f
 }
 
 
-#define TIDYUP                 \
-do { PROOF_INSTS(              \
-    free_pattr(attr);          \
-    free_pinfo(peer);          \
+#define TIDYING() \
+PROOF_INSTS(do {               \
+    if (attr) free(attr);       \
+    if (peer) free(peer);       \
     if (arr_aspath) free(arr_aspath);\
-)} while(0)
+} while(0))
 
 
 
@@ -185,7 +179,7 @@ uint64_t valley_free_check(args_t *args UNUSED) {
     attr = get_attr_from_code(AS_PATH_ATTR_CODE);
     peer = get_src_peer_info();
     if (!attr || !peer) {
-        TIDYUP;
+        TIDYING();
         return PLUGIN_FILTER_UNKNOWN;
     }
     my_as = peer->local_bgp_session->as;
@@ -194,29 +188,29 @@ uint64_t valley_free_check(args_t *args UNUSED) {
 
     arr_aspath = ctx_malloc(sizeof(*arr_aspath) * 1024);
     if (!arr_aspath) {
-        TIDYUP;
+        TIDYING();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
     nb_ases = flatten_as_path(as_path, as_path_len, arr_aspath, 1024);
     if (nb_ases == -1) {
-        TIDYUP;
+        TIDYING();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
     // should always contains at least one AS !
     if (!valley_check(arr_aspath[0], my_as)) {
-        TIDYUP;
+        TIDYING();
         return PLUGIN_FILTER_REJECT;
     }
 
     for (i = 1; i < nb_ases; i++) {
         if (!valley_check(arr_aspath[i], my_as)) {
-            TIDYUP;
+            TIDYING();
             return PLUGIN_FILTER_REJECT;
         }
     }
-    TIDYUP;
+    TIDYING();
     next();
     return PLUGIN_FILTER_REJECT;
 }

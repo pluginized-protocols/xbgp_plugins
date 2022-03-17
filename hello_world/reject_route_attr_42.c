@@ -21,7 +21,7 @@ PROOF_INSTS(
 
 )
 
-#define TIDYING \
+#define TIDYING() \
 PROOF_INSTS( do { \
     if (code) free(code);\
 }while(0);)
@@ -37,18 +37,18 @@ uint64_t reject_route_attr_42(args_t *args UNUSED) {
 
     if (!code) {
         ebpf_print("There was an error\n");
-        TIDYING;
+        TIDYING();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
     if (*code == 42) {
         ebpf_print("The update is rejected since it contains the attribute 42\n");
-        TIDYING;
+        TIDYING();
         return PLUGIN_FILTER_REJECT;
     }
 
     // ebpf_print("Update accepted\n");
-    TIDYING;
+    TIDYING();
     return PLUGIN_FILTER_ACCEPT;
 
 }

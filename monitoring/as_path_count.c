@@ -93,7 +93,7 @@ unsigned int __always_inline count_nb_as(const unsigned char *const as_path, uns
 }
 
 
-#define TIDYING \
+#define TIDYING() \
 PROOF_INSTS( do { \
     if (attribute_code) free(attribute_code); \
     if (as_path_len) free(as_path_len);                \
@@ -108,10 +108,14 @@ uint64_t as_path_count(args_t *args UNUSED) {
 
     if (!as_path || !as_path_len || !attribute_code) {
         // unable to fetch data from host implementation
-        TIDYING;
+        TIDYING();
         return EXIT_FAILURE;
-    } else if (*attribute_code != AS_PATH_ATTR_ID) {
-        TIDYING;
+    }
+
+    COPY_BUFFER(as_path, *as_path_len);
+    if (*attribute_code != AS_PATH_ATTR_ID) {
+        CHECK_COPY(as_path);
+        TIDYING();
         return EXIT_FAILURE;
     }
 
@@ -119,17 +123,19 @@ uint64_t as_path_count(args_t *args UNUSED) {
     as_number = count_nb_as(as_path, *as_path_len);
 
     if (as_number == UINT32_MAX) {
-        TIDYING;
+        CHECK_COPY(as_path);
+        TIDYING();
         return EXIT_FAILURE;
     }
 
     // log the message. If it fails, returns error code
     if (log_msg(L_INFO "as_count:%d\n", LOG_UINT(as_number)) != 0) {
-        TIDYING;
+        CHECK_COPY(as_path);
+        TIDYING();
         return EXIT_FAILURE;
     }
-
-    TIDYING;
+    CHECK_COPY(as_path);
+    TIDYING();
     return EXIT_SUCCESS;
 }
 

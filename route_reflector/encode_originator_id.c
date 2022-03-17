@@ -43,7 +43,8 @@ PROOF_INSTS(
 #define NEXT_RETURN_VALUE FAIL;
 )
 
-#define TIDYING() PROOF_INSTS( do { \
+#define TIDYING() \
+PROOF_INSTS( do { \
     if (attribute) free(attribute); \
     if (to_info) free(to_info);     \
     if (attr_buf) free(attr_buf);\
@@ -55,6 +56,9 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     int nb_peer;
 
     unsigned char originator_id[7];
+
+    CREATE_BUFFER(originator_id, 7);
+
     struct path_attribute *originator_attr;
 
     struct ubpf_peer_info *to_info = NULL;
@@ -105,6 +109,8 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
             p_assert(counter == 7);
             BUF_CHECK_ORIGINATOR(originator_id);
     )
+
+    CHECK_BUFFER(originator_id, sizeof(originator_id));
 
     if (write_to_buffer(originator_id, sizeof(originator_id)) == -1) {
         ebpf_print("Write failed\n");

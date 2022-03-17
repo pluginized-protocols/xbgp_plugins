@@ -9,17 +9,58 @@
 /* starting point */
 uint64_t route_origin_monitor(args_t *args UNUSED);
 
+PROOF_SEAHORN_INSTS (
+
 #define ORIGIN_ATTR 1
 
 #define ORIGIN_ATTR_IGP 0
 #define ORIGIN_ATTR_EGP 1
 #define ORIGIN_ATTR_UNK 2
 
+char int2char(int c)
+{
+    switch (c) {
+        case 0:
+            return '0';
+        case 1:
+            return '1';
+        case 2:
+            return '2';
+        case 3:
+            return '3';
+        case 4:
+            return '4';
+        case 5:
+            return '5';
+        case 6:
+            return '6';
+        case 7:
+            return '7';
+        case 8:
+            return '8';
+        default:
+            return '9';
+    }
+}
+void *char2string(u_char c, char *dst)
+{
+    int i = 0;
+    int d1 = c / 100;
+    int r1 = c % 100;
+    if (d1)
+        dst[i++] = int2char(d1);
+    int d2 = r1 / 10;
+    int r2 = r1 % 10;
+    if (d2)
+        dst[i++] = int2char(d2);
+    dst[i++] = int2char(r2);
 
-const char *igp = "IGP";
-const char *egp = "EGP";
-const char *unk = "INCOMPLETE";
+    return dst+i;
+}
 
+void *memset(void *s, int c, size_t n);
+
+)
 
 PROOF_INSTS(
         uint8_t nondet_u8(void);
@@ -42,13 +83,15 @@ PROOF_INSTS(
         }
 )
 
-#define TYDING \
-PROOF_INSTS( do { \
+#define TIDYING() \
+PROOF_INSTS(do { \
     if (p) free(p); \
     if (attr) free(attr); \
 } while(0);)
 
-
+const char *igp = "IGP";
+const char *egp = "EGP";
+const char *unk = "INCOMPLETE";
 
 uint64_t route_origin_monitor(args_t *args UNUSED) {
     struct path_attribute *attr;
@@ -61,7 +104,7 @@ uint64_t route_origin_monitor(args_t *args UNUSED) {
     p = get_prefix();
 
     if (!attr || !p) {
-        TYDING;
+        TIDYING();
         return EXIT_FAILURE;
     }
 
@@ -69,7 +112,7 @@ uint64_t route_origin_monitor(args_t *args UNUSED) {
 
     if (ebpf_inet_ntop(p->u, p->afi, prefix_addr, sizeof(prefix_addr)) != 0) {
         log_msg("Unable to convert IP address from binary to text\n");
-        TYDING;
+        TIDYING();
         return EXIT_FAILURE;
     }
 
@@ -86,10 +129,12 @@ uint64_t route_origin_monitor(args_t *args UNUSED) {
             origin_txt = unk;
     }
 
-    log_msg(L_INFO "Received route %s/%d. Origin %s",
-            LOG_PTR(prefix_addr), LOG_U16(p->prefixlen), LOG_PTR(origin_txt));
+    CHECK_STRING(prefix_addr, 52);
 
-    TYDING;
+    log_msg(L_INFO "Received route %s/%d. Origin %s",
+            LOG_PTR(prefix_addr), LOG_U16(p->prefixlen), LOG_PTR((void *)origin_txt));
+
+    TIDYING();
     return EXIT_SUCCESS;
 }
 

@@ -18,10 +18,10 @@ PROOF_INSTS(
 
 )
 
-#define TIDYING \
+#define TIDYING() \
 PROOF_INSTS( do { \
     if (code) free(code);\
-}while(0);)
+} while(0))
 
 
 /* starting point */
@@ -68,16 +68,16 @@ uint64_t reject_unknown_attr(args_t *args UNUSED) {
 
     if (!code) {
         // unable to retrieve the argument (internal failure)
-        TIDYING;
+        TIDYING();
         return EXIT_FAILURE;
     }
 
     if (!is_known_attr(*code)) {
-        TIDYING
+        TIDYING();
         return EXIT_FAILURE;
     }
 
-    TIDYING
+    TIDYING();
     return 0;
 }
 
