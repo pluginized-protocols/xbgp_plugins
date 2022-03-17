@@ -36,14 +36,8 @@ char *strncpy(char *dest, const char *src, size_t n)  {
 
   #include "../prove_stuffs/prove_helpers.h"
 #else
-  #ifdef PROVERS_CBMC
-    #include <assert.h>
-    #define p_assert(x) assert(x)
-    #define p_assume(x) __CPROVER_assume(x)
-  #else
-    #define p_assert(x)
-    #define p_assume(x)
-  #endif
+  #define p_assert(x)
+  #define p_assume(x)
 #endif
 
 /*
