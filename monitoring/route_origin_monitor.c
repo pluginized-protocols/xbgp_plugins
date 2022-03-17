@@ -2,8 +2,11 @@
 // Created by thomas on 17/03/21.
 //
 #include <stdint.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "../prove_stuffs/prove.h"
+#include "../prove_stuffs/prove_helpers.h"
 
 
 /* starting point */
@@ -17,30 +20,10 @@ PROOF_SEAHORN_INSTS (
 #define ORIGIN_ATTR_EGP 1
 #define ORIGIN_ATTR_UNK 2
 
-char int2char(int c)
-{
-    switch (c) {
-        case 0:
-            return '0';
-        case 1:
-            return '1';
-        case 2:
-            return '2';
-        case 3:
-            return '3';
-        case 4:
-            return '4';
-        case 5:
-            return '5';
-        case 6:
-            return '6';
-        case 7:
-            return '7';
-        case 8:
-            return '8';
-        default:
-            return '9';
-    }
+char int2char(int c) {
+    static const char *nbs = "0123456789";
+    p_assert(c >= 0 && c <= 9);
+    return nbs[c];
 }
 void *char2string(u_char c, char *dst)
 {
@@ -89,9 +72,9 @@ PROOF_INSTS(do { \
     if (attr) free(attr); \
 } while(0);)
 
-const char *igp = "IGP";
-const char *egp = "EGP";
-const char *unk = "INCOMPLETE";
+static const char *igp = "IGP";
+static const char *egp = "EGP";
+static const char *unk = "INCOMPLETE";
 
 uint64_t route_origin_monitor(args_t *args UNUSED) {
     struct path_attribute *attr;
@@ -115,6 +98,7 @@ uint64_t route_origin_monitor(args_t *args UNUSED) {
         TIDYING();
         return EXIT_FAILURE;
     }
+
 
     origin = *attr->data;
 
