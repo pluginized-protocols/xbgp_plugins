@@ -65,11 +65,11 @@ PROOF_INSTS(
 
 #define TIDYING() \
 PROOF_INSTS(do {            \
-if (code) free(code); \
-if (len) free(len); \
-if (flags) free(flags); \
-if (data) free(data); \
-if (src_info) free(src_info); \
+    if (code) free(code); \
+    if (len) free(len); \
+    if (flags) free(flags); \
+    if (data) free(data); \
+    if (src_info) free(src_info); \
 } while(0);)
 
 uint64_t decode_arrival_attr(args_t *args UNUSED) {
@@ -113,6 +113,9 @@ uint64_t decode_arrival_attr(args_t *args UNUSED) {
     /* read origin AS */
     arrival->from_as = read_u32(data);
 
+    PROOF_SEAHORN_INSTS(
+            CHECK_ATTR_FORMAT(attr, ARRIVAL_TIME_ATTR_LEN);
+    )
 
     if (set_attr(attr) != 0) return EXIT_FAILURE;
     TIDYING();

@@ -12,20 +12,11 @@
 // OPT_ADD automatically add the content of "a" if the next argument of the variadic macro is set
 #define OPT_ADD(a, ...) ELEVENTH_ARGUMENT(dummy, ## __VA_ARGS__, a, a, a, a, a, a, a, a, a, , dummy)
 
-#define GEN_ASSERT(attr, attr_code, attr_length, attr_flags, ...) \
-    p_assert(                                                  \
-            ((attr)->code != (attr_code)) || \
-            (                                                \
-               ((attr)->length == (attr_length)) && \
-               ((attr)->flags == (attr_flags))               \
-               OPT_ADD(&&(__VA_ARGS__), ##__VA_ARGS__)\
-            ) \
-          )
-
 #define BUF_CHECK_LENGTH(buf, length, offset) \
     (((length) <= 255 && (buf)[offset] == (length)) || \
     ((length) > 255 && (*(uint16_t *) ((buf)+(offset))) == (length)))
 
+#ifdef PROVERS_SEAHORN
 #define BUF_GEN_ASSERT(buf, code, length, flags, ...) \
     p_assert(                                      \
         ((buf)[1] != (code)) ||                  \
@@ -36,6 +27,122 @@
         )                                        \
     )
 
+#define GEN_ASSERT(attr, attr_code, attr_length, attr_flags, ...) \
+    p_assert(                                                  \
+        ((attr)->code != (attr_code)) || \
+        (                                                \
+            ((attr)->length == (attr_length)) && \
+            ((attr)->flags == (attr_flags))               \
+            OPT_ADD(&&(__VA_ARGS__), ##__VA_ARGS__)\
+        ) \
+    )
+
+#define ORIGIN 1
+#define AS_PATH 2
+#define NEXT_HOP 3
+#define MULTI_EXIT_DISC 4
+#define LOCAL_PREF 5
+#define ATOMIC_AGGREGATE 6
+#define AGGREGATOR 7
+
+#define CHECK_ATTR(attr_buf) \
+do {                             \
+    int size = 3; \
+    if (attr_buf[0] & 0b00010000) \
+    { \
+        size += 1; \
+        uint16_t *l = (uint16_t*) (attr_buf+2); \
+        size += *l; \
+    } \
+    else \
+    { \
+        size += attr_buf[2]; \
+    } \
+    int s = counter; \
+    p_assert(size <= __ghost_##attr_buf); \
+    p_assert(s == size); \
+    p_assert(!(attr_buf[0]&0b00001111)); \
+    switch (attr_buf[1]) { \
+        case ORIGIN: \
+            p_assert((attr_buf[0]&0b11110000) == 0b01000000); \
+            p_assert(attr_buf[2] == 1); \
+            p_assert(attr_buf[3] <= 2); \
+        break; \
+        case AS_PATH: \
+            p_assert((attr_buf[0]&0b11110000) == 0b01000000); \
+            int data_size = size - 2 - (attr_buf[0] & 0b00010000 ? 2 : 1); \
+            int cur = 0; \
+            while (cur < data_size) \
+            { \
+                p_assert(attr_buf[3+cur] <= 10); \
+                cur += 2 + 2*attr_buf[4+cur]; \
+            } \
+            p_assert(cur == data_size); \
+        break; \
+        case NEXT_HOP: \
+            p_assert((attr_buf[0]&0b11100000) == 0b01000000); \
+        break; \
+        case MULTI_EXIT_DISC: \
+            p_assert((attr_buf[0]&0b11110000) == 0b10000000); \
+            p_assert(attr_buf[2] == 4); \
+        break; \
+        case LOCAL_PREF: \
+            p_assert((attr_buf[0]&0b10110000) == 0b00000000); \
+            p_assert(attr_buf[2] == 4); \
+        break; \
+        case ATOMIC_AGGREGATE: \
+            p_assert((attr_buf[0]&0b10110000) == 0b00000000); \
+            p_assert(attr_buf[2] == 0); \
+        break; \
+        case AGGREGATOR: \
+            p_assert((attr_buf[0]&0b11010000) == 0b11000000); \
+            p_assert(attr_buf[2] == 6); \
+        break; \
+        case CLUSTER_LIST_ATTR_ID: \
+            p_assert(!(attr_buf[2]%4)); \
+        break; \
+        case EXTENDED_COMMUNITIES_ATTR_ID: \
+            p_assert((attr_buf[0]&0b11010000) == 0b11000000); \
+            p_assert(attr_buf[2] == 64); \
+        default: \
+        break; \
+    } \
+} while(0)
+
+#define CREATE_BUFFER(buf, size) int __ghost_##buf = size
+
+#define CHECK_BUFFER(buf, size) p_assert(size <= __ghost_##buf)
+
+#define CHECK_STRING(str, size) do \
+{                                   \
+    int n_term = 1; \
+    int i; \
+    for (i = 0 ; i < size ; i++) \
+        n_term = n_term && str[i]; \
+    p_assert(!n_term); \
+} while(0)
+
+#define COPY_BUFFER(buf, size) \
+int __ghost_len_##buf = size; \
+uint8_t* __ghost_##buf = malloc(size); \
+uint8_t* __ghost_p_##buf = buf; \
+for (int i = 0 ; i < size ; i++) { \
+    __ghost_##buf[i] = buf[i]; \
+}
+
+#define CHECK_COPY(buf) \
+for (int i = 0 ; i < __ghost_len_##buf ; i++) \
+p_assert(*(__ghost_##buf++) == *(__ghost_p_##buf++))
+
+#else
+#define BUF_GEN_ASSERT(...)
+#define GEN_ASSERT(...)
+#define CREATE_BUFFER(...)
+#define CHECK_BUFFER(...)
+#define CHECK_STRING(...)
+#define COPY_BUFFER(...)
+#define CHECK_COPY(...)
+#endif
 
 #define CHECK_ORIGIN(p_attr) \
    GEN_ASSERT(p_attr, ORIGIN_ATTR_ID, 1, ATTR_TRANSITIVE, \
@@ -203,6 +310,5 @@
 #define RET_VAL_FILTERS_CHECK(x) \
     p_assert((x) == PLUGIN_FILTER_REJECT || (x) == PLUGIN_FILTER_ACCEPT || \
     (x) == PLUGIN_FILTER_UNKNOWN)
-
 
 #endif //XBGP_PLUGINS_PROVE_HELPERS_H

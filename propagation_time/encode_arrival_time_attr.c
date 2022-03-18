@@ -48,8 +48,8 @@ PROOF_INSTS(
 
 #define TIDYING() \
 PROOF_INSTS(do {            \
-if (attribute) free(attribute); \
-if (dst_info) free(dst_info); \
+    if (attribute) free(attribute); \
+    if (dst_info) free(dst_info); \
 } while(0);)
 
 uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
@@ -60,6 +60,8 @@ uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
     char attr_buf[ARRIVAL_TIME_ATTR_LEN + ATTR_HDR_LEN];
     char *attr = attr_buf;
     int nb_peer;
+
+    CREATE_BUFFER(attr_buf, ARRIVAL_TIME_ATTR_LEN + ATTR_HDR_LEN);
 
     attribute = get_attr();
 
@@ -109,7 +111,7 @@ uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
 
     /* make sure the offset pointer
      * has not overflowed nor underflow */
-    assert(attr == attr_buf + sizeof(attr_buf));
+    CHECK_BUFFER(attr_buf, sizeof(attr_buf));
 
 
     if (write_to_buffer((uint8_t *)attr_buf, sizeof(attr_buf)) != 0) {

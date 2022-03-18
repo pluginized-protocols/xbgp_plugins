@@ -98,7 +98,7 @@ uint64_t decision_process_add(args_t *args UNUSED);
   val_ret__;                                                 \
 })
 
-#define TIDYING \
+#define TIDYING() \
 PROOF_INSTS( do {            \
     if (rte_new) free_bgp_route(rte_new); \
     if (rte_old) free_bgp_route(rte_old); \
@@ -121,7 +121,7 @@ uint64_t decision_process_add(args_t *args UNUSED) {
     rte_old = get_bgp_route(BGP_ROUTE_TYPE_OLD);
 
     if (!rte_new || !rte_old) {
-        TIDYING;
+        TIDYING();
         return BGP_ROUTE_TYPE_FAIL;
     }
 
@@ -130,7 +130,7 @@ uint64_t decision_process_add(args_t *args UNUSED) {
     old_attr = get_community_from_array(rte_old->attr, rte_old->attr_nb, COMMUNITY_ATTR_ID);
 
     if (!new_attr || !old_attr) {
-        TIDYING;
+        TIDYING();
         return BGP_ROUTE_TYPE_FAIL;
     }
 
@@ -142,7 +142,7 @@ uint64_t decision_process_add(args_t *args UNUSED) {
               (new_community < old_community) ? BGP_ROUTE_TYPE_FAIL :
               BGP_ROUTE_TYPE_UNKNOWN;
 
-    TIDYING;
+    TIDYING();
     return ret_val;
 }
 

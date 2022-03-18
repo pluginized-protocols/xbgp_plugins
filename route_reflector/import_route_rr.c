@@ -63,11 +63,12 @@ PROOF_INSTS(
 #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 )
 
-#define TIDYING() PROOF_INSTS(do {                       \
+#define TIDYING() \
+PROOF_INSTS(do {                       \
     if (pinfo) free(pinfo);                              \
     if (originator) free(originator);                    \
     if (cluster_list) free(cluster_list);                \
-}while(0);)
+} while(0))
 
 uint64_t import_route_rr(args_t *args UNUSED) {
 
@@ -132,7 +133,6 @@ PROOF_INSTS(
             uint64_t rt_val = import_route_rr(&args);
 
             PROOF_SEAHORN_INSTS(
-
                     RET_VAL_FILTERS_CHECK(rt_val);
             )
             return 0;

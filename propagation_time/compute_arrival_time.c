@@ -97,6 +97,10 @@ uint64_t compute_arrival_time(args_t *args UNUSED) {
 
     arrival_data->from_as = src_info->as;
 
+    PROOF_SEAHORN_INSTS(
+            CHECK_ATTR_FORMAT(arrival_attr, sizeof(struct attr_arrival));
+    )
+
     if (set_attr(arrival_attr) != 0) {
         ebpf_print("Failed to set arrival attribute");
         next();

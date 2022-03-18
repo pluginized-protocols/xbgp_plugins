@@ -29,6 +29,13 @@ char *strncpy(char *dest, const char *src, size_t n)  {
  * Define ASSERT statement
  * T2 does not support assertions
  */
+#ifdef PROVERS_CBMC
+  #include <assert.h>
+  #define CBMC_assert(x) assert(x)
+#else
+  #define CBMC_assert(...)
+#endif
+
 #ifdef PROVERS_SEAHORN
   #include "seahorn/seahorn.h"
   #define p_assert(x) sassert(x)
@@ -36,14 +43,8 @@ char *strncpy(char *dest, const char *src, size_t n)  {
 
   #include "../prove_stuffs/prove_helpers.h"
 #else
-  #ifdef PROVERS_CBMC
-    #include <assert.h>
-    #define p_assert(x) assert(x)
-    #define p_assume(x) __CPROVER_assume(x)
-  #else
-    #define p_assert(x)
-    #define p_assume(x)
-  #endif
+  #define p_assert(x)
+  #define p_assume(x)
 #endif
 
 /*

@@ -7,6 +7,7 @@
 #include "common_ext_comm.h"
 
 #include "../prove_stuffs/prove.h"
+#include "../prove_stuffs/prove_helpers.h"
 
 /* starting point */
 uint64_t decode_extended_communities(args_t *args UNUSED);
@@ -14,6 +15,8 @@ uint64_t decode_extended_communities(args_t *args UNUSED);
 
 PROOF_INSTS(
         uint16_t get_length(void);
+        uint64_t nondet_uint64(void);
+
         static uint16_t def_len = 0;
 
         void *get_arg(unsigned int id) {
@@ -59,16 +62,14 @@ PROOF_INSTS(
 )
 
 
-#define TIDYING \
-do {            \
-PROOF_INSTS(    \
+#define TIDYING() \
+PROOF_INSTS(do {     \
     if (code) free(code); \
     if (len) free(len);   \
     if (flags) free(flags); \
     if (data) free(data);\
     if (decoded_ext_communitities) free(decoded_ext_communitities); \
-);\
-} while(0)
+} while(0))
 
 uint64_t decode_extended_communities(args_t *args UNUSED) {
 
@@ -89,15 +90,21 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     data = get_arg(ARG_DATA);
 
     if (!code || !len || !flags || !data) {
-        TIDYING;
+        TIDYING();
         return EXIT_FAILURE;
     }
+    COPY_BUFFER(data, *len);
 
-    if (*code != EXTENDED_COMMUNITIES) next();
+    if (*code != EXTENDED_COMMUNITIES) {
+        CHECK_COPY(data);
+        TIDYING();
+        next();
+    }
 
     if (*len % 8 != 0) {
         // malformed extended attribute
-        TIDYING;
+        CHECK_COPY(data);
+        TIDYING();
         return EXIT_FAILURE;
     }
 
@@ -106,21 +113,25 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     in_ext_communitites = (uint64_t *) data;
 
     decoded_ext_communitities = ctx_malloc(*len);
+
+    CREATE_BUFFER(decoded_ext_communitities, *len);
     if (!decoded_ext_communitities) {
-        TIDYING;
+        CHECK_COPY(data);
+        TIDYING();
         next();
     }
 
     for (i = 0; i < *len / 8; i++) {
+        PROOF_SEAHORN_INSTS(in_ext_communitites[i] = nondet_uint64();)
         decoded_ext_communitities[i] = ebpf_ntohll(in_ext_communitites[i]);
     }
 
+    CHECK_BUFFER(decoded_ext_communitities, *len);
     p_assert(*len % 8 == 0);
     p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
-
-    add_attr(EXTENDED_COMMUNITIES, *flags, *len, (uint8_t *) decoded_ext_communitities);
-
-    TIDYING;
+    add_attr(EXTENDED_COMMUNITIES, *flags, *len, (uint8_t *)decoded_ext_communitities);
+    CHECK_COPY(data);
+    TIDYING();
     return EXIT_SUCCESS;
 }
 
