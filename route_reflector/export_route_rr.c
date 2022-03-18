@@ -68,7 +68,6 @@ PROOF_INSTS(
     if (src_info) free(src_info);        \
     if (originator) free(originator);        \
     if (cluster_list) free(cluster_list);        \
-    if (new_cluster_list) free(new_cluster_list);        \
 }while(0);)
 
 
@@ -154,11 +153,6 @@ uint64_t export_route_rr(args_t *args UNUSED) {
         }
     }
 
-    PROOF_INSTS(
-            CHECK_ORIGINATOR(originator);
-            CHECK_CLUSTER_LIST(new_cluster_list, 4 + (cluster_list ? cluster_list->length : 0));
-    )
-
     TIDYING();
     next();
     return PLUGIN_FILTER_ACCEPT;
@@ -171,7 +165,6 @@ PROOF_INSTS(
             uint64_t rt_val = export_route_rr(&args);
 
             PROOF_SEAHORN_INSTS(
-
                     RET_VAL_FILTERS_CHECK(rt_val);
             )
             return 0;
