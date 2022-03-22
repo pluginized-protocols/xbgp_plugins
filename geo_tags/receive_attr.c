@@ -60,9 +60,9 @@ PROOF_INSTS(
 )
 
 #define TIDYING \
-do {            \
+PROOF_INSTS(do {            \
     if(pinfo) free(pinfo); \
-} while(0)
+} while(0);)
 
 static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flags, const uint8_t *data) {
     struct ubpf_peer_info *pinfo;
@@ -117,12 +117,12 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
 }
 
 #define TIDYING2 \
-do {             \
+PROOF_INSTS(do {             \
     if (code) free(code); \
     if (flags) free(flags); \
     if (data) free(data); \
     if (len) free(len); \
-} while(0)
+} while(0))
 
 
 /**

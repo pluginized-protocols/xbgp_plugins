@@ -26,10 +26,10 @@ PROOF_INSTS(
 #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 )
 
-#define TIDYING \
-do {            \
-  if (peer) free(peer);              \
-} while(0)
+#define TIDYING         \
+PROOF_INSTS(do {        \
+  if (peer) free(peer); \
+} while(0))
 
 uint64_t import_prefix_originator(args_t *args UNUSED) {
 

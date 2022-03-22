@@ -86,6 +86,11 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
             *((uint64_t *) buf_out) = coord_hton(geo);
             PROOF_INSTS(if (pinfo) free(pinfo););
             return 8;
+        case MULTI_EXIT_DISC_ATTR_ID:
+            // we must handle MED ourselves because it is
+            // not handled by the host implementation now !
+            *(uint32_t *) buf_out = ebpf_htonl(*(uint32_t *)buf_in);
+            return 4;
 
         default:
             return -1;
@@ -95,10 +100,10 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
 }
 
 #define TIDYING \
-do {            \
+PROOF_INSTS(do {            \
     if (attribute) free(attribute); \
     if (attr_buf) free(attr_buf); \
-} while(0)\
+} while(0))\
 
 
 /**

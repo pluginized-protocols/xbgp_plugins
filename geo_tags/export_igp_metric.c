@@ -43,10 +43,10 @@ PROOF_INSTS(
 )
 
 #define TIDYING    \
-do {               \
+PROOF_INSTS( do {  \
     free(nexthop); \
     free(peer);    \
-} while (0)
+} while (0))
 
 PROOF_T2_INSTS(
         void *rnd_ptr(void);

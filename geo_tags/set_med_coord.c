@@ -42,9 +42,9 @@ PROOF_INSTS(
 
 
 #define TIDYING \
-do { \
+PROOF_INSTS(do { \
     if (attr) free(attr); \
-} while (0)
+} while (0))
 
 
 /**
