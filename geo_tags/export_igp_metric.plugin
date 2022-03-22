@@ -1,0 +1,23 @@
+{
+  "jit_all": true,
+  "name": "export_filter_by_igp_metric",
+  "extra_mem": 512,
+  "shared_mem": 0,
+  "obj_code_list": {
+    "export_igp_metric": {
+      "obj": "export_igp_metric.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
+    }
+  },
+  "insertion_points": {
+    "bgp_pre_outbound_filter": {
+      "replace": {
+        "0": "export_igp_metric"
+      }
+    }
+  }
+}

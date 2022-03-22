@@ -58,8 +58,7 @@
     },
     "bgp_pre_outbound_filter": {
       "replace": {
-        "0": "set_med_coord",
-        "10": "export_igp_metric"
+        "0": "set_med_coord"
       }
     },
     "bgp_encode_attr": {
