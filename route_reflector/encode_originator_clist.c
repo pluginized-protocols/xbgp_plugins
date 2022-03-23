@@ -3,6 +3,7 @@
 //
 
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "../prove_stuffs/prove.h"
 
 #define KEY_MEM_EXPORT 123
 #define SIZE_MEM_EXPORT 6144
@@ -12,8 +13,45 @@
 
 #define ORIGINATOR_ATTR_LEN 4
 
+PROOF_INSTS(
+
+        uint16_t nondet_len();
+        struct ubpf_peer_info *get_src_peer_info() {
+            struct ubpf_peer_info *pf;
+
+            pf = malloc(sizeof(*pf));
+            if (!pf) return NULL;
+
+            pf->local_bgp_session = malloc(sizeof(struct ubpf_peer_info));
+
+            pf->peer_type = IBGP_SESSION;
+            return pf;
+        }
+
+        struct ubpf_peer_info *get_peer_info(int *nb_peers) {
+            return get_src_peer_info();
+        }
+
+        struct path_attribute *get_attr_from_code(uint8_t code) {
+            struct path_attribute *obj;
+            uint16_t len;
+            switch(code){
+                case ORIGINATOR_ID_ATTR_ID:
+                    len = sizeof(uint32_t);
+                    break;
+                case CLUSTER_LIST_ATTR_ID:
+                    len = nondet_len() / 16 * 4;
+                    break;
+            }
+            obj = malloc(sizeof(struct path_attribute) + len);
+            if (obj == NULL) return NULL;
+            obj->length = len;
+            return obj;
+        }
+)
+
 /* plugin entry point */
-uint64_t encode_originator_clist(void) ;
+uint64_t encode_originator_clist(void);
 
 static __always_inline void *get_mem(void) {
     void *mem;
@@ -27,6 +65,17 @@ static __always_inline void *get_mem(void) {
     }
     return mem;
 }
+
+#define TIDYING() \
+PROOF_INSTS(do {            \
+    if (dst_peer) {   \
+        free(dst_peer);     \
+        free(dst_peer->local_bgp_session); \
+    }\
+    if (src_peer) free(src_peer); \
+    if (originator_id) free(originator_id); \
+    if (cluster_list) free(cluster_list); \
+} while(0))
 
 uint64_t encode_originator_clist(void) {
     int nb_peer;
@@ -48,17 +97,20 @@ uint64_t encode_originator_clist(void) {
 
     extra_mem = get_mem();
     if (!extra_mem) {
+        TIDYING();
         return 0;
     }
 
     dst_peer = get_peer_info(&nb_peer);
     if (!dst_peer) {
         ebpf_print("Unable to get dst peer info\n");
+        TIDYING();
         return 0;
     }
 
     if (dst_peer->peer_type != IBGP_SESSION) {
         ebpf_print("Destination peer is not iBGP\n");
+        TIDYING();
         return 0;
     }
 
@@ -78,6 +130,7 @@ uint64_t encode_originator_clist(void) {
         src_peer = get_src_peer_info();
         if (!src_peer) {
             ebpf_print("Unable to get src peer info\n");
+            TIDYING();
             return 0;
         }
         *(uint32_t *) (&originator[offset_or]) = ebpf_htonl(src_peer->router_id);
@@ -86,6 +139,7 @@ uint64_t encode_originator_clist(void) {
 
     if (offset_or != OFFSET_CLUSTER_LIST) {
         ebpf_print("Malformed ORIGINATOR_ID\n");
+        TIDYING();
         return 0;
     }
 
@@ -121,7 +175,21 @@ uint64_t encode_originator_clist(void) {
     total_offset = offset_or + offset_cl;
     if (write_to_buffer(extra_mem, total_offset) != 0) {
         ebpf_print("Unable to send attribute to the wire\n");
+        TIDYING();
         return 0;
     }
+    TIDYING();
     return total_offset;
 }
+
+PROOF_INSTS(
+        int main(void) {
+            uint64_t ret_val;
+            ctx_shmnew(KEY_MEM_EXPORT, SIZE_MEM_EXPORT);
+
+            ret_val = encode_originator_clist();
+
+            ctx_shmrm(KEY_MEM_EXPORT);
+            return ret_val >= 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+        }
+)

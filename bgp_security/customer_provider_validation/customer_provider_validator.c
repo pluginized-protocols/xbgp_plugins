@@ -1,7 +1,6 @@
 //
 // Created by thomas on 3/06/20.
 //
-
 #ifdef PROVERS
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_security.h"
@@ -43,33 +42,35 @@ PROOF_INSTS(
         uint8_t *nondet_get_buf__verif();
         struct ubpf_peer_info *nondet_get_pinfo__verif();
         uint16_t nondet_get_u16__verif();
+        uint8_t nondet_u8();
 
-        struct ubpf_peer_info *get_peer_info(int *nb_peers);
-        struct ubpf_peer_info *get_src_peer_info(void);
-
-        struct ubpf_peer_info *get_peer_info(int *nb_peers UNUSED) {
-            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
+        struct ubpf_peer_info *get_peer_info(int *nb_peers) {
+            unsigned char *data;
+            struct ubpf_peer_info *pinfo;
+            data = malloc(2*sizeof(*pinfo));
+            if (!data) return NULL;
+            pinfo = (struct ubpf_peer_info *) data;
             pinfo->peer_type = IBGP_SESSION;
+            pinfo->local_bgp_session = (struct ubpf_peer_info *) (data + sizeof(*pinfo));
             return pinfo;
         }
 
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pinfo = nondet_get_pinfo__verif();
-            pinfo->peer_type = IBGP_SESSION;
-            return pinfo;
+            int i = 1;
+            return get_peer_info(&i);
         }
 
 
         struct path_attribute *get_attr_from_code(uint8_t code) {
             struct path_attribute *p_attr;
-            p_attr = malloc(sizeof(*p_attr));
+            uint8_t l = nondet_u8();
+            p_attr = malloc(sizeof(struct path_attribute) + l);
 
             switch (code) {
                 case AS_PATH_ATTR_ID:
                     p_attr->code = AS_PATH_ATTR_ID;
                     p_attr->flags = ATTR_TRANSITIVE;
-                    p_attr->length = nondet_get_u16__verif() * 4;
-                    memcpy(p_attr->data, nondet_get_buf__verif(), p_attr->length);
+                    p_attr->length = l;
                     return p_attr;
                     break;
                 default:
@@ -302,6 +303,12 @@ static __always_inline  int from_provider_check(uint32_t my_as, struct path_attr
     return current_state == VALID_1 || current_state == VALID_2 ? 1 : -1;
 }
 
+#define TIDYING() \
+PROOF_INSTS(do {            \
+    if (attr) free(attr); \
+    if (peer) free(peer); \
+} while(0))
+
 uint64_t customer_provider_validator(args_t *args UNUSED) {
 
     struct path_attribute *attr;
@@ -311,13 +318,19 @@ uint64_t customer_provider_validator(args_t *args UNUSED) {
     attr = get_attr_from_code(AS_PATH_ATTR_CODE);
 
     struct ubpf_peer_info *peer = get_src_peer_info();
-    if (!attr || !peer) return FAIL;
+    if (!attr || !peer){
+        TIDYING();
+        return FAIL;
+    }
 
     from_as = peer->as;
     my_as = peer->local_bgp_session->as;
 
 
-    if (get_extra_info("cust-prov", &info) != 0) return PLUGIN_FILTER_UNKNOWN;
+    if (get_extra_info("cust-prov", &info) != 0){
+        TIDYING();
+        return PLUGIN_FILTER_UNKNOWN;
+    }
 
     switch (get_session_relation(from_as)) {
         case SESSION_MY_PROVIDER:
@@ -328,11 +341,12 @@ uint64_t customer_provider_validator(args_t *args UNUSED) {
             break;
         default:
             ret_val = -1;
+            TIDYING();
             next();
     }
 
     if (ret_val == 0) return PLUGIN_FILTER_REJECT;
-
+    TIDYING();
     next();
     return PLUGIN_FILTER_REJECT;
 }
