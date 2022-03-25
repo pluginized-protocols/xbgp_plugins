@@ -152,10 +152,9 @@ uint64_t write_attr(void) {
     ret_val = encode_attr(attribute->code, attribute->data, attr_buf + counter);
     if (ret_val == -1) {
         TIDYING;
-        // must call next here because to tell the
-        // fallback implem to run its handle routine
-        // if we so not handle the
-        // current attribute passed by the host implementation
+        // should call the following function here.
+        // Maybe other plugins handle the attribute
+        // or the host implementation.
         next();
         return 0;
     }
