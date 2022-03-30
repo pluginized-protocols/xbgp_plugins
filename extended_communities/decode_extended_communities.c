@@ -61,14 +61,15 @@ PROOF_INSTS(
 #define NEXT_RETURN_VALUE EXIT_FAILURE
 )
 
-
+#define PROVERS_SEAHORN
+#define PROVERS
 #define TIDYING() \
 PROOF_INSTS(do {     \
-    if (code) free(code); \
-    if (len) free(len);   \
-    if (flags) free(flags); \
-    if (data) free(data);\
-    if (decoded_ext_communitities) free(decoded_ext_communitities); \
+if (code) free(code); \
+if (len) free(len);   \
+if (flags) free(flags); \
+if (data) free(data);\
+if (decoded_ext_communitities) free(decoded_ext_communitities); \
 } while(0))
 
 uint64_t decode_extended_communities(args_t *args UNUSED) {
@@ -85,28 +86,25 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
 
     ebpf_print("[WARNING] This code won't work!\n");
     code = get_arg(ARG_CODE);  // refactor
+    if (code != NULL && *code != EXTENDED_COMMUNITIES) {
+        TIDYING();
+        next();
+    }
     flags = get_arg(ARG_FLAGS);
     len = get_arg(ARG_LENGTH);
+    if (!len || *len % 8 != 0) {
+        // malformed extended attribute
+        TIDYING();
+        return EXIT_FAILURE;
+    }
+
     data = get_arg(ARG_DATA);
 
-    if (!code || !len || !flags || !data) {
+    if (!code || !flags || !data) {
         TIDYING();
         return EXIT_FAILURE;
     }
     COPY_BUFFER(data, *len);
-
-    if (*code != EXTENDED_COMMUNITIES) {
-        CHECK_COPY(data);
-        TIDYING();
-        next();
-    }
-
-    if (*len % 8 != 0) {
-        // malformed extended attribute
-        CHECK_COPY(data);
-        TIDYING();
-        return EXIT_FAILURE;
-    }
 
     //assume(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
 
@@ -141,4 +139,4 @@ PROOF_INSTS(
             uint64_t ret_val = decode_extended_communities(&args);
             return ret_val;
         }
-)
+        )
