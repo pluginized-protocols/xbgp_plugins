@@ -37,4 +37,9 @@ clean:
 	@rm -f $(OBJ)
 	@rm -f *.ll *.pre_t2 *.t2 *.bc
 
-.PHONY: all clean
+zip: all
+	@echo Creating archive...
+	tar cf ready.tar.xz $(OBJ) *.plugin *.meta
+
+
+.PHONY: all clean zip

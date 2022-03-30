@@ -9,7 +9,7 @@
 #include "../prove_stuffs/prove.h"
 
 /* starting point */
-uint64_t write_attr(args_t *args __attribute__((unused)));
+uint64_t write_attr(void);
 
 PROOF_INSTS(
         uint8_t nondet_u8(void);
@@ -114,9 +114,8 @@ PROOF_INSTS(do {            \
  *         0 when no bytes written
  *         else, the number of bytes written to the stream
  */
-uint64_t write_attr(args_t *args __attribute__((unused))) {
-
-    int ret_val = 0;
+uint64_t write_attr(void) {
+    int ret_val;
     uint32_t counter = 0;
     uint8_t *attr_buf = NULL;
     uint16_t tot_len = 0;
@@ -126,6 +125,7 @@ uint64_t write_attr(args_t *args __attribute__((unused))) {
 
     if (!attribute) {
         TIDYING;
+        next();
         return 0;
     }
 
@@ -136,6 +136,7 @@ uint64_t write_attr(args_t *args __attribute__((unused))) {
     attr_buf = ctx_calloc(1, tot_len);
     if (!attr_buf) {
         TIDYING;
+        next();
         return 0;
     }
 
@@ -151,6 +152,10 @@ uint64_t write_attr(args_t *args __attribute__((unused))) {
     ret_val = encode_attr(attribute->code, attribute->data, attr_buf + counter);
     if (ret_val == -1) {
         TIDYING;
+        // should call the following function here.
+        // Maybe other plugins handle the attribute
+        // or the host implementation.
+        next();
         return 0;
     }
 
@@ -164,6 +169,7 @@ uint64_t write_attr(args_t *args __attribute__((unused))) {
 
     if (write_to_buffer(attr_buf, counter) == -1) {
         TIDYING;
+        next();
         return 0;
     }
     TIDYING;
