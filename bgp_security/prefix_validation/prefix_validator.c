@@ -229,6 +229,7 @@ uint64_t prefix_validator(args_t *args UNUSED) {
             }
         }
     }
+    return PLUGIN_FILTER_UNKNOWN;
 }
 
 PROOF_INSTS(
