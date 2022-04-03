@@ -2,7 +2,7 @@
   "jit_all": true,
   "name": "propagation_time",
   "extra_mem": 4096,
-  "shared_mem": 0,
+  "shared_mem": 6144,
   "obj_code_list": {
     "compute_arrival_time": {
       "obj": "compute_arrival_time.o",
@@ -35,6 +35,14 @@
         "write",
         "usr_ptr"
       ]
+    },
+    "encode_communities": {
+      "obj": "encode_bgp_communities.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
     }
   },
   "insertion_points": {
@@ -48,10 +56,15 @@
         "0": "compute_arrival_time"
       }
     },
+    "bgp_pre_outbound_filter": {
+      "replace": {
+        "0": "encode_propagation_time_communities"
+      },
+    },
     "bgp_encode_attr": {
       "replace": {
-        "0": "encode_arrival_time",
-        "10": "encode_propagation_time_communities"
+        "0": "encode_communities",
+        "10": "encode_arrival_time",
       }
     }
   }
