@@ -2,10 +2,17 @@
 // Created by thomas on 2/06/20.
 //
 
+#ifdef PROVERS
+#include "../xbgp_compliant_api/xbgp_plugin_api.h"
+#include "common_security.h"
+#include "../byte_manip.h"
+#include "../prove_stuffs/prove.h"
+#else
 #include "../../xbgp_compliant_api/xbgp_plugin_api.h"
-#include <sys/socket.h>
-#include "../common_security.h"
 #include "../../byte_manip.h"
+#include "../../prove_stuffs/prove.h"
+#endif
+#include <sys/socket.h>
 
 #define AS_PATH_SET        1    /* Types of path segments */
 #define AS_PATH_SEQUENCE    2
@@ -13,8 +20,6 @@
 #define AS_PATH_CONFED_SET    4
 
 #define MAX_ITER INT32_MAX
-
-#include "../../prove_stuffs/prove.h"
 
 /**
  * Starting point of the BPF program
