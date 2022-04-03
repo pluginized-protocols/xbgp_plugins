@@ -37,9 +37,9 @@
     },
     "bgp_encode_attr": {
       "replace": {
-        "0": "encode_communities",
+        "0": "encode_communities"
       }
-    }
+    },
     "bgp_local_pref_decision": {
       "post": {
         "0": "tie_breaker"

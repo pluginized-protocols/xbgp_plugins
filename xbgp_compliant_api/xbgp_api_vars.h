@@ -252,6 +252,7 @@ static proto_ext_fun_t api_funcs[] = {
 
 static insertion_point_info_t insertion_points[] = {
         {.insertion_point_str="bgp_pre_decision", .insertion_point_id = BGP_PRE_DECISION},
+        {.insertion_point_str="bgp_initial_rte_decision", .insertion_point_id = BGP_INITIAL_RTE_DECISION},
         {.insertion_point_str="bgp_nexthop_resolvable_decision", .insertion_point_id = BGP_NEXTHOP_RESOLVABLE_DECISION},
         {.insertion_point_str="bgp_local_pref_decision", .insertion_point_id = BGP_LOCAL_PREF_DECISION},
         {.insertion_point_str="bgp_as_path_length_decision", .insertion_point_id = BGP_AS_PATH_LENGTH_DECISION},
