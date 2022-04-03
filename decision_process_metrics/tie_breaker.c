@@ -31,8 +31,7 @@ uint64_t tie_breaker(exec_info_t *info) {
      * then skip this plugin
      */
     if (!info->return_val_set) {
-        next();
-        return BPF_FAILURE;
+        return BPF_CONTINUE;
     }
 
     switch (info->insertion_point_id) {
