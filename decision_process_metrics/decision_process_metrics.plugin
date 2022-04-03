@@ -40,6 +40,11 @@
         "0": "encode_communities"
       }
     },
+    "bgp_initial_rte_decision": {
+      "post": {
+        "0": "tie_breaker"
+      }
+    },
     "bgp_local_pref_decision": {
       "post": {
         "0": "tie_breaker"
