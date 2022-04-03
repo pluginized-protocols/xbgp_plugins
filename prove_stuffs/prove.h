@@ -5,24 +5,30 @@
 #ifndef XBGP_PLUGINS_PROVE_H
 #define XBGP_PLUGINS_PROVE_H
 
+#include "prove_helpers.h"
+
 #ifdef PROVERS
 #include "mod_ubpf_api.c"
 #endif
 
 #ifdef PROVERS
 #define next() return NEXT_RETURN_VALUE
+#endif
+
+#ifdef PROVERS_CBMC
 
 char *strncpy(char *dest, const char *src, size_t n)  {
-        size_t i;
+    size_t i;
 
-        for (i = 0; i < n && src[i] != '\0'; i++)
-            dest[i] = src[i];
+    for (i = 0; i < n && src[i] != '\0'; i++)
+        dest[i] = src[i];
 
-        if (i < n)
-            dest[i] = '\0';
+    if (i < n)
+        dest[i] = '\0';
 
-        return dest;
+    return dest;
 }
+
 #endif
 
 /*

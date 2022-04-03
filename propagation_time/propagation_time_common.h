@@ -5,6 +5,8 @@
 #ifndef XBGP_PLUGINS_PROPAGATION_TIME_COMMON_H
 #define XBGP_PLUGINS_PROPAGATION_TIME_COMMON_H
 
+#include "../prove_stuffs/prove.h"
+
 #define ARRIVAL_TIME_ATTR 45
 
 #define ATTR_HDR_LEN 3
@@ -100,6 +102,9 @@ static __always_inline int write_attr(uint8_t code, uint8_t flags, uint16_t leng
     tot_length = length + hdr_length;
 
     attr_buf = ctx_malloc(tot_length);
+
+    CREATE_BUFFER(attr_buf, tot_length);
+
     if (!attr_buf) return -1;
     attr_offset = attr_buf;
 
@@ -119,6 +124,8 @@ static __always_inline int write_attr(uint8_t code, uint8_t flags, uint16_t leng
         ebpf_print("[BUG!] INVALID ATTR FORMAT\n");
         return 0;
     }
+
+    CHECK_BUFFER(attr_buf, tot_length);
 
     res = write_to_buffer(attr_buf, tot_length);
 
