@@ -44,46 +44,6 @@
       "post": {
         "0": "tie_breaker"
       }
-    },
-    "bgp_local_pref_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
-    },
-    "bgp_as_path_length_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
-    },
-    "bgp_med_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
-    },
-    "bgp_use_origin_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
-    },
-    "bgp_prefer_external_peer_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
-    },
-    "bgp_igp_cost_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
-    },
-    "bgp_router_id_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
-    },
-    "bgp_ipaddr_decision": {
-      "post": {
-        "0": "tie_breaker"
-      }
     }
   }
 }

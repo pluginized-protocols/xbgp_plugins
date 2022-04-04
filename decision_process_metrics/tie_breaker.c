@@ -80,11 +80,13 @@ uint64_t tie_breaker(exec_info_t *info) {
     stats[TIE_TOTAL_ROUTES] += 1;
     stats[tie_reason] += 1;
 
+    ebpf_print("Total routes %lu\n", LOG_U64(stats[TIE_TOTAL_ROUTES]));
+
     int rte = info->replace_return_value == BGP_ROUTE_TYPE_NEW ? ARG_BGP_ROUTE_NEW :
               info->replace_return_value == BGP_ROUTE_TYPE_OLD ? ARG_BGP_ROUTE_OLD : -1;
 
     if (rte == -1) {
-        ebpf_print("HOST IMPLEM BUG !\n");
+        ebpf_print("La mer noire, HOST IMPLEM BUG !\n");
         return BPF_FAILURE;
     }
 
@@ -119,6 +121,7 @@ uint64_t tie_breaker(exec_info_t *info) {
             ebpf_htonl((TIE_BREAKER_COMMUNITY < 16) | tie_reason);
 
     if (!set_attr(new_communities)) {
+        ebpf_print("Unable to set attr!\n");
         return BPF_FAILURE;
     }
 

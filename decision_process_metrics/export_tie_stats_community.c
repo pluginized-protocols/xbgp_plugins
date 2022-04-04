@@ -83,9 +83,9 @@ uint64_t export_tie_stats_community(void) {
     communities = (uint32_t *) (new_attr->data + old_community_len);
     total_routes = stats[TIE_TOTAL_ROUTES];
 
-    for (tb = TIE_LOCAL_PREF, idx = 0; tb < TIE_MAX; tb++) {
-        proportion = (stats[tb] * 1000) / total_routes;
-        communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY + tb) < 16) | (proportion & 0xFF));
+    for (tb = TIE_INITIAL_RTE, idx = 0; tb < TIE_MAX; tb++) {
+        proportion = total_routes == 0 ? 0 : (stats[tb] * 1000) / total_routes;
+        communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY + tb) << 16) | (proportion & 0xFF));
     }
 
     if (set_attr(new_attr)) {
