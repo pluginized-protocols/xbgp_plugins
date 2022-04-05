@@ -58,6 +58,8 @@ static xbgp_def_fun_api(schedule_bgp_message, int, *(int *) XBGP_ARGS[0],
 
 static xbgp_def_fun_api(peer_session_reset, int, *(const char **) XBGP_ARGS[0]);
 
+static xbgp_def_fun_api(get_route_info, struct bgp_rte_info *);
+
 
 static proto_ext_fun_t api_funcs[] = {
         {
@@ -258,6 +260,15 @@ static proto_ext_fun_t api_funcs[] = {
                 .closure_fn = xbgp_api_name_closure(peer_session_reset),
                 .name = "peer_session_reset",
                 .attributes=HELPER_ATTR_READ | HELPER_ATTR_WRITE},
+        {
+                .args_type = NULL,
+                .return_type = &ffi_type_pointer,
+                .args_nb = 0,
+                .fn = get_route_info,
+                .closure_fn = xbgp_api_name_closure(get_route_info),
+                .name = "get_route_info",
+                .attributes=HELPER_ATTR_READ,
+        },
         proto_ext_func_null,
 };
 

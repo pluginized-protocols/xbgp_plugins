@@ -196,5 +196,7 @@ extern int schedule_bgp_message(int type, struct bgp_message *message, const cha
 
 extern int peer_session_reset(const char *peer_ip);
 
+extern struct bgp_rte_info *get_route_info(void);
+
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 
