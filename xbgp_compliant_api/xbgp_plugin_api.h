@@ -44,6 +44,8 @@ extern int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decod
  */
 extern int set_attr(struct path_attribute *attr);
 
+extern int set_attr_to_route(struct path_attribute *attr, int rte);
+
 /**
  * Get the current attribute to be processed (if the plugin receives a single
  * attribute as argument)

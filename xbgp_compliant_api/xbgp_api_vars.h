@@ -13,6 +13,8 @@ static xbgp_def_fun_api(add_attr, int, *(uint8_t *) XBGP_ARGS[0], *(uint8_t *) X
 
 static xbgp_def_fun_api(set_attr, int, *(struct path_attribute **) XBGP_ARGS[0]);
 
+static xbgp_def_fun_api(set_attr_to_route, int, *(struct path_attribute **) XBGP_ARGS[0], *(int *) XBGP_ARGS[1]);
+
 static xbgp_def_fun_api(get_attr, struct path_attribute *);
 
 static xbgp_def_fun_api(write_to_buffer, int, *(uint8_t **) XBGP_ARGS[0], *(size_t *) XBGP_ARGS[1]);
@@ -75,6 +77,15 @@ static proto_ext_fun_t api_funcs[] = {
                 .fn = set_attr,
                 .closure_fn = xbgp_api_name_closure(set_attr),
                 .name="set_attr",
+                .attributes=HELPER_ATTR_WRITE | HELPER_ATTR_USR_PTR,
+        },
+        {
+                .args_type = (ffi_type *[]) {&ffi_type_pointer},
+                .return_type = &ffi_type_sint,
+                .args_nb = 2,
+                .fn = set_attr_to_route,
+                .closure_fn = xbgp_api_name_closure(set_attr_to_route),
+                .name="set_attr_to_route",
                 .attributes=HELPER_ATTR_WRITE | HELPER_ATTR_USR_PTR,
         },
         {

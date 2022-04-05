@@ -37,6 +37,8 @@ extern int add_attr(context_t *ctx, uint8_t code, uint8_t flags, uint16_t length
  */
 extern int set_attr(context_t *ctx, struct path_attribute *attr);
 
+extern int set_attr_to_route(context_t *ctx, struct path_attribute *attr, int rte);
+
 /**
  * Get the current attribute to be processed (if the plugin receives a single
  * attribute as argument)
