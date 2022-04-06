@@ -16,6 +16,7 @@ uint64_t decode_extended_communities(args_t *args UNUSED);
 PROOF_INSTS(
         uint16_t get_length(void);
         uint64_t nondet_uint64(void);
+        uint8_t nondet_uint8(void);
 
         static uint16_t def_len = 0;
 
@@ -30,7 +31,7 @@ PROOF_INSTS(
                     uint8_t *code = malloc(sizeof(uint8_t));
                     if (!code) return NULL;
 
-                    *code = EXTENDED_COMMUNITIES;
+                    *code = nondet_uint8();
                     return code;
                 }
                 case ARG_DATA: {
@@ -65,11 +66,11 @@ PROOF_INSTS(
 #define PROVERS
 #define TIDYING() \
 PROOF_INSTS(do {     \
-if (code) free(code); \
-if (len) free(len);   \
-if (flags) free(flags); \
-if (data) free(data);\
-if (decoded_ext_communitities) free(decoded_ext_communitities); \
+    if (code) free(code); \
+    if (len) free(len);   \
+    if (flags) free(flags); \
+    if (data) free(data);\
+    if (decoded_ext_communitities) free(decoded_ext_communitities); \
 } while(0))
 
 uint64_t decode_extended_communities(args_t *args UNUSED) {

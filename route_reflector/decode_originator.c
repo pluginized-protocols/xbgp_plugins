@@ -48,6 +48,8 @@ PROOF_INSTS(
                     *length = data_length;
                     return length;
                 }
+                default:
+                    return NULL;
             }
 
         }
@@ -68,11 +70,11 @@ PROOF_INSTS(
 
 #define TIDYING() \
 PROOF_INSTS(do {\
- if (code) free(code); \
- if (len) free(len);   \
- if (flags) free(flags); \
- if (data) free(data); \
- if (src_info) free(src_info); \
+     if (code) free(code); \
+     if (len) free(len);   \
+     if (flags) free(flags); \
+     if (data) free(data); \
+     if (src_info) free(src_info); \
 } while(0))
 
 
@@ -85,17 +87,30 @@ uint64_t decode_originator(args_t *args UNUSED) {
 
     uint32_t originator_id;
 
+    CREATE_BUFFER(originator_id, sizeof(uint32_t));
+
     code = get_arg(ARG_CODE);
     flags = get_arg(ARG_FLAGS);
     data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
 
-    if (!code || !len || !flags || !data) {
+    COPY_BUFFER(data, *len);
+
+    src_info = get_src_peer_info();
+
+    if (!src_info || !code || !len || !flags || !data) {
         TIDYING();
         return EXIT_FAILURE;
     }
 
+    if (src_info->peer_type != IBGP_SESSION) {
+        CHECK_COPY(data);
+        TIDYING();
+        next(); // don't parse ORIGINATOR_LIST if originated from eBGP session
+    }
+
     if (*code != ORIGINATOR_ID) {
+        CHECK_COPY(data);
         TIDYING();
         next();
     }
@@ -110,11 +125,13 @@ uint64_t decode_originator(args_t *args UNUSED) {
 
     originator_id = ebpf_ntohl(*((uint32_t *) data));
 
+    CHECK_BUFFER(originator_id, 4);
     PROOF_SEAHORN_INSTS(
             p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
     )
 
     add_attr(ORIGINATOR_ID, *flags, 4, (uint8_t *) &originator_id);
+    CHECK_COPY(data);
     TIDYING();
     return EXIT_SUCCESS;
 }
