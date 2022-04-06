@@ -13,6 +13,8 @@ static xbgp_def_fun_api(add_attr, int, *(uint8_t *) XBGP_ARGS[0], *(uint8_t *) X
 
 static xbgp_def_fun_api(set_attr, int, *(struct path_attribute **) XBGP_ARGS[0]);
 
+static xbgp_def_fun_api(set_attr_to_route, int, *(struct path_attribute **) XBGP_ARGS[0], *(int *) XBGP_ARGS[1]);
+
 static xbgp_def_fun_api(get_attr, struct path_attribute *);
 
 static xbgp_def_fun_api(write_to_buffer, int, *(uint8_t **) XBGP_ARGS[0], *(size_t *) XBGP_ARGS[1]);
@@ -56,6 +58,8 @@ static xbgp_def_fun_api(schedule_bgp_message, int, *(int *) XBGP_ARGS[0],
 
 static xbgp_def_fun_api(peer_session_reset, int, *(const char **) XBGP_ARGS[0]);
 
+static xbgp_def_fun_api(get_route_info, struct bgp_rte_info *);
+
 
 static proto_ext_fun_t api_funcs[] = {
         {
@@ -75,6 +79,15 @@ static proto_ext_fun_t api_funcs[] = {
                 .fn = set_attr,
                 .closure_fn = xbgp_api_name_closure(set_attr),
                 .name="set_attr",
+                .attributes=HELPER_ATTR_WRITE | HELPER_ATTR_USR_PTR,
+        },
+        {
+                .args_type = (ffi_type *[]) {&ffi_type_pointer},
+                .return_type = &ffi_type_sint,
+                .args_nb = 2,
+                .fn = set_attr_to_route,
+                .closure_fn = xbgp_api_name_closure(set_attr_to_route),
+                .name="set_attr_to_route",
                 .attributes=HELPER_ATTR_WRITE | HELPER_ATTR_USR_PTR,
         },
         {
@@ -247,11 +260,21 @@ static proto_ext_fun_t api_funcs[] = {
                 .closure_fn = xbgp_api_name_closure(peer_session_reset),
                 .name = "peer_session_reset",
                 .attributes=HELPER_ATTR_READ | HELPER_ATTR_WRITE},
+        {
+                .args_type = NULL,
+                .return_type = &ffi_type_pointer,
+                .args_nb = 0,
+                .fn = get_route_info,
+                .closure_fn = xbgp_api_name_closure(get_route_info),
+                .name = "get_route_info",
+                .attributes=HELPER_ATTR_READ,
+        },
         proto_ext_func_null,
 };
 
 static insertion_point_info_t insertion_points[] = {
         {.insertion_point_str="bgp_pre_decision", .insertion_point_id = BGP_PRE_DECISION},
+        {.insertion_point_str="bgp_initial_rte_decision", .insertion_point_id = BGP_INITIAL_RTE_DECISION},
         {.insertion_point_str="bgp_nexthop_resolvable_decision", .insertion_point_id = BGP_NEXTHOP_RESOLVABLE_DECISION},
         {.insertion_point_str="bgp_local_pref_decision", .insertion_point_id = BGP_LOCAL_PREF_DECISION},
         {.insertion_point_str="bgp_as_path_length_decision", .insertion_point_id = BGP_AS_PATH_LENGTH_DECISION},

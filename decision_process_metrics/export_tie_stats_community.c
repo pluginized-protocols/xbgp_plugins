@@ -37,20 +37,19 @@ if (realloc_attr) ctx_free(realloc_attr); \
 
 uint64_t export_tie_stats_community(void) {
     enum TIE_BREAKER tb;
-    int idx = 0;
-    struct path_attribute *attr, *realloc_attr;
+    int idx;
+    struct path_attribute *attr, *new_attr;
     uint64_t *stats;
     uint32_t *communities;
-    int old_length;
+    uint64_t total_routes;
+    uint16_t proportion;
+    unsigned int old_community_len;
     unsigned int new_community_len;
 
     attr = get_attr_from_code(COMMUNITY_ATTR_ID);
-    if (!attr) {
-        next();
-        return 0;
-    }
 
-    new_community_len = attr->length + (sizeof(uint32_t) * (TIE_MAX - 1));
+    old_community_len = attr ? attr->length : 0;
+    new_community_len = old_community_len + (sizeof(uint32_t) * (TIE_MAX));
 
     stats = ctx_shmget(SHM_KEY_TIE_BREAKER_STATS);
     if (!stats) {
@@ -59,25 +58,37 @@ uint64_t export_tie_stats_community(void) {
         return PLUGIN_FILTER_UNKNOWN;
     }
 
-    old_length = attr->length;
-
-    realloc_attr = ctx_realloc(attr, new_community_len + sizeof(*attr));
-    if (!realloc_attr) {
+    new_attr = ctx_malloc(new_community_len + sizeof(*attr));
+    if (!new_attr) {
         ebpf_print("Unable to allocate memory for COMMUNITY ATTR\n");
         next();
         TIDYING1();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
-    /* points at the end of the new community list */
-    communities = (uint32_t *) (realloc_attr->data + old_length);
+    new_attr->code = COMMUNITY_ATTR_ID;
+    new_attr->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+    new_attr->length = new_community_len;
 
-    for (tb = TIE_LOCAL_PREF; tb < TIE_MAX; tb++) {
-        uint16_t counter = (uint16_t) (stats[tb] > UINT16_MAX ? UINT16_MAX : stats[tb]);
-        communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY + tb) < 2) | (counter));
+    if (new_community_len > 255) {
+        new_attr->flags |= ATTR_EXT_LEN;
     }
 
-    if (set_attr(realloc_attr)) {
+    /* cpy attr */
+    if (attr) {
+        ebpf_memcpy(new_attr->data, attr->data, old_community_len);
+    }
+
+    /* points at the end of the new community list */
+    communities = (uint32_t *) (new_attr->data + old_community_len);
+    total_routes = stats[TIE_TOTAL_ROUTES];
+
+    for (tb = TIE_INITIAL_RTE, idx = 0; tb < TIE_MAX; tb++) {
+        proportion = total_routes == 0 ? 0 : (stats[tb] * 1000) / total_routes;
+        communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY + tb) << 16) | (proportion & 0xFF));
+    }
+
+    if (set_attr(new_attr)) {
         ebpf_print("Unable to set_attr COMMUNITY Attribute\n");
     }
 
