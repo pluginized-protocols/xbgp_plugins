@@ -37,6 +37,8 @@ extern int add_attr(context_t *ctx, uint8_t code, uint8_t flags, uint16_t length
  */
 extern int set_attr(context_t *ctx, struct path_attribute *attr);
 
+extern int set_attr_to_route(context_t *ctx, struct path_attribute *attr, int rte);
+
 /**
  * Get the current attribute to be processed (if the plugin receives a single
  * attribute as argument)
@@ -241,5 +243,10 @@ int schedule_bgp_message(context_t *ctx, int type, struct bgp_message *message, 
  * @return 0 if the session has been shutdown, -1 otherwise
  */
 int peer_session_reset(context_t *ctx, const char *peer_ip);
+
+/**
+ * Get meta info related to the route being processed
+ */
+struct bgp_rte_info *get_route_info(context_t *ctx);
 
 #endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H

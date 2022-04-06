@@ -11,7 +11,9 @@
 
 
 enum TIE_BREAKER {
-    TIE_LOCAL_PREF = 1,
+    TIE_TOTAL_ROUTES = 0,
+    TIE_INITIAL_RTE,
+    TIE_LOCAL_PREF,
     TIE_AS_PATH,
     TIE_MED,
     TIE_ORIGIN,
@@ -20,6 +22,7 @@ enum TIE_BREAKER {
     TIE_ROUTER_ID,
     TIE_IPADDR,
     TIE_OTHER,
+    TIE_DEFAULT,
     TIE_MAX
 };
 

@@ -44,6 +44,8 @@ extern int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decod
  */
 extern int set_attr(struct path_attribute *attr);
 
+extern int set_attr_to_route(struct path_attribute *attr, int rte);
+
 /**
  * Get the current attribute to be processed (if the plugin receives a single
  * attribute as argument)
@@ -193,6 +195,8 @@ extern int get_vrf(struct vrf_info *vrf_info);
 extern int schedule_bgp_message(int type, struct bgp_message *message, const char *peer_ip);
 
 extern int peer_session_reset(const char *peer_ip);
+
+extern struct bgp_rte_info *get_route_info(void);
 
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 

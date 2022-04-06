@@ -69,6 +69,17 @@ if (communities_new) free(communities_new); \
 if (arrival_time) free(arrival_time); \
 } while(0);)
 
+#define MEM_COMMUNITIES 789
+#define MEM_COMMUNITIES_SIZE 4096
+
+static __always_inline void *get_mem() {
+    void *mem;
+
+    mem = ctx_shmget(MEM_COMMUNITIES);
+    if (mem) { return mem; }
+    return ctx_shmnew(MEM_COMMUNITIES, MEM_COMMUNITIES_SIZE);
+}
+
 uint64_t encode_propagation_time_communities(args_t *args UNUSED) {
     struct path_attribute *communities;
     struct path_attribute *arrival_time;
@@ -77,25 +88,17 @@ uint64_t encode_propagation_time_communities(args_t *args UNUSED) {
     struct timespec *in_time;
     struct attr_arrival *arrival;
     int nb_peer;
-    int communities_length;
-    int old_communities_length;
-    uint8_t *communities_new;
+    unsigned int communities_length;
+    unsigned int old_communities_length;
+    struct path_attribute *communities_new;
     uint16_t propagation_time;
 
     communities = get_attr_from_code(COMMUNITY_ATTR_ID);
-    arrival_time = get_attr();
+    arrival_time = get_attr_from_code(ARRIVAL_TIME_ATTR);
 
     dst_info = get_peer_info(&nb_peer);
 
     if (!arrival_time) {
-        next();
-        TIDYING();
-        return 0;
-    }
-
-    /* the current attribute to be processed
-     * is not the one we expect */
-    if (arrival_time->code != ARRIVAL_TIME_ATTR) {
         next();
         TIDYING();
         return 0;
@@ -130,25 +133,43 @@ uint64_t encode_propagation_time_communities(args_t *args UNUSED) {
     old_communities_length = communities ? communities->length : 0;
     communities_length = old_communities_length + 4;
 
-    /* todo maybe should realloc communities->data */
-    communities_new = ctx_malloc(communities_length);
+    if (communities_length > MEM_COMMUNITIES_SIZE) {
+        ebpf_print("COMMUNITIES SIZE OVERFLOWS %d > MAX (%u) !",
+                   LOG_INT(communities_length),
+                   LOG_UINT(MEM_COMMUNITIES_SIZE));
+        TIDYING();
+        return 0;
+    }
+
+    communities_new = get_mem(); //ctx_malloc(communities_length);
     if (!communities_new) {
         TIDYING();
         return 0;
     }
 
-    if (communities) {
-        /* recreate communities */
-        ebpf_memcpy(communities_new, communities->data, communities->length);
+    communities_new->code = COMMUNITY_ATTR_ID;
+    communities_new->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+    communities_new->length = communities_length;
+
+    if (communities_length > 255) {
+        communities_new->flags |= ATTR_EXT_LEN;
     }
 
-    *((uint32_t *)(communities_new + old_communities_length)) =
-            ebpf_htonl((COMMUNITY_ARRIVAL_TAG << 2) | propagation_time);
+    if (communities) {
+        /* recreate communities */
+        ebpf_memcpy(communities_new->data, communities->data, communities->length);
+    }
+
+    *((uint32_t *)(communities_new->data + old_communities_length)) =
+            (ebpf_htons(propagation_time) << 16) | COMMUNITY_ARRIVAL_TAG_BE;
 
     TIDYING();
     /* time to create the attribute to be sent to the wire */
-    return (write_attr(COMMUNITY_ATTR_ID, ATTR_OPTIONAL|ATTR_TRANSITIVE,
-                  communities_length, communities_new));
+
+    if (set_attr(communities_new) != 0) {
+        ebpf_print("set_attr failed\n");
+    }
+    return PLUGIN_FILTER_UNKNOWN;
 }
 
 PROOF_INSTS(

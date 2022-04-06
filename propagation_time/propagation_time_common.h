@@ -12,6 +12,9 @@
 
 #define COMMUNITY_ARRIVAL_TAG 65000
 
+// NETWORK BYTEORDER COMMUNITY_ARRIVAL_TAG (65000)
+#define COMMUNITY_ARRIVAL_TAG_BE 59645
+
 #ifdef DEBUG
 #define assert(cond) \
 do {                 \

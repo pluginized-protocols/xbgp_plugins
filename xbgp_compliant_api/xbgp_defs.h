@@ -103,6 +103,7 @@ enum ubpf_plugins {
     BGP_DECODE_MESSAGE,
     BGP_ENCODE_MESSAGE,
     BGP_OPEN_SENT,
+    BGP_INITIAL_RTE_DECISION,
 
     INSERTION_POINT_RESERVED = 2000000000
 };
@@ -147,6 +148,25 @@ enum BGP_PLUGIN_FILTER_DECISION {
     PLUGIN_FILTER_REJECT = HI_RESERVED_RETURN_VAL + 1,
     PLUGIN_FILTER_ACCEPT,
     PLUGIN_FILTER_UNKNOWN,
+};
+
+
+enum bgp_selection_reason {
+    bgp_selection_none,
+    bgp_selection_first,
+    bgp_selection_local_pref,
+    bgp_selection_local_route,
+    bgp_selection_as_path,
+    bgp_selection_origin,
+    bgp_selection_med,
+    bgp_selection_peer,
+    bgp_selection_igp_metric,
+    bgp_selection_older,
+    bgp_selection_tie_breaker,
+    bgp_selection_cluster_length,
+    bgp_selection_local_configured,
+    bgp_selection_other,
+    bgp_selection_default,
 };
 
 struct bgp_message {
@@ -196,13 +216,18 @@ struct ubpf_prefix {
     uint8_t u[20];
 };
 
+struct bgp_rte_info {
+    time_t uptime;
+    uint32_t type;  // CONNECTED, STATIC, IGP, BGP
+    enum bgp_selection_reason reason;
+};
+
 struct bgp_route {
     struct ubpf_prefix pfx;
     int attr_nb;
     struct path_attribute **attr;
     struct ubpf_peer_info *peer_info;
-    uint32_t type; // CONNECTED, STATIC, IGP, BGP
-    time_t uptime;
+    struct bgp_rte_info route_info;
 };
 
 struct ubpf_nexthop {

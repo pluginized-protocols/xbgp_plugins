@@ -2,7 +2,7 @@
   "jit_all": true,
   "name": "decision_process_metrics",
   "extra_mem": 4096,
-  "shared_mem": 0,
+  "shared_mem": 6144,
   "obj_code_list": {
     "export_tie_stats_community": {
       "obj": "export_tie_stats_community.o",
@@ -19,52 +19,30 @@
         "write",
         "usr_ptr"
       ]
+    },
+    "encode_communities": {
+      "obj": "encode_bgp_communities.o",
+      "permissions": [
+        "read",
+        "write",
+        "usr_ptr"
+      ]
     }
   },
   "insertion_points": {
     "bgp_pre_outbound_filter": {
       "replace": {
+        "0": "export_tie_stats_community"
+      }
+    },
+    "bgp_encode_attr": {
+      "replace": {
+        "0": "encode_communities"
+      }
+    },
+    "bgp_initial_rte_decision": {
+      "post": {
         "0": "tie_breaker"
-      }
-    },
-    "bgp_local_pref_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
-      }
-    },
-    "bgp_as_path_length_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
-      }
-    },
-    "bgp_med_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
-      }
-    },
-    "bgp_use_origin_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
-      }
-    },
-    "bgp_prefer_external_peer_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
-      }
-    },
-    "bgp_igp_cost_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
-      }
-    },
-    "bgp_router_id_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
-      }
-    },
-    "bgp_ipaddr_decision": {
-      "post": {
-        "0": "export_tie_stats_community"
       }
     }
   }

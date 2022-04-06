@@ -63,7 +63,7 @@ uint64_t compute_arrival_time(args_t *args UNUSED) {
     arrival_attr = (struct path_attribute *) attr_space;
     arrival_data = (struct attr_arrival *) arrival_attr->data;
 
-    if (get_attr_from_code(ARRIVAL_TIME_ATTR) == NULL) {
+    if (get_attr_from_code(ARRIVAL_TIME_ATTR) != NULL) {
         /*
          * If the attribute is already set, don't
          * overwrite the attribute already set.

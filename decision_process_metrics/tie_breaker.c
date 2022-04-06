@@ -11,11 +11,11 @@ uint64_t tie_breaker(exec_info_t *info);
 
 PROOF_INSTS(
 #define NEXT_RETURN_VALUE EXIT_SUCCESS
-        )
+)
 
 uint64_t tie_breaker(exec_info_t *info) {
     uint64_t *stats;
-    int tie_reason, old_comm_len;
+    unsigned int tie_reason, old_comm_len, new_comm_len;
     struct path_attribute *communities, *new_communities;
 
     stats = ctx_shmget(SHM_KEY_TIE_BREAKER_STATS);
@@ -31,11 +31,13 @@ uint64_t tie_breaker(exec_info_t *info) {
      * then skip this plugin
      */
     if (!info->return_val_set) {
-        next();
-        return BPF_FAILURE;
+        return BPF_CONTINUE;
     }
 
     switch (info->insertion_point_id) {
+        case BGP_INITIAL_RTE_DECISION:
+            tie_reason = TIE_INITIAL_RTE;
+            break;
         case BGP_PRE_DECISION:
             tie_reason = TIE_OTHER;
             break;
@@ -67,7 +69,7 @@ uint64_t tie_breaker(exec_info_t *info) {
             tie_reason = TIE_OTHER;
             break;
         default:
-            tie_reason = -1;
+            tie_reason = TIE_DEFAULT;
             break;
     }
 
@@ -75,37 +77,55 @@ uint64_t tie_breaker(exec_info_t *info) {
         return BPF_FAILURE;
     }
 
+    stats[TIE_TOTAL_ROUTES] += 1;
     stats[tie_reason] += 1;
 
-    communities = get_attr_from_code(COMMUNITY_ATTR_ID);
+    ebpf_print("Total routes %lu\n", LOG_U64(stats[TIE_TOTAL_ROUTES]));
+
+    int rte = info->replace_return_value == BGP_ROUTE_TYPE_NEW ? ARG_BGP_ROUTE_NEW :
+              info->replace_return_value == BGP_ROUTE_TYPE_OLD ? ARG_BGP_ROUTE_OLD : -1;
+
+    if (rte == -1) {
+        ebpf_print("La mer noire, HOST IMPLEM BUG !\n");
+        return BPF_FAILURE;
+    }
+
+    communities = get_attr_from_code_by_route(COMMUNITY_ATTR_ID, rte);
 
     old_comm_len = 0;
     if (communities) {
         old_comm_len = communities->length;
     }
+    new_comm_len = old_comm_len + sizeof(uint32_t);
 
-    new_communities = ctx_malloc(sizeof(*new_communities) + old_comm_len + sizeof(uint32_t));
+    new_communities = ctx_malloc(sizeof(*new_communities) + new_comm_len);
     if (!new_communities) {
         return BPF_FAILURE;
     }
 
     /* TODO enhance this: recreate again the communities... */
     new_communities->code = COMMUNITY_ATTR_ID;
-    new_communities->length = old_comm_len + sizeof(uint32_t); // only one community will be added
+    new_communities->length = new_comm_len; // only one community will be added
     new_communities->flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+    if (new_comm_len > 255) {
+        new_communities->flags |= ATTR_EXT_LEN;
+    }
 
+    /* recopy communities to the new one */
     if (communities) {
         ebpf_memcpy(new_communities->data, communities->data, communities->length);
     }
 
+    /* add the tie breaker ! */
     *((uint32_t *) (&new_communities->data[old_comm_len])) =
-            ebpf_htonl((TIE_BREAKER_COMMUNITY < 2) | tie_reason);
+            ebpf_htonl((TIE_BREAKER_COMMUNITY < 16) | tie_reason);
 
     if (!set_attr(new_communities)) {
+        ebpf_print("Unable to set attr!\n");
         return BPF_FAILURE;
     }
 
-    return BPF_FAILURE;
+    return BPF_SUCCESS;
 }
 
 PROOF_INSTS(
@@ -115,10 +135,10 @@ PROOF_INSTS(
             uint64_t ret_val = tie_breaker(&info);
 
             p_assert(ret_val == 0 ||
-            ret_val == BPF_FAILURE);
+                     ret_val == BPF_FAILURE);
 
             ctx_shmrm(SHM_KEY_TIE_BREAKER_STATS);
 
             return 0;
         }
-        )
+)
