@@ -18,14 +18,14 @@
 #define COMMUNITY_ARRIVAL_TAG_BE 59645
 
 #ifdef DEBUG
-#define assert(cond) \
+#define c_assert(cond) \
 do {                 \
     if (!(cond)) {     \
         ebpf_print("Assertion \"%s\" failed\n", LOG_PTR(#cond));               \
     }\
 } while(0)
 #else
-#define assert(cond)
+#define c_assert(cond)
 #endif
 
 struct attr_arrival {

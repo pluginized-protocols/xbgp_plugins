@@ -32,7 +32,7 @@ if (attr) ctx_free(attr); \
 
 #define TIDYING2() \
 PROOF_INSTS(do {\
-if (realloc_attr) ctx_free(realloc_attr); \
+if (new_attr) ctx_free(new_attr); \
 } while(0))
 
 uint64_t export_tie_stats_community(void) {
@@ -84,8 +84,9 @@ uint64_t export_tie_stats_community(void) {
     total_routes = stats[TIE_TOTAL_ROUTES];
 
     for (tb = TIE_INITIAL_RTE, idx = 0; tb < TIE_MAX; tb++) {
-        proportion = total_routes == 0 ? 0 : (stats[tb] * 1000) / total_routes;
-        communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY + tb) << 16) | (proportion & 0xFF));
+        uint64_t tmp1 = stats[tb] > UINT64_MAX/1000 ? UINT64_MAX : stats[tb] * 1000;
+        proportion = total_routes == 0 ? 0 : (tmp1/total_routes > UINT16_MAX ? UINT16_MAX : tmp1/total_routes);
+        communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY + (uint32_t) tb) << 16) | (proportion & 0xFF));
     }
 
     if (set_attr(new_attr)) {

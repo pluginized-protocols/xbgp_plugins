@@ -83,14 +83,14 @@ static __always_inline void *get_mem() {
 uint64_t encode_propagation_time_communities(args_t *args UNUSED) {
     struct path_attribute *communities;
     struct path_attribute *arrival_time;
-    struct ubpf_peer_info *dst_info;
+    struct ubpf_peer_info *dst_info = NULL;
     struct timespec out_time, difftime;
     struct timespec *in_time;
     struct attr_arrival *arrival;
     int nb_peer;
     unsigned int communities_length;
     unsigned int old_communities_length;
-    struct path_attribute *communities_new;
+    struct path_attribute *communities_new = NULL;
     uint16_t propagation_time;
 
     communities = get_attr_from_code(COMMUNITY_ATTR_ID);
@@ -99,15 +99,15 @@ uint64_t encode_propagation_time_communities(args_t *args UNUSED) {
     dst_info = get_peer_info(&nb_peer);
 
     if (!arrival_time) {
-        next();
         TIDYING();
+        next();
         return 0;
     }
 
     /* if the peer is not EBGP, then skip also */
     if (dst_info->peer_type != EBGP_SESSION) {
-        next();
         TIDYING();
+        next();
         return 0;
     }
 
@@ -181,7 +181,7 @@ PROOF_INSTS(
             ret_val == PLUGIN_FILTER_UNKNOWN ||
             ret_val > 0);
 
-            ctx_shmrm(42);
+            ctx_shmrm(MEM_COMMUNITIES);
 
             return 0;
         }

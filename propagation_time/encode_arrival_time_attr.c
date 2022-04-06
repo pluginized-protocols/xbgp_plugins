@@ -50,7 +50,7 @@ PROOF_INSTS(
 PROOF_INSTS(do {            \
     if (attribute) free(attribute); \
     if (dst_info) free(dst_info); \
-} while(0);)
+} while(0))
 
 uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
     struct ubpf_peer_info *dst_info;

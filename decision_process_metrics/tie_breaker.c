@@ -134,7 +134,8 @@ PROOF_INSTS(
             exec_info_t info = {};
             uint64_t ret_val = tie_breaker(&info);
 
-            p_assert(ret_val == 0 ||
+            p_assert(ret_val == BPF_CONTINUE ||
+                     ret_val == BPF_SUCCESS ||
                      ret_val == BPF_FAILURE);
 
             ctx_shmrm(SHM_KEY_TIE_BREAKER_STATS);
