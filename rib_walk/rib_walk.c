@@ -5,7 +5,6 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 
 #include "../prove_stuffs/prove.h"
-#include "../prove_stuffs/prove_helpers.h"
 
 static __always_inline void del_bgp_route(struct bgp_route *rte) {
     int i;

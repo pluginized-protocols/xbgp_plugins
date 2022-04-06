@@ -50,7 +50,7 @@ PROOF_INSTS(
             data = malloc(2*sizeof(*pinfo));
             if (!data) return NULL;
             pinfo = (struct ubpf_peer_info *) data;
-            pinfo->peer_type = IBGP_SESSION;
+            pinfo->peer_type = nondet_u8();
             pinfo->local_bgp_session = (struct ubpf_peer_info *) (data + sizeof(*pinfo));
             return pinfo;
         }

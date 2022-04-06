@@ -16,15 +16,16 @@
 PROOF_INSTS(
 
         uint16_t nondet_len();
+        uint8_t nondet_u8();
         struct ubpf_peer_info *get_src_peer_info() {
             struct ubpf_peer_info *pf;
 
-            pf = malloc(sizeof(*pf));
+            pf = malloc(2*sizeof(struct ubpf_peer_info));
             if (!pf) return NULL;
 
-            pf->local_bgp_session = malloc(sizeof(struct ubpf_peer_info));
+            pf->local_bgp_session = &(pf[1]);
 
-            pf->peer_type = IBGP_SESSION;
+            pf->peer_type = nondet_u8();
             return pf;
         }
 
@@ -68,10 +69,7 @@ static __always_inline void *get_mem(void) {
 
 #define TIDYING() \
 PROOF_INSTS(do {            \
-    if (dst_peer) {   \
-        free(dst_peer);     \
-        free(dst_peer->local_bgp_session); \
-    }\
+    if (dst_peer) free(dst_peer);     \
     if (src_peer) free(src_peer); \
     if (originator_id) free(originator_id); \
     if (cluster_list) free(cluster_list); \
@@ -80,11 +78,11 @@ PROOF_INSTS(do {            \
 uint64_t encode_originator_clist(void) {
     int nb_peer;
     unsigned int i;
-    struct ubpf_peer_info *src_peer;
-    struct ubpf_peer_info *dst_peer;
+    struct ubpf_peer_info *src_peer = NULL;
+    struct ubpf_peer_info *dst_peer = NULL;
 
-    struct path_attribute *originator_id;
-    struct path_attribute *cluster_list;
+    struct path_attribute *originator_id = NULL;
+    struct path_attribute *cluster_list = NULL;
 
     unsigned char *extra_mem;
     unsigned char *originator;
