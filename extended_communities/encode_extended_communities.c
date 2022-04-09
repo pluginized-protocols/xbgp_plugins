@@ -33,11 +33,11 @@ PROOF_INSTS(
 #define NEXT_RETURN_VALUE 0
 )
 
-#define TIDYING \
-do {            \
+#define TIDYING() \
+PROOF_INSTS(do {            \
     if (attribute) free(attribute); \
     if (attr_buf)  free(attr_buf);\
-} while(0)
+} while(0))
 
 uint64_t encode_extended_communities(args_t *args UNUSED) {
     uint32_t counter = 0;
@@ -51,12 +51,12 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     if (!attribute) return 0;
     if (attribute->length < 8 || attribute->length % 8 != 0) {
-        TIDYING;
+        TIDYING();
         return 0; // min length extended communities is 8 bytes || malformed attribute (extcomm must be a multiple of 8)
     }
 
     if (attribute->code != EXTENDED_COMMUNITIES) {
-        TIDYING;
+        TIDYING();
         next();
         return 0;
     }
@@ -67,7 +67,7 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     attr_buf = ctx_calloc(1, tot_len);
     if (!attr_buf) {
-        TIDYING;
+        TIDYING();
         return 0;
     }
 
@@ -89,7 +89,7 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     if (counter != tot_len) {
         ebpf_print("Size mismatch\n");
-        TIDYING;
+        TIDYING();
         return 0;
     }
 
@@ -99,7 +99,7 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
 
-    TIDYING;
+    TIDYING();
     return counter;
 }
 

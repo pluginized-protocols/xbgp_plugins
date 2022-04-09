@@ -83,8 +83,7 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     uint64_t *in_ext_communitites;
     uint64_t *decoded_ext_communitities = NULL;
 
-    ebpf_print("[WARNING] This code won't work!\n");
-    code = get_arg(ARG_CODE);  // refactor
+    code = get_arg(ARG_CODE);
     flags = get_arg(ARG_FLAGS);
     len = get_arg(ARG_LENGTH);
     data = get_arg(ARG_DATA);
