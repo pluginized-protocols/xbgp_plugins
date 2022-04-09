@@ -10,6 +10,52 @@
 /* entry point */
 uint64_t export_tie_stats_community(void);
 
+static void __always_inline update_stats(uint64_t *stats, enum bgp_selection_reason reason) {
+    int idx;
+
+    switch (reason) {
+        case bgp_selection_first:
+            idx = TIE_INITIAL_RTE;
+            break;
+        case bgp_selection_local_pref:
+            idx = TIE_LOCAL_PREF;
+            break;
+        case bgp_selection_as_path:
+            idx = TIE_AS_PATH;
+            break;
+        case bgp_selection_origin:
+            idx =  TIE_ORIGIN;
+            break;
+        case bgp_selection_med:
+            idx = TIE_MED;
+            break;
+        case bgp_selection_igp_metric:
+            idx = TIE_IGP_COST;
+            break;
+        case bgp_selection_tie_breaker:
+            idx = TIE_BREAKER;
+            break;
+        default:
+            idx = TIE_OTHER;
+            break;
+    }
+
+    stats[TIE_TOTAL_ROUTES] += 1;
+    stats[idx] += 1;
+}
+
+static __always_inline void *get_mem(void) {
+    void *stats;
+    stats = ctx_shmget(SHM_KEY_TIE_BREAKER_STATS);
+    if (!stats) {
+        stats = ctx_shmnew(SHM_KEY_TIE_BREAKER_STATS, sizeof(uint64_t) * TIE_MAX);
+        if (!stats) {
+            return NULL;
+        }
+    }
+    return stats;
+}
+
 PROOF_INSTS(
 #define NEXT_RETURN_VALUE FAIL
         unsigned int nondet_uint(void);
@@ -45,18 +91,27 @@ uint64_t export_tie_stats_community(void) {
     uint16_t proportion;
     unsigned int old_community_len;
     unsigned int new_community_len;
+    struct bgp_rte_info *rte_info;
 
     attr = get_attr_from_code(COMMUNITY_ATTR_ID);
+    rte_info = get_route_info();
+
+    if (!rte_info) {
+        ebpf_print("Unable to get route info ! SHOULD NOT HAPPEN !\n");
+    }
 
     old_community_len = attr ? attr->length : 0;
-    new_community_len = old_community_len + (sizeof(uint32_t) * (TIE_MAX));
+    new_community_len = old_community_len + (sizeof(uint32_t) * (TIE_MAX)) + 4; // 4 for rte info reason
 
-    stats = ctx_shmget(SHM_KEY_TIE_BREAKER_STATS);
+    stats = get_mem();
     if (!stats) {
+        ebpf_print("wow no stats !\n");
         next();
         TIDYING1();
         return PLUGIN_FILTER_UNKNOWN;
     }
+
+    update_stats(stats, rte_info->reason);
 
     new_attr = ctx_malloc(new_community_len + sizeof(*attr));
     if (!new_attr) {
@@ -83,7 +138,9 @@ uint64_t export_tie_stats_community(void) {
     communities = (uint32_t *) (new_attr->data + old_community_len);
     total_routes = stats[TIE_TOTAL_ROUTES];
 
-    for (tb = TIE_INITIAL_RTE, idx = 0; tb < TIE_MAX; tb++) {
+    idx = 0;
+    communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY) << 16) | (rte_info->reason & 0xFF));
+    for (tb = TIE_INITIAL_RTE; tb < TIE_MAX; tb++) {
         uint64_t tmp1 = stats[tb] > UINT64_MAX/1000 ? UINT64_MAX : stats[tb] * 1000;
         proportion = total_routes == 0 ? 0 : (tmp1/total_routes > UINT16_MAX ? UINT16_MAX : tmp1/total_routes);
         communities[idx++] = ebpf_htonl(((TIE_BREAKER_COMMUNITY + (uint32_t) tb) << 16) | (proportion & 0xFF));

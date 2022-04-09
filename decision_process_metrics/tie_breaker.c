@@ -17,6 +17,7 @@ uint64_t tie_breaker(exec_info_t *info) {
     uint64_t *stats;
     unsigned int tie_reason, old_comm_len, new_comm_len;
     struct path_attribute *communities, *new_communities;
+    int rte;
 
     stats = ctx_shmget(SHM_KEY_TIE_BREAKER_STATS);
     if (!stats) {
@@ -80,13 +81,11 @@ uint64_t tie_breaker(exec_info_t *info) {
     stats[TIE_TOTAL_ROUTES] += 1;
     stats[tie_reason] += 1;
 
-    ebpf_print("Total routes %lu\n", LOG_U64(stats[TIE_TOTAL_ROUTES]));
-
-    int rte = info->replace_return_value == BGP_ROUTE_TYPE_NEW ? ARG_BGP_ROUTE_NEW :
-              info->replace_return_value == BGP_ROUTE_TYPE_OLD ? ARG_BGP_ROUTE_OLD : -1;
+    rte = info->replace_return_value == BGP_ROUTE_TYPE_NEW ? BGP_ROUTE_TYPE_NEW :
+          info->replace_return_value == BGP_ROUTE_TYPE_OLD ? BGP_ROUTE_TYPE_OLD : -1;
 
     if (rte == -1) {
-        ebpf_print("La mer noire, HOST IMPLEM BUG !\n");
+        ebpf_print("HOST IMPLEM BUG !\n");
         return BPF_FAILURE;
     }
 
@@ -118,9 +117,11 @@ uint64_t tie_breaker(exec_info_t *info) {
 
     /* add the tie breaker ! */
     *((uint32_t *) (&new_communities->data[old_comm_len])) =
-            ebpf_htonl((TIE_BREAKER_COMMUNITY < 16) | tie_reason);
+            ebpf_htonl((TIE_BREAKER_COMMUNITY << 16) | (tie_reason & 0xffu));
 
-    if (!set_attr(new_communities)) {
+    /* must add the attribute to the route that has
+     * been selected by the host implementation */
+    if (set_attr_to_route(new_communities, rte) != 0) {
         ebpf_print("Unable to set attr!\n");
         return BPF_FAILURE;
     }

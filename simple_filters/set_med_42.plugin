@@ -1,19 +1,19 @@
 {
   "jit_all": true,
-  "name": "decision_process_metrics",
-  "extra_mem": 4096,
-  "shared_mem": 6144,
+  "name": "set_med_42",
+  "extra_mem": 512,
+  "shared_mem": 0,
   "obj_code_list": {
-    "export_tie_stats_community": {
-      "obj": "export_tie_stats_community.o",
+    "set_med_import_filter": {
+      "obj": "set_med_42.o",
       "permissions": [
         "read",
         "write",
         "usr_ptr"
       ]
     },
-    "encode_communities": {
-      "obj": "encode_bgp_communities.o",
+    "encode_med": {
+      "obj": "encode_med.o",
       "permissions": [
         "read",
         "write",
@@ -22,14 +22,14 @@
     }
   },
   "insertion_points": {
-    "bgp_pre_outbound_filter": {
+    "bgp_pre_inbound_filter": {
       "replace": {
-        "0": "export_tie_stats_community"
+        "0": "set_med_import_filter"
       }
     },
     "bgp_encode_attr": {
       "replace": {
-        "0": "encode_communities"
+        "0": "encode_med"
       }
     }
   }
