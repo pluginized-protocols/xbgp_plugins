@@ -32,6 +32,7 @@ uint64_t encode_med(args_t *args UNUSED) {
     attr_buf[counter++] = LENGTH_MED_VALUE;
 
     memcpy(attr_buf + counter, attribute->data, LENGTH_MED_VALUE);
+    counter += 4;
 
     if (write_to_buffer(attr_buf, counter) == -1) return 0;
 
