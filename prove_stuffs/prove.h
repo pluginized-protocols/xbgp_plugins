@@ -12,7 +12,13 @@
 #endif
 
 #ifdef PROVERS
+#ifdef PROVERS_ARG
+#define next() \
+checked = 0;   \
+return NEXT_RETURN_VALUE
+#else
 #define next() return NEXT_RETURN_VALUE
+#endif
 #endif
 
 #ifdef PROVERS_CBMC
