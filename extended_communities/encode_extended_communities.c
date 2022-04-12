@@ -49,16 +49,20 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
     struct path_attribute *attribute;
     attribute = get_attr();
 
-    if (!attribute) return 0;
-    if (attribute->length < 8 || attribute->length % 8 != 0) {
-        TIDYING();
-        return 0; // min length extended communities is 8 bytes || malformed attribute (extcomm must be a multiple of 8)
+    if (!attribute) {
+        next();
+        return 0;
     }
 
     if (attribute->code != EXTENDED_COMMUNITIES) {
         TIDYING();
         next();
         return 0;
+    }
+
+    if (attribute->length < 8 || attribute->length % 8 != 0) {
+        TIDYING();
+        return 0; // min length extended communities is 8 bytes || malformed attribute (extcomm must be a multiple of 8)
     }
 
     tot_len += 2; // Type hdr
