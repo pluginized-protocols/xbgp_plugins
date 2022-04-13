@@ -10,6 +10,7 @@
 uint64_t decode_arrival_attr(args_t *args UNUSED);
 
 PROOF_INSTS(
+#define PROVERS_ARG
 #define NEXT_RETURN_VALUE FAIL
         uint8_t nondet_u8(void);
         uint16_t nondet_u16(void);
@@ -31,16 +32,20 @@ PROOF_INSTS(
                     return flags;
                 }
                 case ARG_DATA: {
-                    if (data_length == 0) return NULL;
+                    if (data_length == 0) {
+                        data_length = nondet_u16();
+                        p_assume(data_length > 0);
+                    }
                     uint8_t *data = malloc(data_length);
-
+                    for (int i = 0 ; i < data_length ; i++)
+                        data[i] = nondet_u8();
                     return data;
                 }
                 case ARG_LENGTH: {
                     uint16_t *length;
                     if (data_length == 0) {
                         data_length = nondet_u16();
-                        p_assume(data_length % 4 == 0);
+                        p_assume(data_length > 0);
                     }
 
                     length = malloc(sizeof(*length));
@@ -49,6 +54,8 @@ PROOF_INSTS(
                     *length = data_length;
                     return length;
                 }
+                default:
+                    return NULL;
             }
         }
 
@@ -73,6 +80,8 @@ PROOF_INSTS(do {            \
 } while(0);)
 
 uint64_t decode_arrival_attr(args_t *args UNUSED) {
+    INIT_ARG_TYPE();
+    SET_ARG_TYPE(ARRIVAL_TIME_ATTR);
     struct ubpf_peer_info *src_info = NULL;
     char attr_space[sizeof(struct path_attribute) + sizeof(struct attr_arrival)];
     struct path_attribute *attr;
@@ -91,19 +100,26 @@ uint64_t decode_arrival_attr(args_t *args UNUSED) {
     src_info = get_src_peer_info();
 
     if (!src_info || !code || !len || !flags || !data) {
+        CHECK_OUT();
         TIDYING();
         return EXIT_FAILURE;
     }
+    CHECK_ARG_CODE(*code);
 
     if (src_info->peer_type != IBGP_SESSION) {
         next();
+        CHECK_OUT();
     }
 
     if (*code != ARRIVAL_TIME_ATTR) {
         next();
+        CHECK_OUT();
     }
 
     attr = (struct path_attribute *) attr_space;
+    attr->code = ARRIVAL_TIME_ATTR;
+    attr->flags = 0;
+    attr->length = sizeof(struct attr_arrival);
     arrival = (struct attr_arrival *) attr->data;
 
     /* read seconds */
@@ -117,7 +133,12 @@ uint64_t decode_arrival_attr(args_t *args UNUSED) {
             CHECK_ATTR_FORMAT(attr, ARRIVAL_TIME_ATTR_LEN);
     )
 
-    if (set_attr(attr) != 0) return EXIT_FAILURE;
+    if (set_attr(attr) != 0){
+        CHECK_OUT();
+        TIDYING();
+        return EXIT_FAILURE;
+    }
+    CHECK_OUT();
     TIDYING();
     return EXIT_SUCCESS;
 }
