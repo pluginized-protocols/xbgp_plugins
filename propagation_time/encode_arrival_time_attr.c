@@ -10,9 +10,11 @@
 uint64_t encode_arrival_time_attr(args_t *args);
 
 PROOF_INSTS(
+#define PROVERS_ARG
 #define NEXT_RETURN_VALUE EXIT_SUCCESS
         uint16_t nondet_u16(void);
         uint64_t nondet_u64(void);
+        uint8_t nondet_u8(void);
 
         struct path_attribute *get_attr() {
             uint16_t len;
@@ -21,7 +23,7 @@ PROOF_INSTS(
             if (!p_attr) return NULL;
 
             p_attr->flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
-            p_attr->code = ARRIVAL_TIME_ATTR;
+            p_attr->code = nondet_u8();
             p_attr->length = sizeof(struct attr_arrival);
 
             struct attr_arrival *aa = (struct attr_arrival*)p_attr->data;
@@ -53,6 +55,8 @@ PROOF_INSTS(do {            \
 } while(0))
 
 uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
+    INIT_ARG_TYPE();
+    SET_ARG_TYPE(ARRIVAL_TIME_ATTR);
     struct ubpf_peer_info *dst_info;
     struct timespec *in_time;
     struct path_attribute *attribute;
@@ -64,23 +68,27 @@ uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
     CREATE_BUFFER(attr_buf, ARRIVAL_TIME_ATTR_LEN + ATTR_HDR_LEN);
 
     attribute = get_attr();
+    CHECK_ARG(attribute);
 
     dst_info = get_peer_info(&nb_peer);
     if (!dst_info) {
-        next();
         TIDYING();
+        next();
+        CHECK_OUT();
         return 0;
     }
 
     if (!attribute) {
-        next();
         TIDYING();
+        next();
+        CHECK_OUT();
         return 0;
     }
 
     if (attribute->code != ARRIVAL_TIME_ATTR) {
-        next();
         TIDYING();
+        next();
+        CHECK_OUT();
         return 0;
     }
 
@@ -92,8 +100,9 @@ uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
          * this attribute is only written
          * to an iBGP peer
          */
-        next();
         TIDYING();
+        next();
+        CHECK_OUT();
         return 0;
     }
 
@@ -115,11 +124,13 @@ uint64_t encode_arrival_time_attr(args_t *args UNUSED) {
 
 
     if (write_to_buffer((uint8_t *)attr_buf, sizeof(attr_buf)) != 0) {
+        CHECK_OUT();
         TIDYING();
         return 0;
     }
 
-        TIDYING();
+    CHECK_OUT();
+    TIDYING();
     return sizeof(attr_buf);
 }
 
