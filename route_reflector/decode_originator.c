@@ -30,7 +30,10 @@ PROOF_INSTS(
                     return flags;
                 }
                 case ARG_DATA: {
-                    if (data_length == 0) return NULL;
+                    if (data_length == 0) {
+                        data_length = nondet_u16__verif();
+                        p_assume(data_length > 0);
+                    }
                     uint8_t *data = malloc(data_length);
 
                     return data;
@@ -39,7 +42,7 @@ PROOF_INSTS(
                     uint16_t *length;
                     if (data_length == 0) {
                         data_length = nondet_u16__verif();
-                        p_assume(data_length % 4 == 0);
+                        p_assume(data_length > 0);
                     }
 
                     length = malloc(sizeof(*length));
@@ -65,6 +68,7 @@ PROOF_INSTS(
         }
 
 #define NEXT_RETURN_VALUE EXIT_SUCCESS
+#define PROVERS_ARG
 )
 
 
@@ -79,6 +83,8 @@ PROOF_INSTS(do {\
 
 
 uint64_t decode_originator(args_t *args UNUSED) {
+    INIT_ARG_TYPE();
+    SET_ARG_TYPE(ORIGINATOR_ID);
     uint8_t *code;
     uint16_t *len;
     uint8_t *flags;
@@ -90,35 +96,43 @@ uint64_t decode_originator(args_t *args UNUSED) {
     CREATE_BUFFER(originator_id, sizeof(uint32_t));
 
     code = get_arg(ARG_CODE);
+    if (!code) {
+        CHECK_OUT();
+        TIDYING();
+        return EXIT_FAILURE;
+    }
+    CHECK_ARG_CODE(*code);
+    if (*code != ORIGINATOR_ID) {
+        TIDYING();
+        next();
+        CHECK_OUT();
+    }
     flags = get_arg(ARG_FLAGS);
     data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
 
-    COPY_BUFFER(data, *len);
 
     src_info = get_src_peer_info();
 
-    if (!src_info || !code || !len || !flags || !data) {
+    if (!src_info || !len || !flags || !data) {
+        CHECK_OUT();
         TIDYING();
         return EXIT_FAILURE;
     }
+    COPY_BUFFER(data, *len);
 
     if (src_info->peer_type != IBGP_SESSION) {
         CHECK_COPY(data);
         TIDYING();
         next(); // don't parse ORIGINATOR_LIST if originated from eBGP session
-    }
-
-    if (*code != ORIGINATOR_ID) {
-        CHECK_COPY(data);
-        TIDYING();
-        next();
+        CHECK_OUT();
     }
 
     src_info = get_src_peer_info();
     if (!src_info || src_info->peer_type != IBGP_SESSION) {
         TIDYING();
         next(); // don't parse ORIGINATOR_LIST if originated from eBGP session
+        CHECK_OUT();
     }
 
     if (*len != 4) return 0;
@@ -132,6 +146,7 @@ uint64_t decode_originator(args_t *args UNUSED) {
 
     add_attr(ORIGINATOR_ID, *flags, 4, (uint8_t *) &originator_id);
     CHECK_COPY(data);
+    CHECK_OUT();
     TIDYING();
     return EXIT_SUCCESS;
 }
