@@ -9,6 +9,7 @@
 uint64_t encode_communities(args_t *args __attribute__((unused)));
 
 PROOF_INSTS(
+#define PROVERS_ARG
 #define NEXT_RETURN_VALUE FAIL
 
         uint8_t nondet_u8(void);
@@ -35,6 +36,8 @@ if (attr_buf) free(attr_buf); \
 } while(0))
 
 uint64_t encode_communities(args_t *args UNUSED) {
+    INIT_ARG_TYPE();
+    SET_ARG_TYPE(COMMUNITY_ATTR_ID);
     uint32_t counter = 0;
     uint8_t *attr_buf = NULL;
     uint16_t tot_len = 0;
@@ -43,16 +46,19 @@ uint64_t encode_communities(args_t *args UNUSED) {
 
     struct path_attribute *attribute;
     attribute = get_attr();
+    CHECK_ARG(attribute);
 
     if (!attribute) {
         TIDYING();
         next();
+        CHECK_OUT();
         return 0;
     }
 
     if (attribute->code != COMMUNITY_ATTR_ID) {
         TIDYING();
         next();
+        CHECK_OUT();
         return 0;
     }
 
@@ -63,6 +69,7 @@ uint64_t encode_communities(args_t *args UNUSED) {
     attr_buf = ctx_malloc(tot_len);
     CREATE_BUFFER(attr_buf, tot_len);
     if (!attr_buf) {
+        CHECK_OUT();
         TIDYING();
         return 0;
     }
@@ -84,6 +91,7 @@ uint64_t encode_communities(args_t *args UNUSED) {
 
     if (counter != tot_len) {
         ebpf_print("Size mismatch\n");
+        CHECK_OUT();
         TIDYING();
         return 0;
     }
@@ -92,13 +100,15 @@ uint64_t encode_communities(args_t *args UNUSED) {
     PROOF_SEAHORN_INSTS(
             CHECK_ATTR(attr_buf);
             )
-            if (write_to_buffer(attr_buf, counter) == -1)
-            {
-                TIDYING();
-                return 0;
-            }
-    TIDYING();
-            return counter;
+        if (write_to_buffer(attr_buf, counter) == -1)
+        {
+            CHECK_OUT();
+            TIDYING();
+            return 0;
+        }
+        CHECK_OUT();
+        TIDYING();
+        return counter;
 }
 
 PROOF_INSTS(
