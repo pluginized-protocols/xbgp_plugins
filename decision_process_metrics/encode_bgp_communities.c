@@ -35,7 +35,7 @@ if (attribute) free(attribute); \
 if (attr_buf) free(attr_buf); \
 } while(0))
 
-uint64_t encode_communities(args_t *args UNUSED) {
+uint64_t encode_bgp_communities(args_t *args UNUSED) {
     INIT_ARG_TYPE();
     SET_ARG_TYPE(COMMUNITY_ATTR_ID);
     uint32_t counter = 0;
