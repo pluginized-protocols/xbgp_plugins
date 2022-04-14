@@ -66,13 +66,13 @@ do {                        \
 } while(0)
 
 
-#define write_u8(buf, val) write_uxx(buf, val, 1, uint8_t, )
+#define read_u8(buf) read_uxx(buf, 1, uint8_t, )
 
-#define write_u16(buf, val) write_uxx(buf, val, 2, uint16_t, ebpf_htons)
+#define read_u16(buf) read_uxx(buf, 2, uint16_t, ebpf_ntohs)
 
-#define write_u32(buf, val) write_uxx(buf, val, 4, uint32_t, ebpf_htonl)
+#define read_u32(buf) read_uxx(buf, 4, uint32_t, ebpf_ntohl)
 
-#define write_u64(buf, val) write_uxx(buf, val, 8, uint64_t, ebpf_htonll)
+#define read_u64(buf) read_uxx(buf, 8, uint64_t, ebpf_ntohll)
 
 
 #define read_uxx(buf, size, type, fun) \

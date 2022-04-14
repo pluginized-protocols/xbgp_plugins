@@ -94,8 +94,8 @@ uint64_t decode_arrival_attr(args_t *args UNUSED) {
 
     code = get_arg(ARG_CODE);
     flags = get_arg(ARG_FLAGS);
-    data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
+    data = get_arg(ARG_DATA);
 
     src_info = get_src_peer_info();
 
@@ -107,13 +107,21 @@ uint64_t decode_arrival_attr(args_t *args UNUSED) {
     CHECK_ARG_CODE(*code);
 
     if (src_info->peer_type != IBGP_SESSION) {
+        TIDYING();
         next();
         CHECK_OUT();
     }
 
     if (*code != ARRIVAL_TIME_ATTR) {
+        TIDYING();
         next();
         CHECK_OUT();
+    }
+
+    if (*len < ARRIVAL_TIME_ATTR_LEN) {
+        CHECK_OUT();
+        TIDYING();
+        return EXIT_FAILURE;
     }
 
     attr = (struct path_attribute *) attr_space;
@@ -123,9 +131,11 @@ uint64_t decode_arrival_attr(args_t *args UNUSED) {
     arrival = (struct attr_arrival *) attr->data;
 
     /* read seconds */
-    arrival->arrival_time.tv_sec = read_u64(data);
+    uint64_t t = read_u64(data);
+    arrival->arrival_time.tv_sec = t > INT64_MAX ? INT64_MAX : t;
     /* read nanosecs */
-    arrival->arrival_time.tv_nsec = read_u64(data);
+    t = read_u64(data);
+    arrival->arrival_time.tv_nsec = t > INT64_MAX ? INT64_MAX : t;
     /* read origin AS */
     arrival->from_as = read_u32(data);
 
@@ -151,7 +161,6 @@ PROOF_INSTS(
             p_assert(ret_val == EXIT_SUCCESS ||
             ret_val == EXIT_FAILURE);
 
-            ctx_shmrm(42);
 
             return 0;
         }
