@@ -31,10 +31,10 @@ PROOF_INSTS(
                     return flags;
                 }
                 case ARG_DATA: {
-                    if (data_length == 0) {
+                    /*if (data_length == 0) {
                         data_length = nondet_u16__verif();
                         p_assume(data_length > 0);
-                    }
+                    }*/
                     uint8_t *data = malloc(data_length);
                     for (int i = 0 ; i < data_length ; i++)
                         data[i] = nondet_u8();
@@ -58,13 +58,28 @@ PROOF_INSTS(
         }
 
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pf;
+            static struct ubpf_peer_info pf;
 
-            pf = malloc(sizeof(*pf));
-            if (!pf) return NULL;
+            //pf = malloc(sizeof(*pf));
+            //if (!pf) return NULL;
 
-            pf->peer_type = IBGP_SESSION;
-            return pf;
+            pf.peer_type = IBGP_SESSION;
+            return &pf;
+        }
+
+        int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr) {
+
+            if (length == 0)
+                return 0;
+            uint8_t minibuf[5];
+
+            // i < 4096 limits the unrolling of loops
+            // 4096 is the upper bound for BGP messages
+            minibuf[0] = decoded_attr[0];
+            for (int i = 1; i < length && i < 4096; i++) {
+                minibuf[i % 5] = minibuf[(i - 1) % 5] + decoded_attr[i] > UINT8_MAX ? UINT8_MAX : minibuf[(i - 1) % 5] + decoded_attr[i];
+            }
+            return 0;
         }
 
 
@@ -78,7 +93,6 @@ if (code) free(code); \
 if (len) free(len);   \
 if (flags) free(flags); \
 if (data) free(data); \
-if (src_info) free(src_info); \
 if (cluster_list) free(cluster_list); \
 } while(0))
 
@@ -99,8 +113,8 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
 
     code = get_arg(ARG_CODE);
     flags = get_arg(ARG_FLAGS);
-    data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
+    data = get_arg(ARG_DATA);
 
     src_info = get_src_peer_info();
 

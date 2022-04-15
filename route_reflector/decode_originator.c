@@ -30,10 +30,6 @@ PROOF_INSTS(
                     return flags;
                 }
                 case ARG_DATA: {
-                    if (data_length == 0) {
-                        data_length = nondet_u16__verif();
-                        p_assume(data_length > 0);
-                    }
                     uint8_t *data = malloc(data_length);
 
                     return data;
@@ -58,13 +54,36 @@ PROOF_INSTS(
         }
 
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pf;
+#ifndef PROVERS_SEAHORN
+            static struct ubpf_peer_info pf;
 
-            pf = malloc(sizeof(*pf));
-            if (!pf) return NULL;
+            pf.peer_type = IBGP_SESSION;
+            return &pf;
+#else
+            struct ubpf_peer_info* pf;
+
+            pf = malloc(sizeof(struct ubpf_peer_info));
+            if(!pf) return NULL;
 
             pf->peer_type = IBGP_SESSION;
+
             return pf;
+#endif
+        }
+
+        int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr) {
+
+            if (length == 0)
+                return 0;
+            uint8_t minibuf[5];
+
+            // i < 4096 limits the unrolling of loops
+            // 4096 is the upper bound for BGP messages
+            minibuf[0] = decoded_attr[0];
+            for (int i = 1; i < length && i < 4096; i++) {
+                minibuf[i % 5] = minibuf[(i - 1) % 5] + decoded_attr[i] > UINT8_MAX ? UINT8_MAX : minibuf[(i - 1) % 5] + decoded_attr[i];
+            }
+            return 0;
         }
 
 #define NEXT_RETURN_VALUE EXIT_SUCCESS
@@ -78,18 +97,17 @@ PROOF_INSTS(do {\
      if (len) free(len);   \
      if (flags) free(flags); \
      if (data) free(data); \
-     if (src_info) free(src_info); \
 } while(0))
 
 
 uint64_t decode_originator(args_t *args UNUSED) {
     INIT_ARG_TYPE();
     SET_ARG_TYPE(ORIGINATOR_ID);
-    uint8_t *code;
-    uint16_t *len;
-    uint8_t *flags;
-    uint8_t *data;
-    struct ubpf_peer_info *src_info;
+    uint8_t *code = NULL;
+    uint16_t *len = NULL;
+    uint8_t *flags = NULL;
+    uint8_t *data = NULL;
+    struct ubpf_peer_info *src_info = NULL;
 
     uint32_t originator_id;
 
@@ -108,13 +126,23 @@ uint64_t decode_originator(args_t *args UNUSED) {
         CHECK_OUT();
     }
     flags = get_arg(ARG_FLAGS);
-    data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
+    if (!len) {
+        CHECK_OUT();
+        TIDYING();
+        return EXIT_FAILURE;
+    }
+    if (*len <= 4) {
+        CHECK_OUT();
+        TIDYING();
+        return 0;
+    }
+    data = get_arg(ARG_DATA);
 
 
     src_info = get_src_peer_info();
 
-    if (!src_info || !len || !flags || !data) {
+    if (!src_info || !flags || !data) {
         CHECK_OUT();
         TIDYING();
         return EXIT_FAILURE;
@@ -130,12 +158,11 @@ uint64_t decode_originator(args_t *args UNUSED) {
 
     src_info = get_src_peer_info();
     if (!src_info || src_info->peer_type != IBGP_SESSION) {
+        CHECK_COPY(data);
         TIDYING();
         next(); // don't parse ORIGINATOR_LIST if originated from eBGP session
         CHECK_OUT();
     }
-
-    if (*len != 4) return 0;
 
     originator_id = ebpf_ntohl(*((uint32_t *) data));
 
