@@ -53,7 +53,11 @@ PROOF_INSTS(
 
 /* plugin entry point */
 uint64_t encode_originator_clist(void);
-
+#ifdef PROVERS_T2
+static __always_inline void *get_mem(void) {
+    return malloc(100000);
+}
+#else
 static __always_inline void *get_mem(void) {
     void *mem;
     mem = ctx_shmget(KEY_MEM_EXPORT);
@@ -66,6 +70,7 @@ static __always_inline void *get_mem(void) {
     }
     return mem;
 }
+#endif
 
 #define TIDYING() \
 PROOF_INSTS(do {            \
