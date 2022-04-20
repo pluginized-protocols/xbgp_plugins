@@ -106,8 +106,6 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     }
     COPY_BUFFER(data, *len);
 
-    //assume(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
-
     in_ext_communitites = (uint64_t *) data;
 
     decoded_ext_communitities = ctx_malloc(*len);
@@ -119,7 +117,7 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
         next();
     }
 
-    for (i = 0; i < *len / 8; i++) {
+    for (i = 0; i < *len / 8 PROOF_T2_INSTS(&& i < 512); i++) {
         PROOF_SEAHORN_INSTS(in_ext_communitites[i] = nondet_uint64();)
         decoded_ext_communitities[i] = ebpf_ntohll(in_ext_communitites[i]);
     }
