@@ -152,6 +152,35 @@ checked = !__type__[arg_code]
 #define CHECK_OUT() \
 p_assert(!checked)
 
+#define CHECK_UPDATE_MESSAGE(msg) do {                       \
+    int total_size = 0;                                      \
+    uint16_t l = *(uint16_t *)msg->buf;                      \
+    uint8_t* data = msg->buf;                                \
+    for (int i = 0 ; i < l ; i++) {                          \
+        uint8_t inside_length = *data;                       \
+        data += inside_length/8 + (inside_length%8 != 0);    \
+        i += inside_length/8 + (inside_length%8 != 0);       \
+    }                                                        \
+    p_assert(i == l);                                        \
+    l = *(uint16_t *)data;                                   \
+    data += 2;                                               \
+    for (int i = 0 ; i < l ; i++) {                          \
+        uint8_t *tmp = data;                                 \
+        data+=2;                                             \
+        i=2;                                                 \
+        BUF_CHECK_ATTR_FORMAT(tmp, *(uint16_t *) data);      \
+        i += *(uint16_t *) data;                             \
+        data += *(uint16_t *) data;                          \
+    }                                                        \
+    p_assert(i == l);                                        \
+    for (int i = 0 ; i < msg->buf+msg->buf_len-data ; i++) { \
+        uint8_t inside_length = *data;                       \
+        data += inside_length/8 + (inside_length%8 != 0);    \
+        i += inside_length/8 + (inside_length%8 != 0);       \
+    }                                                        \
+    p_assert(msg->buf+msg->buf_len == data);                 \
+} while(0)
+
 #else
 #define BUF_GEN_ASSERT(...)
 #define GEN_ASSERT(...)
@@ -165,6 +194,7 @@ p_assert(!checked)
 #define CHECK_ARG(...)
 #define CHECK_ARG_CODE(...)
 #define CHECK_OUT(...)
+#define CHECK_UPDATE_MESSAGE(...)
 #endif
 
 #define CHECK_ORIGIN(p_attr) \
@@ -289,7 +319,7 @@ BUF_GEN_ASSERT(buf, AS4_PATH_ATTR_ID, len, ATTR_OPTIONAL | ATTR_TRANSITIVE)
 BUF_GEN_ASSERT(buf, AS4_AGGREGATOR_ATTR_ID, 4, ATTR_OPTIONAL | ATTR_TRANSITIVE)
 
 #define BUF_CHECK_LARGE_COMMUNITY(buf, len) \
-BUF_GEN_ASSERT(buf, LARGE_COMMUNITY_ATTR_ID, len, ATTR_OPTIONAL | ATTR_TRANSITIVE, (len) % 12 = 0)
+BUF_GEN_ASSERT(buf, LARGE_COMMUNITY_ATTR_ID, len, ATTR_OPTIONAL | ATTR_TRANSITIVE, (len) % 12 == 0)
 
 #define BUF_CHECK_AIGP(p_attr, len) \
 BUF_GEN_ASSERT(p_attr, AIGP_ATTR_ID, len, ATTR_OPTIONAL)
