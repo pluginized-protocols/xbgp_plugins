@@ -76,7 +76,7 @@ uint64_t encode_extended_communities(args_t *args UNUSED) {
 
     if (attribute->length < 256) attr_buf[counter++] = (uint8_t) attribute->length;
     else {
-        *(uint16_t *)(attr_buf + counter) = attribute->length;
+        memcpy(attr_buf+counter, &(attribute->length), 2);
         counter += 2;
     }
 

@@ -57,6 +57,9 @@ PROOF_INSTS(
         struct ubpf_peer_info *get_src_peer_info(void) {
             return nondet_src_peer_info();
         }
+#define PROVERS_ARG
+#define NEXT_RETURN_VALUE FAIL
+
 )
 
 #define TIDYING \
@@ -116,7 +119,7 @@ static __always_inline int decode_attr(uint8_t code, uint16_t len, uint32_t flag
     return 0;
 }
 
-#define TIDYING2 \
+#define TIDYING2() \
 PROOF_INSTS(do {             \
     if (code) free(code); \
     if (flags) free(flags); \
@@ -132,6 +135,9 @@ PROOF_INSTS(do {             \
  *         EXIT_FAILURE otherwise. The protocol itself must decode this attribute.
  */
 uint64_t receive_attr(args_t *args UNUSED) {
+    INIT_ARG_TYPE();
+    SET_ARG_TYPE(BA_GEO_TAG);
+    SET_ARG_TYPE(PREFIX_ORIGINATOR);
     uint64_t retval;
     uint8_t *code;
     uint16_t *len;
@@ -144,17 +150,21 @@ uint64_t receive_attr(args_t *args UNUSED) {
     len = get_arg(ARG_LENGTH);
 
     if (!code || !len || !flags || !data) {
-        TIDYING2;
+        CHECK_OUT();
+        TIDYING2();
         return EXIT_FAILURE;
     }
+    CHECK_ARG_CODE(*code);
 
     if (*code != BA_GEO_TAG || *code != PREFIX_ORIGINATOR) {
-        TIDYING2;
-        return EXIT_FAILURE;
+        TIDYING2();
+        next();
+        CHECK_OUT();
     }
 
     retval = decode_attr(*code, *len, *flags, data) == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
-    TIDYING2;
+    CHECK_OUT();
+    TIDYING2();
     return retval;
 }
 

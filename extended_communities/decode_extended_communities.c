@@ -16,6 +16,7 @@ uint64_t decode_extended_communities(args_t *args UNUSED);
 PROOF_INSTS(
         uint16_t get_length(void);
         uint64_t nondet_uint64(void);
+        uint8_t nondet_uint8(void);
 
         static uint16_t def_len = 0;
 
@@ -30,7 +31,7 @@ PROOF_INSTS(
                     uint8_t *code = malloc(sizeof(uint8_t));
                     if (!code) return NULL;
 
-                    *code = EXTENDED_COMMUNITIES;
+                    *code = nondet_uint8();
                     return code;
                 }
                 case ARG_DATA: {
@@ -61,7 +62,8 @@ PROOF_INSTS(
 #define NEXT_RETURN_VALUE EXIT_FAILURE
 )
 
-
+#define PROVERS_SEAHORN
+#define PROVERS
 #define TIDYING() \
 PROOF_INSTS(do {     \
     if (code) free(code); \
@@ -84,30 +86,25 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
     uint64_t *decoded_ext_communitities = NULL;
 
     code = get_arg(ARG_CODE);
+    if (code != NULL && *code != EXTENDED_COMMUNITIES) {
+        TIDYING();
+        next();
+    }
     flags = get_arg(ARG_FLAGS);
     len = get_arg(ARG_LENGTH);
+    if (!len || *len % 8 != 0) {
+        // malformed extended attribute
+        TIDYING();
+        return EXIT_FAILURE;
+    }
+
     data = get_arg(ARG_DATA);
 
-    if (!code || !len || !flags || !data) {
+    if (!code || !flags || !data) {
         TIDYING();
         return EXIT_FAILURE;
     }
     COPY_BUFFER(data, *len);
-
-    if (*code != EXTENDED_COMMUNITIES) {
-        CHECK_COPY(data);
-        TIDYING();
-        next();
-    }
-
-    if (*len % 8 != 0) {
-        // malformed extended attribute
-        CHECK_COPY(data);
-        TIDYING();
-        return EXIT_FAILURE;
-    }
-
-    //assume(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
 
     in_ext_communitites = (uint64_t *) data;
 
@@ -120,7 +117,7 @@ uint64_t decode_extended_communities(args_t *args UNUSED) {
         next();
     }
 
-    for (i = 0; i < *len / 8; i++) {
+    for (i = 0; i < *len / 8 PROOF_T2_INSTS(&& i < 512); i++) {
         PROOF_SEAHORN_INSTS(in_ext_communitites[i] = nondet_uint64();)
         decoded_ext_communitities[i] = ebpf_ntohll(in_ext_communitites[i]);
     }
@@ -140,4 +137,4 @@ PROOF_INSTS(
             uint64_t ret_val = decode_extended_communities(&args);
             return ret_val;
         }
-)
+        )

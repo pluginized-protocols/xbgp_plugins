@@ -13,6 +13,7 @@ uint64_t compute_arrival_time(args_t *);
 PROOF_INSTS(
 #define NEXT_RETURN_VALUE FAIL
         uint16_t nondet_u16(void);
+        uint8_t nondet_u8(void);
         unsigned int nondet_uint(void);
         long nondet_long(void);
 
@@ -49,37 +50,47 @@ PROOF_INSTS(
             pf = malloc(sizeof(*pf));
             if (!pf) return NULL;
 
-            pf->peer_type = EBGP_SESSION;
+            pf->peer_type = nondet_u8();
             return pf;
         }
         )
 
+#define TIDYING() \
+PROOF_INSTS(do {            \
+if (src_info) free(src_info); \
+if (attr) free(attr); \
+} while(0))
+
 uint64_t compute_arrival_time(args_t *args UNUSED) {
     char attr_space[sizeof(struct path_attribute) + sizeof(struct attr_arrival)];
-    struct path_attribute *arrival_attr;
+    struct path_attribute *arrival_attr, *attr;
     struct attr_arrival *arrival_data;
-    struct ubpf_peer_info *src_info;
+    struct ubpf_peer_info *src_info = NULL;
 
     arrival_attr = (struct path_attribute *) attr_space;
     arrival_data = (struct attr_arrival *) arrival_attr->data;
 
-    if (get_attr_from_code(ARRIVAL_TIME_ATTR) != NULL) {
+    attr = get_attr_from_code(ARRIVAL_TIME_ATTR);
+    if (attr != NULL) {
         /*
          * If the attribute is already set, don't
          * overwrite the attribute already set.
          */
+        TIDYING();
         next();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
 
     if (get_realtime(&arrival_data->arrival_time) != 0) {
+        TIDYING();
         next();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
     src_info = get_src_peer_info();
     if (!src_info) {
+        TIDYING();
         next();
         return PLUGIN_FILTER_UNKNOWN;
     }
@@ -87,6 +98,7 @@ uint64_t compute_arrival_time(args_t *args UNUSED) {
     /* the attribute is only computed for
      * routes coming from eBGP sessions */
     if (src_info->peer_type != EBGP_SESSION) {
+        TIDYING();
         next();
         return PLUGIN_FILTER_UNKNOWN;
     }
@@ -103,12 +115,14 @@ uint64_t compute_arrival_time(args_t *args UNUSED) {
 
     if (set_attr(arrival_attr) != 0) {
         ebpf_print("Failed to set arrival attribute");
+        TIDYING();
         next();
         return PLUGIN_FILTER_UNKNOWN;
     }
 
     /* this import filter doesn't decide anything.
      * we continue to the other filter if any */
+    TIDYING();
     next();
     return PLUGIN_FILTER_UNKNOWN;
 }
@@ -120,8 +134,6 @@ PROOF_INSTS(
 
             p_assert(ret_val == 0 ||
             ret_val == PLUGIN_FILTER_UNKNOWN);
-
-            ctx_shmrm(42);
 
             return 0;
         }

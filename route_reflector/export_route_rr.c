@@ -63,12 +63,13 @@ PROOF_INSTS(
 #define NEXT_RETURN_VALUE PLUGIN_FILTER_UNKNOWN
 )
 
-#define TIDYING() PROOF_INSTS(do { \
+#define TIDYING() \
+PROOF_INSTS(do { \
     if (pinfo) free(pinfo);        \
     if (src_info) free(src_info);        \
     if (originator) free(originator);        \
     if (cluster_list) free(cluster_list);        \
-}while(0);)
+}while(0))
 
 
 uint64_t export_route_rr(args_t *args UNUSED) {
@@ -108,6 +109,7 @@ uint64_t export_route_rr(args_t *args UNUSED) {
     if (originator) {
         if (*(uint32_t *) originator->data != src_info->router_id) {
             ebpf_print("Originator ID is the SAME, update rejected\n");
+            TIDYING();
             return PLUGIN_FILTER_REJECT;
         }
     }

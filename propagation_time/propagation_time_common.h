@@ -5,6 +5,8 @@
 #ifndef XBGP_PLUGINS_PROPAGATION_TIME_COMMON_H
 #define XBGP_PLUGINS_PROPAGATION_TIME_COMMON_H
 
+#include "../prove_stuffs/prove.h"
+
 #define ARRIVAL_TIME_ATTR 45
 
 #define ATTR_HDR_LEN 3
@@ -16,14 +18,14 @@
 #define COMMUNITY_ARRIVAL_TAG_BE 59645
 
 #ifdef DEBUG
-#define assert(cond) \
+#define c_assert(cond) \
 do {                 \
     if (!(cond)) {     \
         ebpf_print("Assertion \"%s\" failed\n", LOG_PTR(#cond));               \
     }\
 } while(0)
 #else
-#define assert(cond)
+#define c_assert(cond)
 #endif
 
 struct attr_arrival {
@@ -72,7 +74,6 @@ do {                        \
 
 #define write_u64(buf, val) write_uxx(buf, val, 8, uint64_t, ebpf_htonll)
 
-
 #define read_uxx(buf, size, type, fun) \
 ({                                     \
     type __rdval__;                    \
@@ -83,11 +84,11 @@ do {                        \
 
 #define read_u8(buf) read_uxx(buf, 1, uint8_t, )
 
-#define read_u16(buf) read_uxx(buf, 2, uint8_t, ebpf_ntohs)
+#define read_u16(buf) read_uxx(buf, 2, uint16_t, ebpf_ntohs)
 
-#define read_u32(buf) read_uxx(buf, 4, uint8_t, ebpf_ntohl)
+#define read_u32(buf) read_uxx(buf, 4, uint32_t, ebpf_ntohl)
 
-#define read_u64(buf) read_uxx(buf, 8, uint8_t, ebpf_ntohll)
+#define read_u64(buf) read_uxx(buf, 8, uint64_t, ebpf_ntohll)
 
 
 static __always_inline int write_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *data) {
@@ -103,6 +104,9 @@ static __always_inline int write_attr(uint8_t code, uint8_t flags, uint16_t leng
     tot_length = length + hdr_length;
 
     attr_buf = ctx_malloc(tot_length);
+
+    CREATE_BUFFER(attr_buf, tot_length);
+
     if (!attr_buf) return -1;
     attr_offset = attr_buf;
 
@@ -122,6 +126,8 @@ static __always_inline int write_attr(uint8_t code, uint8_t flags, uint16_t leng
         ebpf_print("[BUG!] INVALID ATTR FORMAT\n");
         return 0;
     }
+
+    CHECK_BUFFER(attr_buf, tot_length);
 
     res = write_to_buffer(attr_buf, tot_length);
 
