@@ -6,6 +6,7 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_rr.h"
 #include "../prove_stuffs/prove.h"
+#include "../prove_stuffs/prove_helpers.h"
 
 /* starting point */
 uint64_t encode_cluster_list(args_t *args UNUSED);
@@ -159,7 +160,7 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
         return 0;
     }
 
-    CHECK_ATTR(attr_buf);
+    //CHECK_ATTR(attr_buf);
 
     CHECK_BUFFER(attr_buf, counter);
     if (write_to_buffer(attr_buf, counter) == -1) {

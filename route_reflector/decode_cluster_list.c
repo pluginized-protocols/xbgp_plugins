@@ -6,6 +6,7 @@
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "common_rr.h"
 #include "../prove_stuffs/prove.h"
+#include "../prove_stuffs/prove_helpers.h"
 
 /* starting point */
 uint64_t decode_cluster_list(args_t *args UNUSED);

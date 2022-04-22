@@ -64,7 +64,7 @@ uint64_t tie_breaker(exec_info_t *info) {
             tie_reason = TIE_ROUTER_ID;
             break;
         case BGP_IPADDR_DECISION:
-            tie_reason = TIE_IPADDR;
+            tie_reason = TIE_OTHER;
             break;
         case BGP_POST_DECISION:
             tie_reason = TIE_OTHER;
