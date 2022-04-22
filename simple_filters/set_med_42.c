@@ -4,8 +4,13 @@
 
 #include "../xbgp_compliant_api/xbgp_plugin_api.h"
 #include "med_hdr.h"
+#include "../prove_stuffs/prove.h"
 
 uint64_t set_med_42(void);
+
+PROOF_INSTS(
+#define NEXT_RETURN_VALUE EXIT_SUCCESS
+        )
 
 /**
  * Simple import filter that adds the
@@ -24,6 +29,7 @@ uint64_t set_med_42(void) {
     p_attr->length = LENGTH_MED_VALUE;
     memcpy(p_attr->data, &med_val, sizeof(LENGTH_MED_VALUE));
 
+    CHECK_ATTR_FORMAT(p_attr, sizeof(struct path_attribute) + sizeof(LENGTH_MED_VALUE));
     if (set_attr(p_attr) != 0) {
         ebpf_print("[WARN] Unable to set MED value !\n");
     }
@@ -31,3 +37,11 @@ uint64_t set_med_42(void) {
     next();
     return PLUGIN_FILTER_UNKNOWN;
 }
+
+PROOF_INSTS(
+        int main(void) {
+            uint64_t ret_val = set_med_42();
+
+            return 0;
+        }
+        )

@@ -641,27 +641,33 @@ uint16_t ebpf_htons(uint16_t val) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     return bswap_16(val);  // Compiler builtin GCC/Clang
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    return value;
+    return val;
 #else
 #    error unsupported endianness
 #endif
 }
 
+#ifndef PROVERS_T2
 uint32_t ebpf_htonl(uint32_t val) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     return bswap_32(val);  // Compiler builtin GCC/Clang
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    return value;
+    return val;
 #else
 #    error unsupported endianness
 #endif
 }
+#else
+unsigned int ebpf_htonl(unsigned int val) {
+    return 0;
+}
+#endif
 
 uint64_t ebpf_htonll(uint64_t val) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     return bswap_64(val);  // Compiler builtin GCC/Clang
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    return value;
+    return val;
 #else
 #    error unsupported endianness
 #endif

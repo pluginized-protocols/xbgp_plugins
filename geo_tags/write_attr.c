@@ -13,6 +13,7 @@
 uint64_t write_attr(void);
 
 PROOF_INSTS(
+#define NEXT_RETURN_VALUE FAIL
         uint8_t nondet_u8(void);
         uint64_t nondet_u64(void);
 
@@ -100,11 +101,11 @@ static __always_inline int encode_attr(uint8_t code, const uint8_t *buf_in, uint
     return count;
 }
 
-#define TIDYING \
+#define TIDYING() \
 PROOF_INSTS(do {            \
     if (attribute) free(attribute); \
     if (attr_buf) free(attr_buf); \
-} while(0))\
+} while(0))
 
 
 /**
@@ -125,7 +126,7 @@ uint64_t write_attr(void) {
     attribute = get_attr();
 
     if (!attribute) {
-        TIDYING;
+        TIDYING();
         next();
         return 0;
     }
@@ -136,7 +137,7 @@ uint64_t write_attr(void) {
 
     attr_buf = ctx_calloc(1, tot_len);
     if (!attr_buf) {
-        TIDYING;
+        TIDYING();
         next();
         return 0;
     }
@@ -152,7 +153,7 @@ uint64_t write_attr(void) {
 
     ret_val = encode_attr(attribute->code, attribute->data, attr_buf + counter);
     if (ret_val == -1) {
-        TIDYING;
+        TIDYING();
         // should call the following function here.
         // Maybe other plugins handle the attribute
         // or the host implementation.
@@ -169,18 +170,17 @@ uint64_t write_attr(void) {
 
 
     if (write_to_buffer(attr_buf, counter) == -1) {
-        TIDYING;
+        TIDYING();
         next();
         return 0;
     }
-    TIDYING;
+    TIDYING();
     return counter;
 }
 
 PROOF_INSTS(
         int main(void) {
-            args_t args = {};
-            uint64_t ret_val = write_attr(&args);
+            uint64_t ret_val = write_attr();
 
             return 0;
         }

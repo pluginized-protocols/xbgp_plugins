@@ -82,6 +82,18 @@ PROOF_INSTS(
         int rib_has_route(unsigned int iterator_id) {
             return nondet_int() % 2 == 0;
         }
+
+        void rib_iterator_clean(unsigned int iterator_id) {
+
+        }
+
+        int reschedule_plugin(time_t *time) {
+            return 0;
+        }
+
+        int new_rib_iterator(int afi, int safi) {
+            return 1;
+        }
 )
 
 
@@ -294,6 +306,11 @@ uint64_t rib_walk(UNUSED args_t *args) {
             if (nexthop2str(find_by_code(rte->attr, NEXT_HOP_ATTR_ID, rte->attr_nb), next_hop, sizeof(next_hop)) != 0) {
                 memcpy(next_hop, unk, sizeof(unk));
             }
+
+            CHECK_STRING(ip_str, 60);
+            CHECK_STRING(as_path, 512);
+            CHECK_STRING(origin2str(find_by_code(rte->attr, ORIGIN_ATTR_ID, rte->attr_nb)), 11);
+            CHECK_STRING(next_hop, 60);
 
             log_msg(L_INFO"Pfx %s/%d %s %s via %s",
                     LOG_STR(ip_str),

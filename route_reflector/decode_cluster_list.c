@@ -32,16 +32,20 @@ PROOF_INSTS(
                     return flags;
                 }
                 case ARG_DATA: {
-                    if (data_length == 0) return NULL;
+                    /*if (data_length == 0) {
+                        data_length = nondet_u16__verif();
+                        p_assume(data_length > 0);
+                    }*/
                     uint8_t *data = malloc(data_length);
-
+                    for (int i = 0 ; i < data_length ; i++)
+                        data[i] = nondet_u8();
                     return data;
                 }
                 case ARG_LENGTH: {
                     uint16_t *length;
                     if (data_length == 0) {
                         data_length = nondet_u16__verif();
-                        p_assume(data_length % 4 == 0);
+                        p_assume(data_length > 0);
                     }
 
                     length = malloc(sizeof(*length));
@@ -51,35 +55,52 @@ PROOF_INSTS(
                     return length;
                 }
             }
-
+            return NULL;
         }
 
         struct ubpf_peer_info *get_src_peer_info() {
-            struct ubpf_peer_info *pf;
+            static struct ubpf_peer_info pf;
 
-            pf = malloc(sizeof(*pf));
-            if (!pf) return NULL;
+            //pf = malloc(sizeof(*pf));
+            //if (!pf) return NULL;
 
-            pf->peer_type = IBGP_SESSION;
-            return pf;
+            pf.peer_type = IBGP_SESSION;
+            return &pf;
+        }
+
+        int add_attr(uint8_t code, uint8_t flags, uint16_t length, uint8_t *decoded_attr) {
+
+            if (length == 0)
+                return 0;
+            uint8_t minibuf[5];
+
+            // i < 4096 limits the unrolling of loops
+            // 4096 is the upper bound for BGP messages
+            minibuf[0] = decoded_attr[0];
+            for (int i = 1; i < length && i < 4096; i++) {
+                minibuf[i % 5] = minibuf[(i - 1) % 5] + decoded_attr[i] > UINT8_MAX ? UINT8_MAX : minibuf[(i - 1) % 5] + decoded_attr[i];
+            }
+            return 0;
         }
 
 
 #define NEXT_RETURN_VALUE EXIT_SUCCESS
+#define PROVERS_ARG
 )
 
 #define TIDYING() \
 PROOF_INSTS(do {\
-     if (code) free(code); \
-     if (len) free(len);   \
-     if (flags) free(flags); \
-     if (data) free(data); \
-     if (src_info) free(src_info); \
-     if (cluster_list) free(cluster_list); \
+if (code) free(code); \
+if (len) free(len);   \
+if (flags) free(flags); \
+if (data) free(data); \
+if (cluster_list) free(cluster_list); \
 } while(0))
 
 uint64_t decode_cluster_list(args_t *args UNUSED) {
 
+    INIT_ARG_TYPE();
+    SET_ARG_TYPE(CLUSTER_LIST);
     int i;
     struct ubpf_peer_info *src_info = NULL;
 
@@ -93,37 +114,43 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
 
     code = get_arg(ARG_CODE);
     flags = get_arg(ARG_FLAGS);
-    data = get_arg(ARG_DATA);
     len = get_arg(ARG_LENGTH);
+    data = get_arg(ARG_DATA);
 
-    COPY_BUFFER(data, *len);
     src_info = get_src_peer_info();
 
     if (!src_info || !code || !len || !flags || !data) {
+        CHECK_OUT();
         TIDYING();
         return EXIT_FAILURE;
     }
-
+    COPY_BUFFER(data, *len);
+    CHECK_ARG_CODE(*code);
     if (src_info->peer_type != IBGP_SESSION) {
         CHECK_COPY(data);
         TIDYING();
         next(); // don't parse CLUSTER_LIST if originated from eBGP session
+        CHECK_OUT();
     }
 
     if (*code != CLUSTER_LIST) {
         CHECK_COPY(data);
         TIDYING();
         next();
+        CHECK_OUT();
     }
 
     src_info = get_src_peer_info();
     if (!src_info || src_info->peer_type != IBGP_SESSION) {
+        CHECK_COPY(data);
         TIDYING();
         next(); // don't parse CLUSTER_LIST if originated from eBGP session
+        CHECK_OUT();
     }
 
     if (*len % 4 != 0) {
         CHECK_COPY(data);
+        CHECK_OUT();
         TIDYING();
         return 0;
     }
@@ -133,6 +160,7 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
 
     if (!cluster_list) {
         CHECK_COPY(data);
+        CHECK_OUT();
         TIDYING();
         return EXIT_FAILURE;
     }
@@ -151,12 +179,13 @@ uint64_t decode_cluster_list(args_t *args UNUSED) {
     PROOF_SEAHORN_INSTS(
             p_assert(*len % 4 == 0);
             p_assert(*flags == (ATTR_OPTIONAL | ATTR_TRANSITIVE));
-    )
+            )
 
 
-    add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
+            add_attr(CLUSTER_LIST, *flags, *len, (uint8_t *) cluster_list);
 
     CHECK_COPY(data);
+    CHECK_OUT();
     TIDYING();
     return EXIT_SUCCESS;
 }
@@ -167,4 +196,4 @@ PROOF_INSTS(
             uint64_t ret_val = decode_cluster_list(&args);
             return ret_val;
         }
-)
+        )

@@ -18,6 +18,8 @@
 uint64_t as_path_count(args_t *args UNUSED);
 
 PROOF_INSTS(
+#define NEXT_RETURN_VALUE EXIT_FAILURE
+#define PROVERS_ARG
         uint16_t nondet_u16(void);
         uint8_t nondet_u8(void);
 
@@ -99,11 +101,14 @@ PROOF_INSTS( do { \
     if (attribute_code) free(attribute_code); \
     if (as_path_len) free(as_path_len);                \
     if (as_path) free(as_path); \
-} while(0);)
+} while(0))
 
 uint64_t as_path_count(args_t *args UNUSED) {
+    INIT_ARG_TYPE();
+    SET_ARG_TYPE(AS_PATH_ATTR_ID);
     unsigned int as_number = 0;
     unsigned int *attribute_code = get_arg(ARG_CODE);
+    CHECK_ARG_CODE(*attribute_code);
     unsigned int *as_path_len = get_arg(ARG_LENGTH);
     unsigned char *as_path = get_arg(ARG_DATA);
 
@@ -117,6 +122,8 @@ uint64_t as_path_count(args_t *args UNUSED) {
     if (*attribute_code != AS_PATH_ATTR_ID) {
         CHECK_COPY(as_path);
         TIDYING();
+        next();
+        CHECK_OUT();
         return EXIT_FAILURE;
     }
 
@@ -126,6 +133,7 @@ uint64_t as_path_count(args_t *args UNUSED) {
     if (as_number == UINT32_MAX) {
         CHECK_COPY(as_path);
         TIDYING();
+        CHECK_OUT();
         return EXIT_FAILURE;
     }
 
@@ -133,10 +141,12 @@ uint64_t as_path_count(args_t *args UNUSED) {
     if (log_msg(L_INFO "as_count:%d\n", LOG_UINT(as_number)) != 0) {
         CHECK_COPY(as_path);
         TIDYING();
+        CHECK_OUT();
         return EXIT_FAILURE;
     }
     CHECK_COPY(as_path);
     TIDYING();
+    CHECK_OUT();
     return EXIT_SUCCESS;
 }
 
