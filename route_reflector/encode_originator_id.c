@@ -98,7 +98,7 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
     originator_id[counter++] = originator_attr->code;
     originator_id[counter++] = originator_attr->length;
 
-    memcpy(&originator_id[counter], originator_attr->data, originator_attr->length);
+    ebpf_memcpy(&originator_id[counter], originator_attr->data, originator_attr->length);
     counter += originator_attr->length;
 
     if (counter != 7) {
