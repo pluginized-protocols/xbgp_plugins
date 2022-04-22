@@ -19,7 +19,7 @@ PROOF_INSTS(
             struct path_attribute *p_attr;
             uint16_t len;
 
-            len =  nondet_get_u16__verif();
+            len = nondet_get_u16__verif();
             p_assume(len % 4 == 0);
             //p_assume(len <= 4096);
 
@@ -105,18 +105,18 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
 
     cluster_list_attr = get_attr_from_code(CLUSTER_LIST_ATTR_ID);
 
+    if (!cluster_list_attr) {
+        TIDYING()
+        next();
+        return 0;
+    }
+
     tot_len += 2; // Type hdr
 
-    if (cluster_list_attr) {
-        length_clist = cluster_list_attr->length + 4;
-        tot_len += length_clist < 256 ? 1 : 2;
-        tot_len += length_clist;
+    length_clist = cluster_list_attr->length;
+    tot_len += length_clist < 256 ? 1 : 2;
+    tot_len += length_clist;
 
-    } else {
-        tot_len += 1; // length size
-        tot_len += 4;
-        length_clist = 4;
-    }
 
     extra_space = get_mem();
     if (!extra_space) {
@@ -134,24 +134,24 @@ uint64_t encode_cluster_list(args_t *args UNUSED) {
     CREATE_BUFFER(attr_buf, tot_len);
     attr_buf = extra_space;
 
-    attr_buf[counter++] = ATTR_OPTIONAL;
-    attr_buf[counter++] = CLUSTER_LIST_ATTR_ID;
+    attr_buf[counter++] = cluster_list_attr->flags;
+    attr_buf[counter++] = cluster_list_attr->code;
 
     if (length_clist < 256) attr_buf[counter++] = length_clist;
     else {
-        *(uint16_t *)(&attr_buf[counter]) = ebpf_htons(length_clist);
+        unsigned int hto_length = ebpf_htons(length_clist);
+        memcpy(&attr_buf[counter], &hto_length, 2);
+        //*(uint16_t *)(&attr_buf[counter]) = ebpf_htons(length_clist);
         counter += 2;
     }
 
-    *(uint32_t *) (&attr_buf[counter]) = ebpf_htonl(to_info->local_bgp_session->router_id);
-    counter += 4;
-    if (cluster_list_attr) {
-        cluster_list = (uint32_t *) cluster_list_attr->data;
-        for (i = 0; i < cluster_list_attr->length / 4; i++) {
-            *((uint32_t *) (attr_buf + counter)) = ebpf_htonl(cluster_list[i]);
-            counter += 4;
-        }
+
+    cluster_list = (uint32_t *) cluster_list_attr->data;
+    for (i = 0; i < cluster_list_attr->length / 4; i++) {
+        *((uint32_t *) (attr_buf + counter)) = ebpf_htonl(cluster_list[i]);
+        counter += 4;
     }
+
 
     if (counter != tot_len) {
         ebpf_print("Size missmatch counter %d totlen %d\n", LOG_U32(counter), LOG_U32(tot_len));

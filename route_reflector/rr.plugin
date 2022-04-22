@@ -64,7 +64,7 @@
         "0": "export_route_rr"
       }
     },
-    "bgp_encode_custom_attr": {
+    "bgp_encode_attr": {
       "replace": {
         "0": "encode_cluster_list",
         "10": "encode_originator_id"

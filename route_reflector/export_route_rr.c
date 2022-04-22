@@ -74,11 +74,15 @@ PROOF_INSTS(do { \
 
 uint64_t export_route_rr(args_t *args UNUSED) {
     unsigned int i;
+    int must_set_originator = 0;
     int nb_peers;
     uint32_t *cluster_array;
+    unsigned int cl_length;
+    char *cl_array;
 
     struct path_attribute *originator = NULL;
     struct path_attribute *cluster_list = NULL;
+    struct path_attribute *new_cluster_list = NULL;
 
     struct ubpf_peer_info *pinfo = get_peer_info(&nb_peers);
     struct ubpf_peer_info *src_info = get_src_peer_info();
@@ -152,6 +156,58 @@ uint64_t export_route_rr(args_t *args UNUSED) {
                        LOG_U32(pinfo->router_id));
             TIDYING();
             return PLUGIN_FILTER_REJECT;
+        }
+    }
+
+    /* rr check is done ! */
+    /* we now need to change the 2 RR attributes */
+
+    /* add originator id */
+    if (!originator) {
+        must_set_originator = 1;
+        originator = ctx_malloc(sizeof(struct path_attribute) + sizeof(uint32_t));
+        if (!originator) {
+            // fail !!!
+            ebpf_print("Unable to allocate memory for ORIGINATOR_ID\n");
+            TIDYING();
+            return PLUGIN_FILTER_REJECT;
+        }
+        originator->code = ORIGINATOR_ID;
+        originator->flags = ATTR_OPTIONAL; // originator is non transitive !
+        originator->length = 4;
+        *((uint32_t *) originator->data) = src_info->router_id;
+    }
+
+    /* prepend our router id/cluster id in cluster list */
+    cl_length = 4;
+    if (cluster_list) {
+        cl_length += cluster_list->length;
+    }
+
+    new_cluster_list = ctx_malloc(sizeof(*new_cluster_list) + cl_length);
+    if (!new_cluster_list) {
+        ebpf_print("Unable to allocate space for cluster list\n");
+        return PLUGIN_FILTER_UNKNOWN;
+    }
+    new_cluster_list->code = CLUSTER_LIST_ATTR_ID;
+    new_cluster_list->flags = ATTR_OPTIONAL;
+    new_cluster_list->length = cl_length;
+    cl_array = (char *) new_cluster_list->data;
+
+    /* prepend our cluster list */
+    memcpy(cl_array, &src_info->local_bgp_session->router_id, 4);
+    if (cluster_list) {
+        /* copy the rest of the cluster list */
+        ebpf_memcpy(cl_array + 4, cluster_list->data, cluster_list->length);
+    }
+
+    if (set_attr(new_cluster_list) != 0) {
+        ebpf_print("Unable to set cluster list attr !\n");
+    }
+
+    if (must_set_originator) {
+        if (set_attr(originator) != 0) {
+            ebpf_print("Unable to set orignator id attr!\n");
         }
     }
 

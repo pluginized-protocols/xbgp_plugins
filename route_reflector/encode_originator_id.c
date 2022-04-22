@@ -88,17 +88,19 @@ uint64_t encode_originator_id(args_t *args __attribute__((unused))) {
 
     originator_attr = get_attr_from_code(ORIGINATOR_ID_ATTR_ID);
 
-    originator_id[counter++] = ATTR_OPTIONAL;
-    originator_id[counter++] = ORIGINATOR_ID_ATTR_ID;
-    originator_id[counter++] = 4;
-
-    if (originator_attr) {
-        *(uint32_t *) (&originator_id[counter]) = *(uint32_t *)originator_attr->data;
-    } else {
-        *(uint32_t *) (&originator_id[counter]) = ebpf_htonl(src_info->router_id);
+    if (!originator_attr) {
+        TIDYING();
+        next();
+        return 0;
     }
 
-    counter += 4;
+    originator_id[counter++] = originator_attr->flags;
+    originator_id[counter++] = originator_attr->code;
+    originator_id[counter++] = originator_attr->length;
+
+    memcpy(&originator_id[counter], originator_attr->data, originator_attr->length);
+    counter += originator_attr->length;
+
     if (counter != 7) {
         ebpf_print("Size missmatch\n");
         TIDYING();
