@@ -53,7 +53,7 @@ extern clock_t bpf_clock(void);
 
 extern void *ebpf_memcpy(void *dst0, const void *src0, size_t length);
 
-extern void ebpf_print_intern(const char *format, ...);
+extern int ebpf_print_intern(const char *format, struct vargs *args);
 
 extern void set_error(const char *reason, size_t len);
 

@@ -48,12 +48,8 @@ int get_time(struct timespec *spec) {
 #include <stdio.h>
 #define ebpf_print(...)
 #else
-void ebpf_print_intern(const char *format, ...) {
-    va_list list;
-
-    va_start(list, format);
-    vfprintf(stderr, format, list);
-    va_end(list);
+int ebpf_print_intern(const char *format, struct vargs *args) {
+    printf(format, args->nb_args);
 }
 #endif
 
