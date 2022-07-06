@@ -3,6 +3,7 @@
   "name": "show_rib",
   "extra_mem": 512,
   "shared_mem": 0,
+  "memory_mgmt": "michelfra",
   "obj_code_list": {
     "rib_show": {
       "obj": "rib_walk.o",
