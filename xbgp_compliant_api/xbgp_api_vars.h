@@ -60,6 +60,9 @@ static xbgp_def_fun_api(peer_session_reset, int, *(const char **) XBGP_ARGS[0]);
 
 static xbgp_def_fun_api(get_route_info, struct bgp_rte_info *);
 
+static xbgp_def_fun_api(get_route_sent_to_peer, struct bgp_route *, *(struct ubpf_prefix**) XBGP_ARGS[0],
+        *(struct ubpf_peer_info **) XBGP_ARGS[1]);
+
 
 static proto_ext_fun_t api_funcs[] = {
         {
@@ -267,6 +270,15 @@ static proto_ext_fun_t api_funcs[] = {
                 .fn = get_route_info,
                 .closure_fn = xbgp_api_name_closure(get_route_info),
                 .name = "get_route_info",
+                .attributes=HELPER_ATTR_READ,
+        },
+        {
+                .args_type = (ffi_type *[]) {&ffi_type_pointer, &ffi_type_pointer},
+                .return_type = &ffi_type_pointer,
+                .args_nb = 2,
+                .fn = get_route_sent_to_peer,
+                .closure_fn = xbgp_api_name_closure(get_route_sent_to_peer),
+                .name = "get_route_sent_to_peer",
                 .attributes=HELPER_ATTR_READ,
         },
         proto_ext_func_null,

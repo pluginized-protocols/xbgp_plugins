@@ -249,4 +249,8 @@ int peer_session_reset(context_t *ctx, const char *peer_ip);
  */
 struct bgp_rte_info *get_route_info(context_t *ctx);
 
+
+struct bgp_route *get_route_sent_to_peer(context_t *ctx, struct ubpf_prefix *pfx, struct ubpf_peer_info *peer);
+
+
 #endif //PLUGINIZED_FRR_XBGP_PLUGIN_HOST_API_H

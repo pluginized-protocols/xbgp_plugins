@@ -198,5 +198,7 @@ extern int peer_session_reset(const char *peer_ip);
 
 extern struct bgp_rte_info *get_route_info(void);
 
+struct bgp_route *get_route_sent_to_peer(struct ubpf_prefix *pfx, struct ubpf_peer_info *peer);
+
 #endif //PLUGINIZED_BIRD_XBGP_API_H
 
