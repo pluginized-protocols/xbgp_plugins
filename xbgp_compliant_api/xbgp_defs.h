@@ -189,6 +189,16 @@ struct ubpf_peer_info {
     uint8_t peer_type; // iBGP, eBGP, or LOCAL for local_bgp_sessions field.
 
     struct {
+        uint8_t type;
+        union {
+            struct in6_addr in6;
+            struct in_addr in;
+        };
+    } nexthop;
+
+    // uint32_t nexthop;
+
+    struct {
         uint8_t af;
         union {
             struct in6_addr in6;
