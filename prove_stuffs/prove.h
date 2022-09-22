@@ -98,8 +98,12 @@ char *strncpy(char *dest, const char *src, size_t n)  {
 
 #ifdef PROVERS_T2
 #define PROOF_T2_INSTS(...) __VA_ARGS__
+#define NOT_T2(...)
+#define T2SI
 #else
 #define PROOF_T2_INSTS(...)
+#define NOT_T2(...) __VA_ARGS__
+#define T2SI static __inline __attribute__ ((__always_inline__))
 #endif
 
 #endif //XBGP_PLUGINS_PROVE_H
