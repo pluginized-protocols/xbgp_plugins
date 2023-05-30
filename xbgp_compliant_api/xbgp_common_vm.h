@@ -5,13 +5,19 @@
 #ifndef XBGP_PLUGINS_XBGP_COMMON_VM_H
 #define XBGP_PLUGINS_XBGP_COMMON_VM_H
 
-
+#include <time.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 
 #include "xbgp_common_vm_defs.h"
+
+#if (!defined(__always_inline)) && defined(__GNUC__)
+#define __always_inline __attribute__((always_inline))
+#endif
+
 
 
 #define ubpf_sprintf(str, size, format, ...)\

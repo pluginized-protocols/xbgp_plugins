@@ -5,6 +5,7 @@
 #ifndef PLUGINIZED_BIRD_XBGP_API_H
 #define PLUGINIZED_BIRD_XBGP_API_H
 
+#include <time.h>
 #include <stdint.h>
 #include <stddef.h>
 #include "xbgp_defs.h"
