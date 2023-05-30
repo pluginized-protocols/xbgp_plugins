@@ -5,6 +5,7 @@
 #ifndef PLUGINIZED_FRR_XBGP_DEFS_H
 #define PLUGINIZED_FRR_XBGP_DEFS_H
 
+#include <time.h>
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
